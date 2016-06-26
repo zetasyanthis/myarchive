@@ -12,7 +12,7 @@ from cPickle import dump
 from collections import defaultdict
 from time import sleep
 
-from t import *
+from account_info import *
 
 SLEEP_TIME = 60 * (60 / 15)
 
@@ -152,7 +152,7 @@ def main():
     if not all([CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET]):
         raise ValueError(
             "You must define CONSUMER_KEY, CONSUMER_SECRET, "
-            "ACCESS_KEY, ACCESS_SECRET in t.py")
+            "ACCESS_KEY, ACCESS_SECRET in account_info.py")
 
     if args.favorites:
         archive_favorites(
