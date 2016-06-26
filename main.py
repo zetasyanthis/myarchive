@@ -1,26 +1,40 @@
 #!/usr/bin/env python
 #
-# Load the latest update for a Twitter user and output it as an HTML fragment
+# Load favorites for a Twitter user and output them to a file.
 #
 
-from __future__ import print_function
 import argparse
-import codecs
+import csv
 import sys
 
 import twitter
 
 from t import *
 
-__author__ = 'dewitt@google.com'
+KEYS = [
+    u'id',
+    u'user',
+    u'text',
+    u'created_at',
+    u'hashtags',
+    u'favorited',
+    u'retweeted',
+    u'user_mentions',
+    u'source',
+    u'in_reply_to_screen_name',
+    u'in_reply_to_status_id',
+    u'urls',
+    u'media',
+    u'retweet_count',
+    u'favorite_count',
 
-TEMPLATE = """
-<div>
-  <a href="http://twitter.com/{user}">Twitter</a>: {user}<br>
-  {tweet_text}<br>
-  <a href="http://twitter.com/{user}/statuses/{status_id}">Posted {tweet_created}</a>
-</div>
-"""
+    # Don't really care about these.
+    u'id_str',
+    u'place',
+    u'in_reply_to_user_id',
+    u'lang',
+    u'possibly_sensitive',
+]
 
 
 def main(**kwargs):
@@ -32,30 +46,37 @@ def main(**kwargs):
     if kwargs['user_id'] is not None:
         statuses = api.GetFavorites(
             user_id=kwargs['user_id'],
-            count=1,
+            count=None,
             since_id=None,
             max_id=None,
             include_entities=True)
     elif kwargs['screenname'] is not None:
         statuses = api.GetFavorites(
             screen_name=kwargs['screenname'],
-            count=1,
+            count=10,
             since_id=None,
             max_id=None,
             include_entities=True)
 
-    print(statuses)
+    key_set = set()
+    status_dicts = []
+    for status in statuses:
+        status_dict = status.AsDict()
+        # Override field
+        status_dict["user"] = status_dict["user"]["screen_name"]
 
-    # if kwargs['output_file'] is not None:
-    #     with open(kwargs['output_file'], 'w+') as f:
-    #         for status in statuses:
-    #             f.write(status)
-    # else:
-    #     for status in statuses:
-    #         print(TEMPLATE.format(user=status.user.screen_name,
-    #                               tweet_text=status.text.encode('utf-8'),
-    #                               status_id=status.id,
-    #                               tweet_created=status.created_at))
+        status_dicts.append(status_dict)
+        key_set.update(status_dict.keys())
+
+
+    with open(kwargs['output_file'], 'w+') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=KEYS)
+        writer.writeheader()
+        for status in statuses:
+            #print("\n")
+            #print(status.AsDict())
+            writer.writerow(status.AsDict())
+
 
 
 if __name__ == "__main__":
@@ -68,8 +89,8 @@ if __name__ == "__main__":
         '-n', '--screenname',
         help='Screenname for which to return timeline')
     parser.add_argument(
-        '--output-file',
-        #default="twitter.log"
+        '-f', '--output-file',
+        default="twitter.csv",
         help='Write to file instead of stdout')
     args = parser.parse_args()
     if not (args.user_id or args.screenname):
