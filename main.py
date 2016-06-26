@@ -14,7 +14,7 @@ from time import sleep
 
 from t import *
 
-SLEEP_TIME = sleep(60*(60/15))
+SLEEP_TIME = 60 * (60 / 15)
 
 KEYS = [
     u'user',
@@ -111,7 +111,7 @@ def archive_favorites(**kwargs):
         # Twitter rate-limits us to 15 requests / 15 minutes, so
         # space this out a bit to avoid a super-long sleep at the
         # end which could lose the connection.
-        print "Sleeping to ease up rate limit..."
+        print "Sleeping for %s seconds to ease up rate limit..." % SLEEP_TIME
         sleep(SLEEP_TIME)
 
 
