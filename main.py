@@ -5,100 +5,162 @@
 
 import argparse
 import csv
-import sys
-
+import os
 import twitter
+
+from cPickle import dump
+from collections import defaultdict
+from time import sleep
 
 from t import *
 
+SLEEP_TIME = sleep(60*(60/15))
+
 KEYS = [
-    u'id',
     u'user',
     u'text',
-    u'created_at',
-    u'hashtags',
-    u'favorited',
-    u'retweeted',
-    u'user_mentions',
-    u'source',
     u'in_reply_to_screen_name',
-    u'in_reply_to_status_id',
-    u'urls',
     u'media',
-    u'retweet_count',
-    u'favorite_count',
+
+    # Not that interesting, but saved.
+    u'hashtags',
+    u'id',
+    u'in_reply_to_status_id',
+    # Seems to be empty a lot. Put it at the end.
+    u'urls',
 
     # Don't really care about these.
-    u'id_str',
-    u'place',
-    u'in_reply_to_user_id',
-    u'lang',
-    u'possibly_sensitive',
+    # u'user_mentions',
+    # u'source',
+    # u'created_at',
+    # u'id_str',
+    # u'place',
+    # u'in_reply_to_user_id',
+    # u'lang',
+    # u'possibly_sensitive',
+    # u'favorited',
+    # u'favorite_count',
+    # u'retweeted',
+    # u'retweet_count',
 ]
 
 
-def main(**kwargs):
+def archive_favorites(**kwargs):
+    try:
+        os.remove(kwargs["output_file"])
+    except OSError:
+        pass
     api = twitter.Api(
         CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET,
         sleep_on_rate_limit=True)
 
-    statuses = None
-    if kwargs['user_id'] is not None:
-        statuses = api.GetFavorites(
-            user_id=kwargs['user_id'],
-            count=None,
-            since_id=None,
-            max_id=None,
-            include_entities=True)
-    elif kwargs['screenname'] is not None:
+    max_id = None
+    while True:
+        print max_id
+
         statuses = api.GetFavorites(
             screen_name=kwargs['screenname'],
-            count=10,
+            count=200,
             since_id=None,
-            max_id=None,
+            max_id=max_id,
             include_entities=True)
+        # print api.rate_limit.get_limit("favorites/list")
+        if not statuses:
+            break
 
-    key_set = set()
-    status_dicts = []
-    for status in statuses:
-        status_dict = status.AsDict()
-        # Override field
-        status_dict["user"] = status_dict["user"]["screen_name"]
-
-        status_dicts.append(status_dict)
-        key_set.update(status_dict.keys())
-
-
-    with open(kwargs['output_file'], 'w+') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=KEYS)
-        writer.writeheader()
+        # Format things the way we want and handle max_id changes.
+        status_dicts = []
         for status in statuses:
-            #print("\n")
-            #print(status.AsDict())
-            writer.writerow(status.AsDict())
+            status_dict = status.AsDict()
+            status_id = int(status_dict["id"])
+            # Pickle the tweets out to save the original format.
+            with open(
+                "%s/%s.pickle" %
+                    (kwargs["pickle_folder"], status_id), "w") as pickle_fptr:
+                dump(status_dict, pickle_fptr)
+            # Capture new max_id
+            if status_id < max_id or max_id is None:
+                max_id = status_id - 1
+            # Override fields
+            status_dict["user"] = status_dict["user"]["screen_name"]
+            status_dict["text"] = status_dict["text"].encode('utf-8')
+            # Filter crap we don't care about.
+            keys = list(status_dict.keys())
+            for key in keys:
+                if key not in KEYS:
+                    del status_dict[key]
+            status_dicts.append(status_dict)
+
+        file_exists = False
+        try:
+            if os.path.getsize(kwargs['output_file']) > 0:
+                file_exists = True
+        except OSError:
+            pass
+        with open(kwargs['output_file'], 'a') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=KEYS)
+            if file_exists is False:
+                writer.writeheader()
+            for status_dict in status_dicts:
+                try:
+                    writer.writerow(status_dict)
+                except:
+                    print "ERROR: ", status_dict
+                    raise
+
+        # Twitter rate-limits us to 15 requests / 15 minutes, so
+        # space this out a bit to avoid a super-long sleep at the
+        # end which could lose the connection.
+        print "Sleeping to ease up rate limit..."
+        sleep(SLEEP_TIME)
 
 
+def check_duplicates(**kwargs):
+    rows_by_id = defaultdict(list)
+    with open(kwargs["file_path"]) as csv_fptr:
+        dict_reader = csv.DictReader(csv_fptr)
+        # fieldnames = dict_reader.fieldnames
+        for index, row in enumerate(dict_reader):
+            rows_by_id[row["id"]].append((index, row))
+        for id, row_tuple in rows_by_id.items():
+            if len(row_tuple) > 1:
+                for item in row_tuple:
+                    print "DUPLICATE on line %s. [id: %s]" % (
+                        item[0], item[1]["id"])
 
-if __name__ == "__main__":
+
+def main():
+
     parser = argparse.ArgumentParser()
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        '--user-id',
-        help='User id for which to return timeline')
-    group.add_argument(
-        '-n', '--screenname',
-        help='Screenname for which to return timeline')
     parser.add_argument(
-        '-f', '--output-file',
+        '-f', '--favorites',
+        action="store",
+        help='Downloads favorites. Accepts a Twitter username.')
+    parser.add_argument(
+        '-d', '--check_duplicates',
+        action="store",
+        help='Checks CSV for duplicates.')
+    parser.add_argument(
+        '-o', '--output-file',
         default="twitter.csv",
         help='Write to file instead of stdout')
+    parser.add_argument(
+        '-p', '--pickle-folder',
+        default="pickle_dump",
+        help='Write to file instead of stdout')
     args = parser.parse_args()
-    if not (args.user_id or args.screenname):
-        raise ValueError("You must specify one of user-id or screenname")
     if not all([CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET]):
         raise ValueError(
             "You must define CONSUMER_KEY, CONSUMER_SECRET, "
             "ACCESS_KEY, ACCESS_SECRET in t.py")
-    main(user_id=args.user_id,
-         screenname=args.screenname,
-         output_file=args.output_file)
+
+    if args.favorites:
+        archive_favorites(
+            pickle_folder=args.pickle_folder,
+            screenname=args.favorites,
+            output_file=args.output_file)
+    elif args.check_duplicates:
+        check_duplicates(file_path=args.check_duplicates)
+
+if __name__ == "__main__":
+    main()
