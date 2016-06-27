@@ -102,8 +102,8 @@ class ColorizingStreamHandler(logging.StreamHandler):
 
 
 # Get the main logger by name since __name__ will be __main__ here.
-TAGINATOR_LOGGER = logging.getLogger('taginator')
-TAGINATOR_LOGGER.setLevel(logging.DEBUG)
+myarchive_LOGGER = logging.getLogger('myarchive')
+myarchive_LOGGER.setLevel(logging.DEBUG)
 
 stream_handler = ColorizingStreamHandler()
 stream_formatter = logging.Formatter(
@@ -111,15 +111,15 @@ stream_formatter = logging.Formatter(
     datefmt='%Y-%m-%d %H:%M:%S')
 stream_handler.setFormatter(stream_formatter)
 stream_handler.setLevel(logging.INFO)
-TAGINATOR_LOGGER.addHandler(stream_handler)
+myarchive_LOGGER.addHandler(stream_handler)
 
 # TODO: Move this to syslog / systemd logger.
 log_folder = os.path.join(
-    os.path.join(os.path.expanduser("~"), ".taginator/log/")
+    os.path.join(os.path.expanduser("~"), ".myarchive/log/")
 )
 if not os.path.exists(log_folder):
     os.makedirs(log_folder)
-log_file_path = os.path.join(log_folder, "taginator.log")
+log_file_path = os.path.join(log_folder, "myarchive.log")
 file_handler = RotatingFileHandler(
     filename=log_file_path,
     maxBytes=10*2**20,
@@ -129,4 +129,4 @@ file_formatter = logging.Formatter(
     datefmt='%Y-%m-%d %H:%M:%S')
 file_handler.setFormatter(file_formatter)
 file_handler.setLevel(logging.DEBUG)
-TAGINATOR_LOGGER.addHandler(file_handler)
+myarchive_LOGGER.addHandler(file_handler)

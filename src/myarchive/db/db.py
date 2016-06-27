@@ -8,7 +8,7 @@ from sqlalchemy.engine.url import URL as SQLAlchemyURL
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import IntegrityError
 
-from taginator.db.tables import Base, TrackedFile, Tag
+from myarchive.db.tables import Base, TrackedFile, Tag
 
 # Get the module logger.
 logger = logging.getLogger(__name__)
@@ -139,7 +139,7 @@ if __name__ == '__main__':
     tag1.add_child(tag2)
 
     # Try to cause an explosion.
-    from taginator.db.tables.tag import CircularDependencyError
+    from myarchive.db.tables.tag import CircularDependencyError
     try:
         tag2.add_child(tag1)
     except CircularDependencyError as e:

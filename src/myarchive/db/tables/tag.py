@@ -5,7 +5,7 @@ Module containing definitions of tag hierarchies.
 from sqlalchemy import Column, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import backref, relationship
 
-from taginator.db.tables.base import Base
+from myarchive.db.tables.base import Base
 
 
 class CircularDependencyError(Exception):

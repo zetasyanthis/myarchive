@@ -1,6 +1,6 @@
 """Package of database tables"""
 
-from taginator.db.tables.base import Base
-from taginator.db.tables.file import TrackedFile
-from taginator.db.tables.tag import Tag
-# from taginator.db.tables.base import Collection
+from myarchive.db.tables.base import Base
+from myarchive.db.tables.file import TrackedFile
+from myarchive.db.tables.tag import Tag
+# from myarchive.db.tables.base import Collection

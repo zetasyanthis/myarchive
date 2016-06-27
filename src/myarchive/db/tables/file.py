@@ -8,8 +8,8 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import backref, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from taginator.db.tables.base import Base
-from taginator.db.tables.association_tables import at_file_tag
+from myarchive.db.tables.base import Base
+from myarchive.db.tables.association_tables import at_file_tag
 
 
 class TrackedFile(Base):

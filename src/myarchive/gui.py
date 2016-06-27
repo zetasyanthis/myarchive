@@ -3,7 +3,7 @@ import logging
 
 from gi.repository import Gtk, GLib, GdkPixbuf
 
-from taginator.db.tables import TrackedFile, Tag
+from myarchive.db.tables import TrackedFile, Tag
 
 # Get the module logger.
 logger = logging.getLogger(__name__)
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class MainWindow(Gtk.Window):
 
     def __init__(self, tag_db):
-        Gtk.Window.__init__(self, title="Taginator")
+        Gtk.Window.__init__(self, title="myarchive")
 
         # Configure self.
         self.tag_db = tag_db
@@ -224,13 +224,13 @@ class AboutDialog(Gtk.Dialog):
 
     def __init__(self, parent):
         Gtk.Dialog.__init__(
-            self, "About Taginator", parent, 0,
+            self, "About myarchive", parent, 0,
             (Gtk.STOCK_OK, Gtk.ResponseType.OK))
 
         self.set_default_size(400, 30)
 
         label = Gtk.Label(
-            "Taginator is intended as a maintainable, extensible Shotwell "
+            "myarchive is intended as a maintainable, extensible Shotwell "
             "replacement, written in Python and using SQLAlchemy for "
             "flexibility with its database back-end.",
             wrap=True)

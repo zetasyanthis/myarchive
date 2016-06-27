@@ -5,7 +5,7 @@ import os
 
 from db import TagDB
 from gui import Gtk, MainWindow
-from util.logger import TAGINATOR_LOGGER as logger
+from util.logger import myarchive_LOGGER as logger
 
 
 def main(db_filename):
