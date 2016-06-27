@@ -2,3 +2,5 @@ account_info.py
 *~
 *.pyc
 .idea
+testdata/
+*.pickle
