@@ -1,8 +1,9 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 
 import argparse
 import os
 
+import twitterlib
 from db import TagDB
 from gui import Gtk, MainWindow
 from util.logger import myarchive_LOGGER as logger
@@ -29,12 +30,14 @@ def main():
         action="store",
         help='Downloads favorites. Accepts a Twitter username.')
     parser.add_argument(
-        '--output-csv-file',
-        default="twitter.csv",
-        help='Write to file instead of stdout')
+        '--print-tweets',
+        action="store_true",
+        default=False,
+        help='Prints all tweets.')
     parser.add_argument(
-        '--pickle-folder',
-        default="pickle_dump",
+        '--output-csv-file',
+        nargs='?',
+        const='twitter.csv',
         help='Write to file instead of stdout')
     args = parser.parse_args()
 
@@ -52,6 +55,18 @@ def main():
             db_name=args.db_filename)
     else:
         tag_db = TagDB()
+
+    if args.import_twitter_favorites:
+        twitterlib.archive_favorites(
+            username=args.import_twitter_favorites,
+            output_csv_file=args.output_csv_file,
+            db_session=tag_db.session)
+        if args.check_duplicates:
+            twitterlib.check_duplicates(
+                file_path=args.check_duplicates)
+
+    if args.print_tweets is True:
+        twitterlib.print_tweets(db_session=tag_db.session)
 
     MainWindow(tag_db)
     Gtk.main()

@@ -16,7 +16,7 @@ class Tweet(Base):
     __tablename__ = 'tweets'
 
     _id = Column(Integer, name="id", primary_key=True)
-    raw_data = PickleType()
+    raw_status_dict = Column(PickleType)
 
     tags = relationship(
         "Tag",
@@ -27,10 +27,9 @@ class Tweet(Base):
         secondary=at_file_tweet
     )
 
-    def __init__(self, tweet_dict):
-        self.raw_data = tweet_dict
+    def __init__(self, status_dict):
+        self.raw_status_dict = status_dict
 
     def __repr__(self):
-        return ("<File(Tweet='%s', id='%s', "
-                "raw_data='%s')>" %
-                (self.directory, self._id, self.raw_data))
+        return ("<Tweet(id='%s', raw_data='%s')>" %
+                (self._id, self.raw_status_dict))
