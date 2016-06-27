@@ -8,23 +8,15 @@ from gui import Gtk, MainWindow
 from util.logger import myarchive_LOGGER as logger
 
 
-def main(db_filename):
+def main():
     """Starts up the DB connection and GUI."""
 
-    if db_filename:
-        tag_db = TagDB(drivername='sqlite', db_name=db_filename)
-    else:
-        tag_db = TagDB()
-
-    MainWindow(tag_db)
-    Gtk.main()
-
-
-if __name__ == '__main__':
-
     parser = argparse.ArgumentParser(description='Manages tagged files.')
-    parser.add_argument("-d", "--db_filename", type=str, dest="db_filename",
-                        help="Folder to organize.")
+    parser.add_argument(
+        "-d", "--db_filename",
+        type=str,
+        dest="db_filename",
+        help="Database filename.")
     parser.add_argument("--import", type=str, dest="import_folder",
                         help="Folder to organize.")
     args = parser.parse_args()
@@ -37,4 +29,14 @@ if __name__ == '__main__':
 
     logger.debug(args)
 
-    main(args.db_filename)
+    if args.db_filename:
+        tag_db = TagDB(drivername='sqlite', db_name=db_filename)
+    else:
+        tag_db = TagDB()
+
+    MainWindow(tag_db)
+    Gtk.main()
+
+
+if __name__ == '__main__':
+    main()
