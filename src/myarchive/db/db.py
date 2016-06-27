@@ -8,7 +8,7 @@ from sqlalchemy.engine.url import URL as SQLAlchemyURL
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import IntegrityError
 
-from myarchive.db.tables import Base, TrackedFile, Tag
+from myarchive.db.tables import Base, TrackedFile, Tag, Tweet
 
 # Get the module logger.
 logger = logging.getLogger(__name__)

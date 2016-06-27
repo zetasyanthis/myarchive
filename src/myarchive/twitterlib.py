@@ -132,27 +132,6 @@ def check_duplicates(**kwargs):
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '-f', '--favorites',
-        action="store",
-        help='Downloads favorites. Accepts a Twitter username.')
-    parser.add_argument(
-        '-d', '--check_duplicates',
-        action="store",
-        help='Checks CSV for duplicates.')
-    parser.add_argument(
-        '-o', '--output-file',
-        default="twitter.csv",
-        help='Write to file instead of stdout')
-    parser.add_argument(
-        '-p', '--pickle-folder',
-        default="pickle_dump",
-        help='Write to file instead of stdout')
-    args = parser.parse_args()
-    if not all([CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET]):
-        raise ValueError(
-            "You must define CONSUMER_KEY, CONSUMER_SECRET, "
-            "ACCESS_KEY, ACCESS_SECRET in account_info.py")
 
     if args.favorites:
         archive_favorites(

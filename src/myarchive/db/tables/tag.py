@@ -39,12 +39,12 @@ class Tag(Base):
                   name="name",
                   unique=True)
 
-    child_tags = relationship(
+    __child_tags = relationship(
         "Tag",
         doc="Child tags.  DO NOT APPEND TO THIS RELATIONSHIP DIRECTLY! Use "
             "add_child() for safety!",
         backref=backref(
-            "parent_tags",
+            "__parent_tags",
             doc=("Parent tags. DO NOT APPEND TO THIS RELATIONSHIP DIRECTLY! "
                  "Use add_child() for safety!")),
         primaryjoin=(_id == _at_tag_tag.c.tag1_id),
@@ -59,8 +59,11 @@ class Tag(Base):
 
     def add_child(self, tag):
         """Creates an instance, performing a safety check first."""
-        if self in tag.child_tags:
+        if self in tag.get_child_tags():
             raise CircularDependencyError(
-                "Attempting to create an infinite self referential loop!")
+                "Attempting to create a self-referential tag loop!")
         else:
-            self.child_tags.append(tag)
+            self.__child_tags.append(tag)
+
+    def get_child_tags(self):
+        return self.__child_tags
