@@ -8,6 +8,13 @@ from sqlalchemy.orm import backref, relationship
 from myarchive.db.tables.base import Base
 
 
+_at_tag_tag = Table(
+    'at_tag_tag', Base.metadata,
+    Column("tag1_id", Integer, ForeignKey("tags.id"), primary_key=True),
+    Column("tag2_id", Integer, ForeignKey("tags.id"), primary_key=True),
+    info="Association table for self-referential many-to-many mappings.")
+
+
 class CircularDependencyError(Exception):
     """
     Specific exception for attempting to create a self-referential
@@ -21,12 +28,6 @@ class Tag(Base):
     Tag storage table.  Allows nesting of tags via self-referential
     structure.
     """
-
-    _at_tag_tag = Table(
-        'at_tag_tag', Base.metadata,
-        Column("tag1_id", Integer, ForeignKey("tags.id"), primary_key=True),
-        Column("tag2_id", Integer, ForeignKey("tags.id"), primary_key=True),
-        info="Association table for self-referential many-to-many mappings.")
 
     __tablename__ = 'tags'
 

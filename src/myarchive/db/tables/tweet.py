@@ -21,7 +21,7 @@ class Tweet(Base):
     tags = relationship(
         "Tag",
         backref=backref(
-            "files",
+            "tweets",
             doc="Tweets associated with this tag"),
         doc="Tags that have been applied to this file.",
         secondary=at_file_tweet
