@@ -5,7 +5,7 @@ import os
 
 import twitterlib
 from db import TagDB
-from gui import Gtk, MainWindow
+# from gui import Gtk, MainWindow
 from util.logger import myarchive_LOGGER as logger
 
 
