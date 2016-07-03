@@ -4,15 +4,12 @@
 #
 
 import os
-import requests
 import twitter
 
-from posixpath import basename
 from time import sleep
-from urlparse import urlparse
 
 from myarchive.db.tables.file import TrackedFile
-from myarchive.db.tables.twittertables import RawTweet, Tweet
+from myarchive.db.tables.twittertables import RawTweet, Tweet, TwitterUser
 
 from account_info import *
 
@@ -118,9 +115,15 @@ def archive_favorites(username, db_session, output_csv_file=None):
 def parse_tweets(db_session, media_path):
     for raw_tweet in db_session.query(RawTweet):
 
+        # Generate User objects.
+        user_dict = raw_tweet.raw_status_dict["user"]
+        user = TwitterUser.add_from_user_dict(db_session, media_path, user_dict)
+
         # Generate Tweet objects.
-        tweet = Tweet.add_from_raw(db_session, raw_tweet.raw_status_dict)
-        db_session.add(tweet)
+        tweet = Tweet.add_from_raw(db_session, raw_tweet.raw_status_dict, user)
+        if tweet not in user.tweets:
+            user.tweets.append(tweet)
+            db_session.commit()
 
         # Retrieve media files.
         if media_path and "media" in raw_tweet.raw_status_dict:
@@ -131,8 +134,6 @@ def parse_tweets(db_session, media_path):
                 if tracked_file not in tweet.files:
                     tweet.files.append(tracked_file)
                 db_session.commit()
-
-
 
 
 def print_tweets(db_session):
