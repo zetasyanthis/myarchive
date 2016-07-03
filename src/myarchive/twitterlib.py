@@ -3,12 +3,13 @@
 # Load favorites for a Twitter user and output them to a file.
 #
 
-import csv
 import os
+import requests
 import twitter
 
-from collections import defaultdict
+from posixpath import basename
 from time import sleep
+from urlparse import urlparse
 from myarchive.db.tables.twittertables import RawTweet, Tweet
 
 from account_info import *
@@ -112,12 +113,21 @@ def archive_favorites(username, db_session, output_csv_file=None):
         sleep(SLEEP_TIME)
 
 
-def parse_tweets(db_session):
+def parse_tweets(db_session, media_path):
     for tweet in db_session.query(RawTweet):
+        if media_path and "media" in tweet.raw_status_dict:
+            for media_item in tweet.raw_status_dict["media"]:
+                media_id = media_item["id"]
+                media_url = media_item["media_url_https"]
+                media_request = requests.get(media_url)
+                filename = basename(urlparse(media_url).path)
+                filepath = os.path.join(media_path, filename)
+                with open(filepath, "w") as fptr:
+                    fptr.write(media_request.content)
         db_session.add(Tweet(tweet.raw_status_dict))
     db_session.commit()
 
 
 def print_tweets(db_session):
-    for tweet in db_session.query(Tweet).all():
+    for tweet in db_session.query(RawTweet).all():
         print tweet

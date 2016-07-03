@@ -19,8 +19,13 @@ def main():
         type=str,
         dest="db_filename",
         nargs='?',
-        const="archive.sqlite",
+        const="/tmp/myarchive/db/archive.sqlite",
         help="Database filename.")
+    parser.add_argument(
+        '--media-path',
+        action="store",
+        default="/tmp/myarchive/media/",
+        help='Prints all tweets.')
     parser.add_argument(
         "--import-folder",
         type=str, dest="import_folder",
@@ -63,7 +68,8 @@ def main():
             db_session=tag_db.session)
 
     if args.parse_tweets is True:
-        twitterlib.parse_tweets(db_session=tag_db.session)
+        twitterlib.parse_tweets(
+            db_session=tag_db.session, media_path=args.media_path)
     if args.print_tweets is True:
         twitterlib.print_tweets(db_session=tag_db.session)
 
