@@ -110,7 +110,7 @@ stream_formatter = logging.Formatter(
     fmt='%(levelname)s: %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S')
 stream_handler.setFormatter(stream_formatter)
-stream_handler.setLevel(logging.INFO)
+stream_handler.setLevel(logging.DEBUG)
 myarchive_LOGGER.addHandler(stream_handler)
 
 # TODO: Move this to syslog / systemd logger.

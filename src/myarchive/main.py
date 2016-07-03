@@ -41,13 +41,13 @@ def main():
         help='Write to file instead of stdout')
     args = parser.parse_args()
 
+    logger.debug(args)
+
     if args.import_folder:
         if not os.path.exists(args.import_folder):
             raise Exception("Import folder path does not exist!")
         if not os.path.isdir(args.import_folder):
             raise Exception("Import folder path is not a folder!")
-
-    logger.debug(args)
 
     if args.db_filename:
         tag_db = TagDB(
