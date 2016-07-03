@@ -16,10 +16,8 @@ def main():
         description='Manages tagged files.')
     parser.add_argument(
         "-D", "--db_filename",
-        type=str,
-        dest="db_filename",
-        nargs='?',
-        const="/tmp/myarchive/db/archive.sqlite",
+        action="store",
+        default="/tmp/myarchive/db/archive.sqlite",
         help="Database filename.")
     parser.add_argument(
         '--media-path',

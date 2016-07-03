@@ -117,21 +117,22 @@ def archive_favorites(username, db_session, output_csv_file=None):
 
 def parse_tweets(db_session, media_path):
     for raw_tweet in db_session.query(RawTweet):
+
+        # Generate Tweet objects.
         tweet = Tweet.add_from_raw(db_session, raw_tweet.raw_status_dict)
         db_session.add(tweet)
+
+        # Retrieve media files.
         if media_path and "media" in raw_tweet.raw_status_dict:
             for media_item in raw_tweet.raw_status_dict["media"]:
-                media_id = media_item["id"]
                 media_url = media_item["media_url_https"]
-                filename = basename(urlparse(media_url).path)
-                tracked_file = TrackedFile.add_file(
-                    db_session=db_session, directory=media_path, filename=filename)
-                tweet.files.append(tracked_file)
+                tracked_file = TrackedFile.download_file(
+                    db_session, media_path, media_url)
+                if tracked_file not in tweet.files:
+                    tweet.files.append(tracked_file)
                 db_session.commit()
-                filepath = os.path.join(media_path, filename)
-                media_request = requests.get(media_url)
-                # with open(filepath, "w") as fptr:
-                #     fptr.write(media_request.content)
+
+
 
 
 def print_tweets(db_session):
