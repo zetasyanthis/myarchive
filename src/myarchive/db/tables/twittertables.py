@@ -6,7 +6,7 @@ from sqlalchemy import Column, Integer, String, PickleType
 from sqlalchemy.orm import backref, relationship
 
 from myarchive.db.tables.base import Base
-from myarchive.db.tables.association_tables import at_file_tweet
+from myarchive.db.tables.association_tables import at_tweet_tag, at_tweet_file
 
 
 class RawTweet(Base):
@@ -37,13 +37,21 @@ class Tweet(Base):
     in_reply_to_screen_name = Column(String)
     in_reply_to_status_id = Column(Integer)
 
+    files = relationship(
+        "TrackedFile",
+        backref=backref(
+            "tweets",
+            doc="Tweets associated with this tag"),
+        doc="Tags that have been applied to this file.",
+        secondary=at_tweet_file
+    )
     tags = relationship(
         "Tag",
         backref=backref(
             "tweets",
             doc="Tweets associated with this tag"),
         doc="Tags that have been applied to this file.",
-        secondary=at_file_tweet
+        secondary=at_tweet_tag
     )
 
     def __init__(self, status_dict):
@@ -67,3 +75,12 @@ class Tweet(Base):
         return (
             "<Tweet(id='%s', user='%s', in_reply_to_screen_name='%s')>" %
             (self._id, self.user, self.in_reply_to_screen_name))
+
+    @classmethod
+    def add_from_raw(cls, db_session, status_dict):
+        id = int(status_dict["id"])
+        tweet = db_session.query(cls).filter_by(id=id).all()
+        if tweet:
+            return tweet[0]
+        return Tweet(status_dict)
+

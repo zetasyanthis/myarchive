@@ -33,13 +33,26 @@ class TrackedFile(Base):
         secondary=at_file_tag
     )
 
-    def __init__(self, directory, filename):
+    def __init__(self, directory, filename, sha1_hash):
         self.directory = directory
         self.filename = filename
-        self.sha1_hash = sha1(open(self.filepath, 'rb').read()).hexdigest()
-        self.prefixed_filename = '_' + self.sha1_hash + '_' + filename
+        self.sha1_hash = sha1_hash
+        # self.prefixed_filename = '_' + self.sha1_hash + '_' + filename
 
     def __repr__(self):
         return ("<File(directory='%s', filename='%s', "
                 "sha1_hash='%s')>" %
                 (self.directory, self.filename, self.sha1_hash))
+
+    @classmethod
+    def add_file(cls, db_session, directory, filename):
+        filepath = join(directory, filename)
+        sha1_hash = sha1(open(filepath, 'rb').read()).\
+            hexdigest()
+        tracked_file = db_session.query(cls).\
+            filter_by(sha1_hash=sha1_hash).all()
+        if tracked_file:
+            print "Repeated hash: %s [%s, %s]" % (
+                sha1_hash, tracked_file[0].filepath, filepath)
+            return tracked_file[0]
+        return TrackedFile(directory, filename, sha1_hash)

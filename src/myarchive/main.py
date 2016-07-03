@@ -73,8 +73,8 @@ def main():
     if args.print_tweets is True:
         twitterlib.print_tweets(db_session=tag_db.session)
 
-    MainWindow(tag_db)
-    Gtk.main()
+    # MainWindow(tag_db)
+    # Gtk.main()
 
 
 if __name__ == '__main__':

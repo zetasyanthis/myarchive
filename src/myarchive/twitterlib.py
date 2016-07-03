@@ -10,6 +10,8 @@ import twitter
 from posixpath import basename
 from time import sleep
 from urlparse import urlparse
+
+from myarchive.db.tables.file import TrackedFile
 from myarchive.db.tables.twittertables import RawTweet, Tweet
 
 from account_info import *
@@ -114,20 +116,24 @@ def archive_favorites(username, db_session, output_csv_file=None):
 
 
 def parse_tweets(db_session, media_path):
-    for tweet in db_session.query(RawTweet):
-        if media_path and "media" in tweet.raw_status_dict:
-            for media_item in tweet.raw_status_dict["media"]:
+    for raw_tweet in db_session.query(RawTweet):
+        tweet = Tweet.add_from_raw(db_session, raw_tweet.raw_status_dict)
+        db_session.add(tweet)
+        if media_path and "media" in raw_tweet.raw_status_dict:
+            for media_item in raw_tweet.raw_status_dict["media"]:
                 media_id = media_item["id"]
                 media_url = media_item["media_url_https"]
-                media_request = requests.get(media_url)
                 filename = basename(urlparse(media_url).path)
+                tracked_file = TrackedFile.add_file(
+                    db_session=db_session, directory=media_path, filename=filename)
+                tweet.files.append(tracked_file)
+                db_session.commit()
                 filepath = os.path.join(media_path, filename)
-                with open(filepath, "w") as fptr:
-                    fptr.write(media_request.content)
-        db_session.add(Tweet(tweet.raw_status_dict))
-    db_session.commit()
+                media_request = requests.get(media_url)
+                # with open(filepath, "w") as fptr:
+                #     fptr.write(media_request.content)
 
 
 def print_tweets(db_session):
-    for tweet in db_session.query(RawTweet).all():
-        print tweet
+    for raw_tweet in db_session.query(RawTweet).all():
+        print raw_tweet
