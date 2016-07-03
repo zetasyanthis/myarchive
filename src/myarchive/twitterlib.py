@@ -9,7 +9,7 @@ import twitter
 
 from collections import defaultdict
 from time import sleep
-from myarchive.db.tables.twittertables import RawTweet
+from myarchive.db.tables.twittertables import RawTweet, Tweet
 
 from account_info import *
 
@@ -112,19 +112,10 @@ def archive_favorites(username, db_session, output_csv_file=None):
         sleep(SLEEP_TIME)
 
 
-def check_duplicates(**kwargs):
-    rows_by_id = defaultdict(list)
-    with open(kwargs["file_path"]) as csv_fptr:
-        dict_reader = csv.DictReader(csv_fptr)
-        # fieldnames = dict_reader.fieldnames
-        for index, row in enumerate(dict_reader):
-            rows_by_id[row["id"]].append((index, row))
-        for id, row_tuple in rows_by_id.items():
-            if len(row_tuple) > 1:
-                for item in row_tuple:
-                    print(
-                        "DUPLICATE on line %s. [id: %s]" % (
-                        item[0], item[1]["id"]))
+def parse_tweets(db_session):
+    for tweet in db_session.query(RawTweet):
+        db_session.add(Tweet(tweet.raw_status_dict))
+    db_session.commit()
 
 
 def print_tweets(db_session):

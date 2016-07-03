@@ -30,15 +30,15 @@ def main():
         action="store",
         help='Downloads favorites. Accepts a Twitter username.')
     parser.add_argument(
-        '--print-tweets',
+        '--parse-tweets',
         action="store_true",
         default=False,
         help='Prints all tweets.')
     parser.add_argument(
-        '--output-csv-file',
-        nargs='?',
-        const='twitter.csv',
-        help='Write to file instead of stdout')
+        '--print-tweets',
+        action="store_true",
+        default=False,
+        help='Prints all tweets.')
     args = parser.parse_args()
 
     logger.debug(args)
@@ -62,6 +62,8 @@ def main():
             output_csv_file=args.output_csv_file,
             db_session=tag_db.session)
 
+    if args.parse_tweets is True:
+        twitterlib.parse_tweets(db_session=tag_db.session)
     if args.print_tweets is True:
         twitterlib.print_tweets(db_session=tag_db.session)
 

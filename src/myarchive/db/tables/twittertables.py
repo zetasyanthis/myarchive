@@ -54,6 +54,10 @@ class Tweet(Base):
         if in_reply_to_status_id is not None:
             self.in_reply_to_status_id = int(in_reply_to_status_id)
         self.created_at = status_dict["created_at"]
+        hashtags_list = status_dict.get("hashtags")
+        if hashtags_list:
+            self.hashtags = ",".join(
+                [hashtag_dict[u"text"] for hashtag_dict in hashtags_list])
 
         # self.user = status_dict["user"]
         # self.in_reply_to_screen_name = str(status_dict.get(
@@ -61,7 +65,5 @@ class Tweet(Base):
 
     def __repr__(self):
         return (
-            "<Tweet(id='%s', user='%s', in_reply_to_screen_name='%s', "
-            "raw_data='%s')>" %
-            (self._id, self.user, self.in_reply_to_screen_name,
-             self.raw_status_dict))
+            "<Tweet(id='%s', user='%s', in_reply_to_screen_name='%s')>" %
+            (self._id, self.user, self.in_reply_to_screen_name))
