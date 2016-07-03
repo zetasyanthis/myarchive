@@ -61,9 +61,6 @@ def main():
             username=args.import_twitter_favorites,
             output_csv_file=args.output_csv_file,
             db_session=tag_db.session)
-        if args.check_duplicates:
-            twitterlib.check_duplicates(
-                file_path=args.check_duplicates)
 
     if args.print_tweets is True:
         twitterlib.print_tweets(db_session=tag_db.session)

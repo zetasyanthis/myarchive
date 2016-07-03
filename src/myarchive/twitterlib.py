@@ -7,10 +7,9 @@ import csv
 import os
 import twitter
 
-from cPickle import dump
 from collections import defaultdict
 from time import sleep
-from myarchive.db.tables.tweet import Tweet
+from myarchive.db.tables.twittertables import RawTweet
 
 from account_info import *
 
@@ -73,7 +72,7 @@ def archive_favorites(username, db_session, output_csv_file=None):
         # status_dicts = []
         for status in statuses:
             status_dict = status.AsDict()
-            db_session.add(Tweet(status_dict=status_dict))
+            db_session.add(RawTweet(status_dict=status_dict))
             db_session.commit()
             status_id = int(status_dict["id"])
             # Capture new max_id
