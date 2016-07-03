@@ -32,11 +32,3 @@ at_twuser_file = Table(
     Column("file_id", Integer,
            ForeignKey("files.id"), primary_key=True),
     info="Association table for mapping users to files and vice versa.")
-
-at_twuser_tweet = Table(
-    'at_twuser_tweet', Base.metadata,
-    Column("twuser_id", Integer,
-           ForeignKey("twitter_users.id"), primary_key=True),
-    Column("tweet_id", Integer,
-           ForeignKey("tweets.id"), primary_key=True),
-    info="Association table for mapping users to tweets and vice versa.")

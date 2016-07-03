@@ -8,7 +8,7 @@ from sqlalchemy.orm import backref, relationship
 from myarchive.db.tables.base import Base
 from myarchive.db.tables.file import TrackedFile
 from myarchive.db.tables.association_tables import (
-    at_tweet_tag, at_tweet_file, at_twuser_file, at_twuser_tweet)
+    at_tweet_tag, at_tweet_file, at_twuser_file)
 
 
 class RawTweet(Base):
@@ -120,7 +120,6 @@ class TwitterUser(Base):
     tweets = relationship(
         "Tweet",
         doc="Tweets tweeted by this user.",
-        secondary=at_twuser_tweet
     )
 
     def __init__(self, user_dict):

@@ -2,6 +2,7 @@
 Module containing class definitions for files to be tagged.
 """
 
+import imghdr
 import os
 import requests
 
@@ -71,8 +72,13 @@ class TrackedFile(Base):
 
         # Download the file.
         filename = os.path.basename(urlparse(url).path)
-        filepath = os.path.join(media_path, filename)
         media_request = requests.get(url)
+        # Detect an extension incase the URL doesn't have one.
+        if os.path.splitext(filename)[1] == '':
+            extension = imghdr.what("", media_request.content)
+            if extension:
+                filename += extension
+        filepath = os.path.join(media_path, filename)
         with open(filepath, "w") as fptr:
             fptr.write(media_request.content)
 
