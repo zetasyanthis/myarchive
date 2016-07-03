@@ -84,3 +84,54 @@ class Tweet(Base):
             return tweet[0]
         return Tweet(status_dict)
 
+
+class User(Base):
+    """Class representing a file tweet by the database."""
+
+    __tablename__ = 'users'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    url = Column(String)
+    created_at = Column(String)
+    timezone = Column(String)
+    screen_name = Column(String)
+    profile_sidebar_fill_color = Column(String)
+    profile_text_color = Column(String)
+    location = Column(String)
+    profile_background_color = Column(String)
+    description = Column(String)
+    profile_link_color = Column(String)
+    profile_image_url = Column(String)
+    profile_banner_url = Column(String)
+    profile_background_image_url = Column(String)
+
+    def __init__(self, status_dict):
+        self.id = int(status_dict["id"])
+        self.text = status_dict["text"]
+        in_reply_to_status_id = status_dict.get(
+            "in_reply_to_status_id")
+        if in_reply_to_status_id is not None:
+            self.in_reply_to_status_id = int(in_reply_to_status_id)
+        self.created_at = status_dict["created_at"]
+        hashtags_list = status_dict.get("hashtags")
+        if hashtags_list:
+            self.hashtags = ",".join(
+                [hashtag_dict[u"text"] for hashtag_dict in hashtags_list])
+
+        # self.user = status_dict["user"]
+        # self.in_reply_to_screen_name = str(status_dict.get(
+        #     ["in_reply_to_screen_name"]))
+
+    def __repr__(self):
+        return (
+            "<Tweet(id='%s', user='%s', in_reply_to_screen_name='%s')>" %
+            (self._id, self.user, self.in_reply_to_screen_name))
+
+    @classmethod
+    def add_from_raw(cls, db_session, status_dict):
+        id = int(status_dict["id"])
+        tweet = db_session.query(cls).filter_by(id=id).all()
+        if tweet:
+            return tweet[0]
+        return Tweet(status_dict)
