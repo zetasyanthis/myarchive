@@ -58,16 +58,18 @@ def archive_favorites(username, db_session):
     new_ids = []
     max_id = None
     early_termination = False
-    while True:
-        print 'asdf'
+    while not early_termination:
+        print ("Pulling 200 tweets from API starting with ID %s and "
+               "ending with ID %s..." % (since_id, max_id))
         statuses = api.GetFavorites(
             screen_name=username,
             count=200,
             since_id=since_id,
             max_id=max_id,
             include_entities=True)
+        print "Found %s tweets this iteration..." % len(statuses)
         # print(api.rate_limit.get_limit("favorites/list"))
-        if early_termination or not statuses:
+        if not statuses:
             break
 
         # Format things the way we want and handle max_id changes.
@@ -97,7 +99,7 @@ def archive_favorites(username, db_session):
 
 def parse_tweets(db_session, media_path, new_ids=None):
 
-    if new_ids:
+    if new_ids is not None:
         raw_tweets = [db_session.query(RawTweet).filter_by(id=tweet_id)
                       for tweet_id in new_ids]
     else:

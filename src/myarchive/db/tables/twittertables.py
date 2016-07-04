@@ -101,7 +101,7 @@ class TwitterUser(Base):
     url = Column(String)
     description = Column(String)
     location = Column(String)
-    timezone = Column(String)
+    time_zone = Column(String)
     created_at = Column(String)
 
     profile_sidebar_fill_color = Column(String)
