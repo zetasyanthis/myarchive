@@ -16,6 +16,9 @@ from account_info import *
 
 SLEEP_TIME = 60 * (60 / 15)
 
+USER = "USER"
+FAVORITES = "FAVORITES"
+
 KEYS = [
     u'user',
     u'text',
@@ -45,55 +48,68 @@ KEYS = [
 ]
 
 
-def archive_favorites(username, db_session):
+def archive_tweets(username, db_session, types=(USER, FAVORITES)):
+    """
+    Archives several types of new tweets along with their associated content.
+    """
+    new_ids = []
     api = twitter.Api(
         CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET,
         sleep_on_rate_limit=True)
 
-    since_id = db_session.query(RawTweet.id).order_by(desc(RawTweet.id)).first()
-    if since_id:
-        since_id = since_id[0]
-    print since_id
+    for type_ in types:
 
-    new_ids = []
-    max_id = None
-    early_termination = False
-    while not early_termination:
-        print ("Pulling 200 tweets from API starting with ID %s and "
-               "ending with ID %s..." % (since_id, max_id))
-        statuses = api.GetFavorites(
-            screen_name=username,
-            count=200,
-            since_id=since_id,
-            max_id=max_id,
-            include_entities=True)
-        print "Found %s tweets this iteration..." % len(statuses)
-        # print(api.rate_limit.get_limit("favorites/list"))
-        if not statuses:
-            break
+        since_id = db_session.query(RawTweet.id).filter_by(type_=type_).\
+            order_by(desc(RawTweet.id)).first()
+        if since_id:
+            since_id = since_id[0]
+        print type_, since_id
 
-        # Format things the way we want and handle max_id changes.
-        for status in statuses:
-            status_dict = status.AsDict()
-            status_id = int(status_dict["id"])
-            if status_id >= since_id:
-                early_termination = True
+        max_id = None
+        early_termination = False
+        while not early_termination:
+            print ("Pulling 200 tweets from API starting with ID %s and "
+                   "ending with ID %s..." % (since_id, max_id))
+            if type_ == FAVORITES:
+                statuses = api.GetFavorites(
+                    screen_name=username,
+                    count=200,
+                    since_id=since_id,
+                    max_id=max_id,
+                    include_entities=True)
+            elif type_ == USER:
+                statuses = api.GetUserTimeline(
+                    screen_name=username,
+                    count=200,
+                    since_id=since_id,
+                    max_id=max_id)
+            print "Found %s tweets this iteration..." % len(statuses)
+            # print(api.rate_limit.get_limit("favorites/list"))
+            if not statuses:
                 break
-            else:
-                new_ids.append(status_id)
-            db_session.add(RawTweet(status_dict=status_dict))
-            db_session.commit()
-            # Capture new max_id
-            if status_id < max_id or max_id is None:
-                max_id = status_id - 1
 
-        # Twitter rate-limits us to 15 requests / 15 minutes, so
-        # space this out a bit to avoid a super-long sleep at the
-        # end which could lose the connection.
-        if early_termination is False:
-            print "Sleeping for %s seconds to ease up rate limit..." % (
-                SLEEP_TIME)
-            sleep(SLEEP_TIME)
+            # Format things the way we want and handle max_id changes.
+            for status in statuses:
+                status_dict = status.AsDict()
+                status_id = int(status_dict["id"])
+                if since_id is not None and status_id >= since_id:
+                    early_termination = True
+                    break
+                else:
+                    new_ids.append(status_id)
+                db_session.add(RawTweet(status_dict=status_dict, type_=type_))
+                db_session.commit()
+                # Capture new max_id
+                if status_id < max_id or max_id is None:
+                    max_id = status_id - 1
+
+            # Twitter rate-limits us to 15 requests / 15 minutes, so
+            # space this out a bit to avoid a super-long sleep at the
+            # end which could lose the connection.
+            if early_termination is False:
+                print "Sleeping for %s seconds to ease up rate limit..." % (
+                    SLEEP_TIME)
+                sleep(SLEEP_TIME)
     return new_ids
 
 
@@ -103,6 +119,7 @@ def parse_tweets(db_session, media_path, new_ids=None):
         raw_tweets = [db_session.query(RawTweet).filter_by(id=tweet_id)
                       for tweet_id in new_ids]
     else:
+        # Process all captured raw tweets.
         raw_tweets = db_session.query(RawTweet)
 
     for raw_tweet in raw_tweets:
@@ -112,7 +129,11 @@ def parse_tweets(db_session, media_path, new_ids=None):
         user = TwitterUser.add_from_user_dict(db_session, media_path, user_dict)
 
         # Generate Tweet objects.
-        tweet = Tweet.add_from_raw(db_session, raw_tweet.raw_status_dict, user)
+        tweet = Tweet.add_from_raw(
+            db_session=db_session,
+            status_dict=raw_tweet.raw_status_dict,
+            user=user,
+            type_=raw_tweet.type_)
         if tweet not in user.tweets:
             user.tweets.append(tweet)
             db_session.commit()

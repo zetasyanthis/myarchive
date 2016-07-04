@@ -60,7 +60,7 @@ def main():
         tag_db = TagDB()
 
     if args.import_twitter_favorites:
-        new_ids = twitterlib.archive_favorites(
+        new_ids = twitterlib.archive_tweets(
             username=args.import_twitter_favorites,
             db_session=tag_db.session)
         print "Processing new tweets with the following IDs: %s" % new_ids

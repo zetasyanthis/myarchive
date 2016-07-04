@@ -17,11 +17,13 @@ class RawTweet(Base):
     __tablename__ = 'rawtweets'
 
     id = Column(Integer, primary_key=True)
+    type_ = Column(String)
     raw_status_dict = Column(PickleType)
 
-    def __init__(self, status_dict):
+    def __init__(self, status_dict, type_):
         self.id = int(status_dict["id"])
         self.raw_status_dict = status_dict
+        self.type_ = type_
 
     def __repr__(self):
         return (
@@ -34,7 +36,7 @@ class Tweet(Base):
     __tablename__ = 'tweets'
 
     id = Column(Integer, primary_key=True)
-    user = Column(String)
+    type_ = Column(String)
     text = Column(String)
     in_reply_to_screen_name = Column(String)
     in_reply_to_status_id = Column(Integer)
@@ -57,8 +59,9 @@ class Tweet(Base):
         secondary=at_tweet_tag
     )
 
-    def __init__(self, status_dict):
+    def __init__(self, status_dict, type_):
         self.id = int(status_dict["id"])
+        self.type_ = type_
         self.text = status_dict["text"]
         in_reply_to_status_id = status_dict.get(
             "in_reply_to_status_id")
@@ -70,23 +73,17 @@ class Tweet(Base):
             self.hashtags = ",".join(
                 [hashtag_dict[u"text"] for hashtag_dict in hashtags_list])
 
-        # self.user = status_dict["user"]
-        # self.in_reply_to_screen_name = str(status_dict.get(
-        #     ["in_reply_to_screen_name"]))
-
     def __repr__(self):
-        return (
-            "<Tweet(id='%s', user='%s', in_reply_to_screen_name='%s')>" %
-            (self._id, self.user, self.in_reply_to_screen_name))
+        return "<Tweet(id='%s', text='%s')>" % (self._id, self.text)
 
     @classmethod
-    def add_from_raw(cls, db_session, status_dict, user):
+    def add_from_raw(cls, db_session, status_dict, user, type_):
         id = int(status_dict["id"])
         tweets = db_session.query(cls).filter_by(id=id).all()
         if tweets:
             tweet = tweets[0]
         else:
-            tweet = Tweet(status_dict)
+            tweet = Tweet(status_dict, type_)
         return tweet
 
 
