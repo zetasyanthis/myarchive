@@ -8,8 +8,10 @@ Dreamwidth / LJ
     Add download of user profiles.
     Add download of posts.
     Add download of comments.
+    https://dw-dev-training.dreamwidth.org/58924.html
 
 Medium
+    https://medium.com/developers/welcome-to-the-medium-api-3418f956552#.9aey342sp
 Podcasts
 Goodreads
 SoFurry
@@ -17,3 +19,8 @@ Weasyl
 Youtube videos
 RSS Feeds
 Internet archive API may be of help.
+
+
+Requirements
+    python-lj
+    python-twitter

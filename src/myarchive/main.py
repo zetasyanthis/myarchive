@@ -33,11 +33,6 @@ def main():
         action="store",
         help='Downloads favorites. Accepts a Twitter username.')
     parser.add_argument(
-        '--parse-tweets',
-        action="store_true",
-        default=False,
-        help='Prints all tweets.')
-    parser.add_argument(
         '--print-tweets',
         action="store_true",
         default=False,
@@ -60,14 +55,12 @@ def main():
         tag_db = TagDB()
 
     if args.import_twitter_favorites:
-        twitterlib.archive_favorites(
+        new_ids = twitterlib.archive_favorites(
             username=args.import_twitter_favorites,
-            output_csv_file=args.output_csv_file,
             db_session=tag_db.session)
-
-    if args.parse_tweets is True:
         twitterlib.parse_tweets(
-            db_session=tag_db.session, media_path=args.media_path)
+            db_session=tag_db.session, media_path=args.media_path,
+            new_ids=new_ids)
     if args.print_tweets is True:
         twitterlib.print_tweets(db_session=tag_db.session)
 
