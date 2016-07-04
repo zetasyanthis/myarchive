@@ -1,0 +1,19 @@
+Twitter
+    Add intelligence to tweet download function.
+    Add symlinking of images with same sha1sums.
+    Add download of linked items somehow.
+
+Dreamwidth / LJ
+    Build out tables.
+    Add download of user profiles.
+    Add download of posts.
+    Add download of comments.
+
+Medium
+Podcasts
+Goodreads
+SoFurry
+Weasyl
+Youtube videos
+RSS Feeds
+Internet archive API may be of help.
