@@ -78,6 +78,8 @@ class TrackedFile(Base):
             extension = imghdr.what("", media_request.content)
             if extension:
                 filename += extension
+            else:
+                return None
         filepath = os.path.join(media_path, filename)
         with open(filepath, "w") as fptr:
             fptr.write(media_request.content)

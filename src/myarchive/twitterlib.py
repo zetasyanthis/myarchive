@@ -131,7 +131,7 @@ def parse_tweets(db_session, media_path):
                 media_url = media_item["media_url_https"]
                 tracked_file = TrackedFile.download_file(
                     db_session, media_path, media_url)
-                if tracked_file not in tweet.files:
+                if tracked_file is not None and tracked_file not in tweet.files:
                     tweet.files.append(tracked_file)
                 db_session.commit()
 
