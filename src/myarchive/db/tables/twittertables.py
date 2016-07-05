@@ -32,7 +32,7 @@ class RawTweet(Base):
     def add_type(self, type_):
         if self.types_str:
             if type_ not in self.types_str:
-                self.types_str = ",".join(self.types.split(',') + [type_])
+                self.types_str = ",".join(self.types_str.split(',') + [type_])
         else:
             self.types_str = type_
 
@@ -99,7 +99,7 @@ class Tweet(Base):
     def add_type(self, type_):
         if self.types_str:
             if type_ not in self.types_str:
-                self.types_str = ",".join(self.types.split(',') + [type_])
+                self.types_str = ",".join(self.types_str.split(',') + [type_])
         else:
             self.types_str = type_
 
