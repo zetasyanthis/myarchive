@@ -8,6 +8,7 @@ import twitter
 
 from time import sleep
 from sqlalchemy import desc
+from sqlalchemy.orm.exc import NoResultFound
 
 from myarchive.db.tables.file import TrackedFile
 from myarchive.db.tables.twittertables import RawTweet, Tweet, TwitterUser
@@ -59,8 +60,14 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
 
     for type_ in types:
 
-        since_id = db_session.query(RawTweet.id).filter_by(type_=type_).\
-            order_by(desc(RawTweet.id)).first()
+        # For favorites, always do a full sweep. We can't guarantee an older
+        # tweet wasn't recently favorited!
+        if type_ == FAVORITES:
+            since_id = None
+        else:
+            since_id = db_session.query(RawTweet.id).\
+                filter(RawTweet.types_str.like("%%%s%%" % type_)).\
+                order_by(desc(RawTweet.id)).first()
         if since_id:
             since_id = since_id[0]
         print type_, since_id
@@ -97,7 +104,13 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
                     break
                 else:
                     new_ids.append(status_id)
-                db_session.add(RawTweet(status_dict=status_dict, type_=type_))
+                try:
+                    raw_tweet = db_session.query(RawTweet).filter_by(id=status_id).one()
+                    raw_tweet.add_type(type_)
+                except NoResultFound:
+                    raw_tweet = RawTweet(status_dict=status_dict)
+                    db_session.add(raw_tweet)
+                raw_tweet.add_type(type_)
                 db_session.commit()
                 # Capture new max_id
                 if status_id < max_id or max_id is None:

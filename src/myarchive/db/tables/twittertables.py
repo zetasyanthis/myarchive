@@ -4,6 +4,7 @@ Module containing class definitions for files to be tagged.
 
 from sqlalchemy import Column, Integer, String, PickleType, ForeignKey
 from sqlalchemy.orm import backref, relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from myarchive.db.tables.base import Base
 from myarchive.db.tables.file import TrackedFile
@@ -17,17 +18,23 @@ class RawTweet(Base):
     __tablename__ = 'rawtweets'
 
     id = Column(Integer, primary_key=True)
-    type_ = Column(String)
+    types_str = Column(String, default="")
     raw_status_dict = Column(PickleType)
 
-    def __init__(self, status_dict, type_):
+    def __init__(self, status_dict):
         self.id = int(status_dict["id"])
         self.raw_status_dict = status_dict
-        self.type_ = type_
 
     def __repr__(self):
         return (
             "<Tweet(id='%s', raw_data='%s')>" % (self.id, self.raw_status_dict))
+
+    def add_type(self, type_):
+        if self.types_str:
+            if type_ not in self.types_str:
+                self.types_str = ",".join(self.types.split(',') + [type_])
+        else:
+            self.types_str = type_
 
 
 class Tweet(Base):
@@ -36,11 +43,15 @@ class Tweet(Base):
     __tablename__ = 'tweets'
 
     id = Column(Integer, primary_key=True)
-    type_ = Column(String)
+    types_str = Column(String, default="")
     text = Column(String)
     in_reply_to_screen_name = Column(String)
     in_reply_to_status_id = Column(Integer)
     user_id = Column(Integer, ForeignKey("twitter_users.id"))
+
+    @property
+    def types(self):
+        return self.types_str.split(",")
 
     files = relationship(
         "TrackedFile",
@@ -59,9 +70,8 @@ class Tweet(Base):
         secondary=at_tweet_tag
     )
 
-    def __init__(self, status_dict, type_):
+    def __init__(self, status_dict):
         self.id = int(status_dict["id"])
-        self.type_ = type_
         self.text = status_dict["text"]
         in_reply_to_status_id = status_dict.get(
             "in_reply_to_status_id")
@@ -77,14 +87,21 @@ class Tweet(Base):
         return "<Tweet(id='%s', text='%s')>" % (self._id, self.text)
 
     @classmethod
-    def add_from_raw(cls, db_session, status_dict, user, type_):
+    def add_from_raw(cls, db_session, status_dict, user):
         id = int(status_dict["id"])
         tweets = db_session.query(cls).filter_by(id=id).all()
         if tweets:
             tweet = tweets[0]
         else:
-            tweet = Tweet(status_dict, type_)
+            tweet = Tweet(status_dict)
         return tweet
+
+    def add_type(self, type_):
+        if self.types_str:
+            if type_ not in self.types_str:
+                self.types_str = ",".join(self.types.split(',') + [type_])
+        else:
+            self.types_str = type_
 
 
 class TwitterUser(Base):
