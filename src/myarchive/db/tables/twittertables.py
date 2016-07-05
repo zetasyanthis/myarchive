@@ -4,7 +4,6 @@ Module containing class definitions for files to be tagged.
 
 from sqlalchemy import Column, Integer, String, PickleType, ForeignKey
 from sqlalchemy.orm import backref, relationship
-from sqlalchemy.ext.hybrid import hybrid_property
 
 from myarchive.db.tables.base import Base
 from myarchive.db.tables.file import TrackedFile
@@ -20,6 +19,10 @@ class RawTweet(Base):
     id = Column(Integer, primary_key=True)
     types_str = Column(String, default="")
     raw_status_dict = Column(PickleType)
+
+    @property
+    def types(self):
+        return self.types_str.split(",")
 
     def __init__(self, status_dict):
         self.id = int(status_dict["id"])

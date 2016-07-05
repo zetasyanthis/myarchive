@@ -3,10 +3,12 @@
 # Load favorites for a Twitter user and output them to a file.
 #
 
+import csv
 import os
 import twitter
 
 from time import sleep
+from twitter.error import TwitterError
 from sqlalchemy import desc
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -130,7 +132,7 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
 def parse_tweets(db_session, media_path, new_ids=None):
 
     if new_ids is not None:
-        raw_tweets = [db_session.query(RawTweet).filter_by(id=tweet_id)
+        raw_tweets = [db_session.query(RawTweet).filter_by(id=tweet_id).one()
                       for tweet_id in new_ids]
     else:
         # Process all captured raw tweets.
@@ -146,8 +148,9 @@ def parse_tweets(db_session, media_path, new_ids=None):
         tweet = Tweet.add_from_raw(
             db_session=db_session,
             status_dict=raw_tweet.raw_status_dict,
-            user=user,
-            type_=raw_tweet.type_)
+            user=user)
+        for type in raw_tweet.types:
+            tweet.add_type(type)
         if tweet not in user.tweets:
             user.tweets.append(tweet)
             db_session.commit()
@@ -161,6 +164,38 @@ def parse_tweets(db_session, media_path, new_ids=None):
                 if tracked_file is not None and tracked_file not in tweet.files:
                     tweet.files.append(tracked_file)
                 db_session.commit()
+
+
+def import_from_csv(db_session, username, csv_filepath):
+    new_ids = []
+    api = twitter.Api(
+        CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET,
+        sleep_on_rate_limit=True)
+
+    with open(csv_filepath) as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            new_ids.append(int(row['tweet_id']))
+
+    for ii, new_id in enumerate(new_ids):
+        if ii % 100 == 0:
+            print "Importing id %s of %s..." % (ii, len(new_ids))
+        try:
+            # If the tweet is found, it's already been imported. Ignore it.
+            db_session.query(RawTweet).filter_by(id=new_id).one()
+        except NoResultFound:
+            try:
+                status = api.GetStatus(status_id=new_id)
+                status_dict = status.AsDict()
+                raw_tweet = RawTweet(status_dict=status_dict)
+                db_session.add(raw_tweet)
+                raw_tweet.add_type(USER)
+            except TwitterError:
+                print "Unable to import id %s!" % new_id
+        db_session.commit()
+
+        # Sleep to not hit the rate limit.
+        sleep(5)
 
 
 def print_tweets(db_session):

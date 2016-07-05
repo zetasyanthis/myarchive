@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import sys
 
 import twitterlib
 from db import TagDB
@@ -26,10 +27,20 @@ def main():
         help='Prints all tweets.')
     parser.add_argument(
         "--import-folder",
-        type=str, dest="import_folder",
+        type=str,
+        dest="import_folder",
         help="Folder to organize.")
     parser.add_argument(
-        '--import-twitter-favorites',
+        '--username',
+        action="store",
+        help='Accepts a service username.')
+    parser.add_argument(
+        '--import-tweets-from-api',
+        action="store_true",
+        default=False,
+        help='Downloads favorites. Accepts a Twitter username.')
+    parser.add_argument(
+        '--import-tweets-from-archive-csv',
         action="store",
         help='Downloads favorites. Accepts a Twitter username.')
     parser.add_argument(
@@ -59,19 +70,33 @@ def main():
     else:
         tag_db = TagDB()
 
-    if args.import_twitter_favorites:
+    new_ids = None
+    if args.import_tweets_from_api:
+        if not args.username:
+            logger.error("Username is required for tweet imports!")
+            sys.exit(1)
         new_ids = twitterlib.archive_tweets(
-            username=args.import_twitter_favorites,
-            db_session=tag_db.session)
-        print "Processing new tweets with the following IDs: %s" % new_ids
-        twitterlib.parse_tweets(
-            db_session=tag_db.session, media_path=args.media_path,
-            new_ids=new_ids)
+            db_session=tag_db.session,
+            username=args.username)
+    if args.import_tweets_from_archive_csv:
+        if not args.username:
+            logger.error("Username is required for tweet imports!")
+            sys.exit(1)
+        new_ids = twitterlib.import_from_csv(
+            db_session=tag_db.session,
+            username=args.username,
+            csv_filepath=args.import_tweets_from_archive_csv)
     if args.parse_tweets is True:
         twitterlib.parse_tweets(
             db_session=tag_db.session, media_path=args.media_path)
     if args.print_tweets is True:
         twitterlib.print_tweets(db_session=tag_db.session)
+
+    if new_ids:
+        print "Processing new tweets with the following IDs: %s" % new_ids
+        twitterlib.parse_tweets(
+            db_session=tag_db.session, media_path=args.media_path,
+            new_ids=new_ids)
 
     # MainWindow(tag_db)
     # Gtk.main()
