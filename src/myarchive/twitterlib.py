@@ -105,7 +105,8 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
                 else:
                     new_ids.append(status_id)
                 try:
-                    raw_tweet = db_session.query(RawTweet).filter_by(id=status_id).one()
+                    raw_tweet = db_session.query(RawTweet).\
+                        filter_by(id=status_id).one()
                     raw_tweet.add_type(type_)
                 except NoResultFound:
                     raw_tweet = RawTweet(status_dict=status_dict)
