@@ -190,12 +190,12 @@ def import_from_csv(db_session, username, csv_filepath):
                 raw_tweet = RawTweet(status_dict=status_dict)
                 db_session.add(raw_tweet)
                 raw_tweet.add_type(USER)
+                db_session.commit()
+
+                # Sleep to not hit the rate limit.
+                sleep(5)
             except TwitterError:
                 print "Unable to import id %s!" % new_id
-        db_session.commit()
-
-        # Sleep to not hit the rate limit.
-        sleep(5)
 
 
 def print_tweets(db_session):
