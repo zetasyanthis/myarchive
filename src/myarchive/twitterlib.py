@@ -86,12 +86,16 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
                     since_id=since_id,
                     max_id=max_id,
                     include_entities=True)
+                # 15 requests per 15 minutes.
+                sleep_time = 60
             elif type_ == USER:
                 statuses = api.GetUserTimeline(
                     screen_name=username,
                     count=200,
                     since_id=since_id,
                     max_id=max_id)
+                # 300 requests per 15 minutes.
+                sleep_time = 3
             print "Found %s tweets this iteration..." % len(statuses)
             # print(api.rate_limit.get_limit("favorites/list"))
             if not statuses:
@@ -124,8 +128,8 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
             # end which could lose the connection.
             if early_termination is False:
                 print "Sleeping for %s seconds to ease up rate limit..." % (
-                    SLEEP_TIME)
-                sleep(SLEEP_TIME)
+                    sleep_time)
+                sleep(sleep_time)
     return new_ids
 
 
@@ -166,7 +170,7 @@ def parse_tweets(db_session, media_path, new_ids=None):
                 db_session.commit()
 
 
-def import_from_csv(db_session, username, csv_filepath):
+def import_from_csv(db_session, csv_filepath):
     new_ids = []
     api = twitter.Api(
         CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET,
@@ -193,7 +197,8 @@ def import_from_csv(db_session, username, csv_filepath):
                 db_session.commit()
 
                 # Sleep to not hit the rate limit.
-                sleep(5)
+                # 60 requests per 15 minutes.
+                sleep(15)
             except TwitterError:
                 print "Unable to import id %s!" % new_id
 
