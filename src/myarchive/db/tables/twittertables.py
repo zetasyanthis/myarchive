@@ -2,7 +2,8 @@
 Module containing class definitions for files to be tagged.
 """
 
-from sqlalchemy import Column, Integer, String, PickleType, ForeignKey
+from sqlalchemy import (
+    Binary, Boolean, Column, Integer, String, PickleType, ForeignKey)
 from sqlalchemy.orm import backref, relationship
 
 from myarchive.db.tables.base import Base
@@ -27,6 +28,63 @@ class RawTweet(Base):
     def __init__(self, status_dict):
         self.id = int(status_dict["id"])
         self.raw_status_dict = status_dict
+
+    def __repr__(self):
+        return (
+            "<Tweet(id='%s', raw_data='%s')>" % (self.id, self.raw_status_dict))
+
+    def add_type(self, type_):
+        if self.types_str:
+            if type_ not in self.types_str:
+                self.types_str = ",".join(self.types_str.split(',') + [type_])
+        else:
+            self.types_str = type_
+
+
+class CSVTweet(Base):
+    """
+    Class representing a tweet taken from a CSV file, which may or may not have
+    been cross-imported from the Twitter API.
+    """
+
+    __tablename__ = 'csvtweets'
+
+    id = Column(Integer, primary_key=True)
+    types_str = Column(String, default="USER")
+    username = Column(String)
+    in_reply_to_status_id = Column(Integer)
+    in_reply_to_user_id = Column(Integer)
+    timestamp = Column(String)
+    text = Column(Binary)
+    retweeted_status_id = Column(Integer)
+    retweeted_status_user_id = Column(Integer)
+    retweeted_status_timestamp = Column(String)
+    expanded_urls = Column(String)
+    api_import_complete = Column(Boolean, default=False)
+
+    # TODO: Add relationship to imported tweet.
+
+    @property
+    def types(self):
+        return self.types_str.split(",")
+
+    def __init__(self, id, username, in_reply_to_status_id, in_reply_to_user_id,
+                 timestamp, text, retweeted_status_id, retweeted_status_user_id,
+                 retweeted_status_timestamp, expanded_urls):
+        self.id = int(id)
+        self.username = username
+        if in_reply_to_status_id:
+            self.in_reply_to_status_id = int(in_reply_to_status_id)
+        if in_reply_to_user_id:
+            self.in_reply_to_user_id = int(in_reply_to_user_id)
+        self.timestamp = timestamp
+        self.text = text
+        if retweeted_status_id:
+            self.retweeted_status_id = int(retweeted_status_id)
+        if retweeted_status_user_id:
+            self.retweeted_status_user_id = int(retweeted_status_user_id)
+        self.retweeted_status_timestamp = retweeted_status_timestamp
+        self.expanded_urls = expanded_urls
 
     def __repr__(self):
         return (

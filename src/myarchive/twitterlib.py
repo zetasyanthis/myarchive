@@ -3,6 +3,7 @@
 # Load favorites for a Twitter user and output them to a file.
 #
 
+import copy
 import csv
 import os
 import twitter
@@ -13,7 +14,8 @@ from sqlalchemy import desc
 from sqlalchemy.orm.exc import NoResultFound
 
 from myarchive.db.tables.file import TrackedFile
-from myarchive.db.tables.twittertables import RawTweet, Tweet, TwitterUser
+from myarchive.db.tables.twittertables import (
+    CSVTweet, RawTweet, Tweet, TwitterUser)
 
 from account_info import *
 
@@ -49,6 +51,51 @@ KEYS = [
     # u'retweeted',
     # u'retweet_count',
 ]
+
+
+class BulkApi(twitter.Api):
+    """API with an extra call."""
+
+    def LookupStatuses(self, status_ids, trim_user=False,
+                       include_entities=True):
+        """
+        Returns up to 100 status messages, specified by a list passed to
+        status_ids.
+
+        Args:
+          status_ids:
+            A list of numeric IDs of the statuses you are trying to retrieve.
+          trim_user:
+            When set to True, each tweet returned in a timeline will include
+            a user object including only the status authors numerical ID.
+            Omit this parameter to receive the complete user object. [Optional]
+          include_entities:
+            If False, the entities node will be disincluded.
+            This node offers a variety of metadata about the tweet in a
+            discreet structure, including: user_mentions, urls, and
+            hashtags. [Optional]
+        Returns:
+          A twitter.Status instance representing that status message
+        """
+        url = '%s/statuses/lookup.json' % self.base_url
+
+        parameters = dict()
+
+        if not status_ids or len(status_ids) > 100:
+            raise TwitterError(
+                "status_ids must be between 1 and 100 in length.")
+        # This takes a comma-separated list of up to 100 IDs.
+        parameters['id'] = ",".join(status_ids)
+
+        if trim_user:
+            parameters['trim_user'] = True
+        if include_entities:
+            parameters['include_entities'] = True
+
+        resp = self._RequestUrl(url, 'GET', data=parameters)
+        data = self._ParseAndCheckTwitter(resp.content.decode('utf-8'))
+
+        return [twitter.Status.NewFromJsonDict(x) for x in data]
 
 
 def archive_tweets(username, db_session, types=(USER, FAVORITES)):
@@ -97,7 +144,6 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
                 # 300 requests per 15 minutes.
                 sleep_time = 3
             print "Found %s tweets this iteration..." % len(statuses)
-            # print(api.rate_limit.get_limit("favorites/list"))
             if not statuses:
                 break
 
@@ -170,37 +216,70 @@ def parse_tweets(db_session, media_path, new_ids=None):
                 db_session.commit()
 
 
-def import_from_csv(db_session, csv_filepath):
-    new_ids = []
-    api = twitter.Api(
+def import_from_csv(db_session, csv_filepath, username):
+    api = BulkApi(
         CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET,
         sleep_on_rate_limit=True)
 
+    csv_rows_by_id = dict()
     with open(csv_filepath) as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            new_ids.append(int(row['tweet_id']))
+            csv_rows_by_id[int(row['tweet_id'])] = row
+            csv_tweet = CSVTweet(
+                id=row["tweet_id"],
+                username=username,
+                in_reply_to_status_id=row["in_reply_to_status_id"],
+                in_reply_to_user_id=row["in_reply_to_user_id"],
+                timestamp=row["timestamp"],
+                text=row["text"],
+                retweeted_status_id=row["retweeted_status_id"],
+                retweeted_status_user_id=row["retweeted_status_user_id"],
+                retweeted_status_timestamp=row["retweeted_status_timestamp"],
+                expanded_urls=row["expanded_urls"])
+            db_session.add(csv_tweet)
+            db_session.commit()
+    csv_ids = list(csv_rows_by_id.keys())
+    new_api_tweets = []
 
-    for ii, new_id in enumerate(new_ids):
-        if ii % 100 == 0:
-            print "Importing id %s of %s..." % (ii, len(new_ids))
-        try:
-            # If the tweet is found, it's already been imported. Ignore it.
-            db_session.query(RawTweet).filter_by(id=new_id).one()
-        except NoResultFound:
+    index = 0
+    sliced_ids = csv_ids[:100]
+    while sliced_ids:
+        new_ids = []
+        for status_id in sliced_ids:
             try:
-                status = api.GetStatus(status_id=new_id)
-                status_dict = status.AsDict()
-                raw_tweet = RawTweet(status_dict=status_dict)
-                db_session.add(raw_tweet)
-                raw_tweet.add_type(USER)
-                db_session.commit()
+                # If the tweet is found, it's already been imported. Ignore it.
+                db_session.query(RawTweet.id).filter_by(id=status_id).one()
+            except NoResultFound:
+                new_ids.append(str(status_id))
+        if new_ids:
+            print "Attempting import of id %s to %s of %s..." % (
+                index + 1, index + 100, len(csv_ids))
+            try:
+                statuses = api.LookupStatuses(
+                    status_ids=new_ids, trim_user=False, include_entities=True)
+                for status in statuses:
+                    status_dict = status.AsDict()
+                    raw_tweet = RawTweet(status_dict=status_dict)
+                    db_session.add(raw_tweet)
+                    raw_tweet.add_type(USER)
+                    db_session.commit()
+                    # Mark CSV tweet appropriately.
+                    csv_tweet = db_session.query(CSVTweet).\
+                        filter_by(id=int(status_dict["id"]))
+                    csv_tweet.api_import_complete = True
+                    # Record in new ID list.
+                    new_api_tweets.append(status_dict["id"])
 
                 # Sleep to not hit the rate limit.
                 # 60 requests per 15 minutes.
                 sleep(15)
-            except TwitterError:
-                print "Unable to import id %s!" % new_id
+            except TwitterError as e:
+                print e
+        index += 100
+        sliced_ids = csv_ids[index:100 + index]
+
+    return new_api_tweets
 
 
 def print_tweets(db_session):

@@ -84,7 +84,8 @@ def main():
             sys.exit(1)
         new_ids = twitterlib.import_from_csv(
             db_session=tag_db.session,
-            csv_filepath=args.import_tweets_from_archive_csv)
+            csv_filepath=args.import_tweets_from_archive_csv,
+            username=args.username)
     if args.parse_tweets is True:
         twitterlib.parse_tweets(
             db_session=tag_db.session, media_path=args.media_path)
