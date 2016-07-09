@@ -88,7 +88,8 @@ class CSVTweet(Base):
 
     def __repr__(self):
         return (
-            "<Tweet(id='%s', raw_data='%s')>" % (self.id, self.raw_status_dict))
+            "<Tweet(id='%s', api_import_complete='%s')>" % (
+                self.id, self.api_import_complete))
 
     def add_type(self, type_):
         if self.types_str:
