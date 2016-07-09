@@ -22,13 +22,10 @@ class TrackedFile(Base):
     __tablename__ = 'files'
 
     _id = Column(Integer, name="id", primary_key=True)
-    directory = Column(String)
-    filename = Column(String)
+    original_filename = Column(String)
+    filepath = Column(String)
     md5sum = Column(String(32), unique=True)
     url = Column(String)
-
-    filepath = hybrid_property(
-        lambda self: os.path.join(self.directory, self.filename))
 
     tags = relationship(
         "Tag",
@@ -39,29 +36,41 @@ class TrackedFile(Base):
         secondary=at_file_tag
     )
 
-    def __init__(self, directory, filename, md5sum, url=None):
-        self.directory = directory
-        self.filename = filename
+    def __init__(self, original_filename, filepath, md5sum, url=None):
+        self.original_filename = original_filename
+        self.filepath = filepath
         self.md5sum = md5sum
         self.url = url
-        # self.prefixed_filename = '_' + self.sha1_hash + '_' + filename
 
     def __repr__(self):
-        return ("<File(directory='%s', filename='%s', "
-                "sha1_hash='%s', url='%s')>" %
-                (self.directory, self.filename, self.sha1_hash, self.url))
+        return ("<File(original_filename='%s', filepath='%s', "
+                "md5sum='%s', url='%s')>" %
+                (self.original_filename, self.filepath, self.md5sum, self.url))
 
     @classmethod
-    def add_file(cls, db_session, directory, filename, url=None):
-        filepath = os.path.join(directory, filename)
-        md5sum = md5(open(filepath, 'rb').read()).hexdigest()
+    def add_file(cls, db_session, media_path, file_buffer=None,
+                 original_filename=None, url=None):
+        if file_buffer:
+            md5sum = md5(file_buffer).hexdigest()
+            # Detect an extension incase the URL doesn't have one.
+            extension = os.path.splitext(original_filename)[1]
+            if extension == '':
+                imghdr_extension = imghdr.what("", file_buffer)
+                if imghdr_extension:
+                    extension = "." + imghdr_extension
+            filepath = os.path.join(media_path, str(md5sum)) + extension
+            with open(filepath, "w") as fptr:
+                fptr.write(file_buffer)
+        else:
+            filepath = os.path.join(os.path.join(media_path, original_filename))
+            md5sum = md5(open(filepath, 'rb').read()).hexdigest()
         tracked_file = db_session.query(cls).\
             filter_by(md5sum=md5sum).all()
         if tracked_file:
             print "Repeated hash: %s [%s, %s]" % (
                 md5sum, tracked_file[0].filepath, filepath)
             return tracked_file[0]
-        return TrackedFile(directory, filename, md5sum, url)
+        return TrackedFile(original_filename, filepath, md5sum, url)
 
     @classmethod
     def download_file(cls, db_session, media_path, url):
@@ -71,20 +80,14 @@ class TrackedFile(Base):
 
         # Download the file.
         filename = os.path.basename(urlparse(url).path)
+        print "Downloading %s..." % url
         media_request = requests.get(url)
-        # Detect an extension incase the URL doesn't have one.
-        if os.path.splitext(filename)[1] == '':
-            extension = imghdr.what("", media_request.content)
-            if extension:
-                filename += extension
-            else:
-                return None
-        filepath = os.path.join(media_path, filename)
-        with open(filepath, "w") as fptr:
-            fptr.write(media_request.content)
 
         # Add file to DB (runs a md5sum).
         tracked_file = TrackedFile.add_file(
-            db_session=db_session, directory=media_path,
-            filename=filename, url=url)
+            db_session=db_session,
+            media_path=media_path,
+            file_buffer=media_request.content,
+            original_filename=filename,
+            url=url)
         return tracked_file
