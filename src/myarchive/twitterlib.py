@@ -3,9 +3,8 @@
 # Load favorites for a Twitter user and output them to a file.
 #
 
-import copy
 import csv
-import os
+import time
 import twitter
 
 from time import sleep
@@ -213,6 +212,7 @@ def import_from_csv(db_session, csv_filepath, username):
     index = 0
     sliced_ids = csv_ids[:100]
     while sliced_ids:
+        start_time = time.time()
         new_ids = []
         for status_id in sliced_ids:
             try:
@@ -245,7 +245,12 @@ def import_from_csv(db_session, csv_filepath, username):
 
                 # Sleep to not hit the rate limit.
                 # 60 requests per 15 minutes.
-                sleep(15)
+                duration = time.time() - start_time
+                if duration < 15:
+                    sleep_duration = 15 - duration
+                    print ("Sleeping for %s seconds to ease up on rate "
+                           "limit..." % sleep_duration)
+                    sleep(sleep_duration)
             except TwitterError as e:
                 print e
         index += 100
