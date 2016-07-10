@@ -278,7 +278,8 @@ def parse_tweets(db_session, media_path, raw_tweets=None, csv_only_tweets=None,
         user_dict = raw_tweet.raw_status_dict["user"]
         user_id = int(user_dict["id"])
         twitter_user_ids = db_session.query(TwitterUser.id).all()
-        if user_id not in twitter_user_ids:
+        # Check with a tuple since SQLAlchemy will return a list of tuples.
+        if (user_id,) not in twitter_user_ids:
             user = TwitterUser.add_from_user_dict(db_session, user_dict)
             if download_files is True:
                 user.download_files(db_session, media_path)

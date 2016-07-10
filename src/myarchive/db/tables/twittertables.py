@@ -134,7 +134,7 @@ class Tweet(Base):
 
     @classmethod
     def make_from_raw(cls, raw_tweet):
-        tweet = cls(raw_tweet.status_dict)
+        tweet = cls(raw_tweet.raw_status_dict)
         return tweet
 
     def download_associated_media(self, db_session, media_path, new_ids=None):
