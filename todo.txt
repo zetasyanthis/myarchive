@@ -1,6 +1,8 @@
 Twitter
+    Look up user and import if needed when importing from API.
+    Fix up how we handle favorites.
     Break out media download.
-    Speed up parsing. Maybe multiple processes can help.
+    Speed up parsing. Maybe multiple processes for file downloading and md5suming can help.
     Handle non-API CSV tweets.
     Add download of linked items somehow.
 

@@ -114,7 +114,7 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
             since_id = None
         else:
             since_id = db_session.query(RawTweet.id).\
-                filter(RawTweet.types_str.like("%%%s%%" % type_)).\
+                filter(RawTweet.favorited_by_str.like("%%%s%%" % username)).\
                 order_by(desc(RawTweet.id)).first()
         if since_id:
             since_id = since_id[0]
@@ -158,11 +158,11 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
                 try:
                     raw_tweet = db_session.query(RawTweet).\
                         filter_by(id=status_id).one()
-                    raw_tweet.add_type(type_)
                 except NoResultFound:
                     raw_tweet = RawTweet(status_dict=status_dict)
                     db_session.add(raw_tweet)
-                raw_tweet.add_type(type_)
+                if type_ == FAVORITES:
+                    raw_tweet.add_user_favorite(username)
                 db_session.commit()
                 # Capture new max_id
                 if status_id < max_id or max_id is None:
@@ -234,7 +234,6 @@ def import_from_csv(db_session, csv_filepath, username):
                     status_dict = status.AsDict()
                     raw_tweet = RawTweet(status_dict=status_dict)
                     db_session.add(raw_tweet)
-                    raw_tweet.add_type(USER)
                     db_session.commit()
                     # Mark CSV tweet appropriately.
                     csv_tweet = db_session.query(CSVTweet).\
@@ -280,11 +279,10 @@ def parse_tweets(db_session, media_path, raw_tweets=None, csv_tweets=None,
         tweet_id = int(status_dict["id"])
         tweet_ids = db_session.query(Tweet.id).filter_by(user_id=user.id).all()
         if tweet_id not in tweet_ids:
-            tweet = Tweet(status_dict=status_dict)
+            tweet = Tweet.make_from_raw(raw_tweet)
+            db_session.add(tweet)
         else:
             tweet = db_session.query(Tweet).filter_by(id=tweet_id).one()
-        for type in raw_tweet.types:
-            tweet.add_type(type)
         user.tweets.append(tweet)
         db_session.commit()
 

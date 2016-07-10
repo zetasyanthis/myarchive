@@ -18,12 +18,12 @@ class RawTweet(Base):
     __tablename__ = 'rawtweets'
 
     id = Column(Integer, primary_key=True)
-    types_str = Column(String, default="")
+    favorited_by_str = Column(String, default="")
     raw_status_dict = Column(PickleType)
 
     @property
-    def types(self):
-        return self.types_str.split(",")
+    def favorited_by(self):
+        return self.favorited_by_str.split(",")
 
     def __init__(self, status_dict):
         self.id = int(status_dict["id"])
@@ -33,12 +33,13 @@ class RawTweet(Base):
         return (
             "<Tweet(id='%s', raw_data='%s')>" % (self.id, self.raw_status_dict))
 
-    def add_type(self, type_):
-        if self.types_str:
-            if type_ not in self.types_str:
-                self.types_str = ",".join(self.types_str.split(',') + [type_])
+    def add_user_favorite(self, type_):
+        if self.favorited_by_str:
+            if type_ not in self.favorited_by_str:
+                self.favorited_by_str = (
+                    ",".join(self.favorited_by_str.split(',') + [type_]))
         else:
-            self.types_str = type_
+            self.favorited_by_str = type_
 
 
 class CSVTweet(Base):
@@ -50,7 +51,6 @@ class CSVTweet(Base):
     __tablename__ = 'csvtweets'
 
     id = Column(Integer, primary_key=True)
-    types_str = Column(String, default="USER")
     username = Column(String)
     in_reply_to_status_id = Column(Integer)
     in_reply_to_user_id = Column(Integer)
@@ -60,13 +60,8 @@ class CSVTweet(Base):
     retweeted_status_user_id = Column(Integer)
     retweeted_status_timestamp = Column(String)
     expanded_urls = Column(String)
+    favorited_by_str = Column(String, default="")
     api_import_complete = Column(Boolean, default=False)
-
-    # TODO: Add relationship to imported tweet.
-
-    @property
-    def types(self):
-        return self.types_str.split(",")
 
     def __init__(self, id, username, in_reply_to_status_id, in_reply_to_user_id,
                  timestamp, text, retweeted_status_id, retweeted_status_user_id,
@@ -91,13 +86,6 @@ class CSVTweet(Base):
             "<Tweet(id='%s', api_import_complete='%s')>" % (
                 self.id, self.api_import_complete))
 
-    def add_type(self, type_):
-        if self.types_str:
-            if type_ not in self.types_str:
-                self.types_str = ",".join(self.types_str.split(',') + [type_])
-        else:
-            self.types_str = type_
-
 
 class Tweet(Base):
     """Class representing a file tweet by the database."""
@@ -105,16 +93,11 @@ class Tweet(Base):
     __tablename__ = 'tweets'
 
     id = Column(Integer, primary_key=True)
-    types_str = Column(String, default="")
     text = Column(String)
     in_reply_to_screen_name = Column(String)
     in_reply_to_status_id = Column(Integer)
     raw_id = Column(Integer, ForeignKey("rawtweets.id"), nullable=True)
     user_id = Column(Integer, ForeignKey("twitter_users.id"), nullable=True)
-
-    @property
-    def types(self):
-        return self.types_str.split(",")
 
     files = relationship(
         "TrackedFile",
@@ -150,17 +133,9 @@ class Tweet(Base):
         return "<Tweet(id='%s', text='%s')>" % (self._id, self.text)
 
     @classmethod
-    def add_from_raw(cls, db_session, status_dict, user):
-        id = int(status_dict["id"])
-        tweet = cls(status_dict)
+    def make_from_raw(cls, raw_tweet):
+        tweet = cls(raw_tweet.status_dict)
         return tweet
-
-    def add_type(self, type_):
-        if self.types_str:
-            if type_ not in self.types_str:
-                self.types_str = ",".join(self.types_str.split(',') + [type_])
-        else:
-            self.types_str = type_
 
     def download_associated_media(self, db_session, media_path, new_ids=None):
         # Retrieve media files.
@@ -172,6 +147,7 @@ class Tweet(Base):
                 if tracked_file is not None and tracked_file not in tweet.files:
                     tweet.files.append(tracked_file)
                 db_session.commit()
+
 
 class TwitterUser(Base):
     """Class representing a file tweet by the database."""
