@@ -240,8 +240,8 @@ def import_from_csv(db_session, csv_filepath, username):
                         filter_by(id=int(status_dict["id"])).one()
                     csv_tweet.api_import_complete = True
                     db_session.commit()
-                    # Record in new ID list.
-                    new_api_tweets.append(status_dict["id"])
+                    # Append to new list.
+                    new_api_tweets.append(raw_tweet)
 
                 # Sleep to not hit the rate limit.
                 # 60 requests per 15 minutes.
@@ -251,10 +251,13 @@ def import_from_csv(db_session, csv_filepath, username):
         index += 100
         sliced_ids = csv_ids[index:100 + index]
 
-    return new_api_tweets
+    csv_only_tweets = db_session.query(CSVTweet.api_import_complete).\
+        filter_by(api_import_complete=False).all()
+
+    return new_api_tweets, csv_only_tweets
 
 
-def parse_tweets(db_session, media_path, raw_tweets=None, csv_tweets=None,
+def parse_tweets(db_session, media_path, raw_tweets=None, csv_only_tweets=None,
                  parse_all_raw=False, download_files=False):
 
     if parse_all_raw is True:
@@ -285,6 +288,9 @@ def parse_tweets(db_session, media_path, raw_tweets=None, csv_tweets=None,
             tweet = db_session.query(Tweet).filter_by(id=tweet_id).one()
         user.tweets.append(tweet)
         db_session.commit()
+
+    if csv_only_tweets:
+        print len(csv_only_tweets)
 
 
 def print_tweets(db_session):
