@@ -283,8 +283,10 @@ def parse_tweets(db_session, raw_tweets=None, csv_only_tweets=None,
 
     for index, raw_tweet in enumerate(raw_tweets_to_parse):
         if index % 100 == 0:
-            print "Parsing tweet %s of %s..." % (
-                index, len(raw_tweets_to_parse))
+            print "Parsing tweet %s to %s of %s..." % (
+                index,
+                min(index + 100, len(raw_tweets_to_parse)),
+                len(raw_tweets_to_parse))
 
         # Generate User objects. Only really query if we absolutely have to.
         user_dict = raw_tweet.raw_status_dict["user"]
