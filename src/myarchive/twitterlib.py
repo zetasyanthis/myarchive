@@ -290,7 +290,8 @@ def parse_tweets(db_session, media_path, raw_tweets=None, csv_only_tweets=None,
         status_dict = raw_tweet.raw_status_dict
         tweet_id = int(status_dict["id"])
         tweet_ids = db_session.query(Tweet.id).filter_by(user_id=user.id).all()
-        if tweet_id not in tweet_ids:
+        # Check with a tuple since SQLAlchemy will return a list of tuples.
+        if (tweet_id,) not in tweet_ids:
             tweet = Tweet.make_from_raw(raw_tweet)
             db_session.add(tweet)
         else:
