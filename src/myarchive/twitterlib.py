@@ -272,7 +272,18 @@ def parse_tweets(db_session, media_path, raw_tweets=None, csv_only_tweets=None,
         # Process all captured raw tweets.
         raw_tweets = db_session.query(RawTweet)
 
-    for raw_tweet in raw_tweets:
+    # Filter out existing tweets, making sure to compare with a a tuple since
+    # SQLAlchemy will return a list of tuples.
+    existing_tweet_ids = db_session.query(Tweet.id).all()
+    raw_tweets_to_parse = [
+        raw_tweet for raw_tweet in raw_tweets
+        if (int(raw_tweet.raw_status_dict["id"]),) not in existing_tweet_ids]
+    print "Found %s tweets to parse." % len(raw_tweets_to_parse)
+
+    for index, raw_tweet in enumerate(raw_tweets_to_parse):
+        if index % 100 == 0:
+            print "Parsing tweet %s of %s..." % (
+                index, len(raw_tweets_to_parse))
 
         # Generate User objects.
         user_dict = raw_tweet.raw_status_dict["user"]
@@ -288,14 +299,8 @@ def parse_tweets(db_session, media_path, raw_tweets=None, csv_only_tweets=None,
 
         # Generate Tweet objects.
         status_dict = raw_tweet.raw_status_dict
-        tweet_id = int(status_dict["id"])
-        tweet_ids = db_session.query(Tweet.id).filter_by(user_id=user.id).all()
-        # Check with a tuple since SQLAlchemy will return a list of tuples.
-        if (tweet_id,) not in tweet_ids:
-            tweet = Tweet.make_from_raw(raw_tweet)
-            db_session.add(tweet)
-        else:
-            tweet = db_session.query(Tweet).filter_by(id=tweet_id).one()
+        tweet = Tweet.make_from_raw(raw_tweet)
+        db_session.add(tweet)
         user.tweets.append(tweet)
         db_session.commit()
 

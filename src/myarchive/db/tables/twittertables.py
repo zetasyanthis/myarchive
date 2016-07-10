@@ -96,7 +96,6 @@ class Tweet(Base):
     text = Column(String)
     in_reply_to_screen_name = Column(String)
     in_reply_to_status_id = Column(Integer)
-    raw_id = Column(Integer, ForeignKey("rawtweets.id"), nullable=True)
     user_id = Column(Integer, ForeignKey("twitter_users.id"), nullable=True)
 
     files = relationship(
