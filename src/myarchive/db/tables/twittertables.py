@@ -109,7 +109,8 @@ class Tweet(Base):
     text = Column(String)
     in_reply_to_screen_name = Column(String)
     in_reply_to_status_id = Column(Integer)
-    user_id = Column(Integer, ForeignKey("twitter_users.id"))
+    raw_id = Column(Integer, ForeignKey("rawtweets.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("twitter_users.id"), nullable=True)
 
     @property
     def types(self):
@@ -151,11 +152,7 @@ class Tweet(Base):
     @classmethod
     def add_from_raw(cls, db_session, status_dict, user):
         id = int(status_dict["id"])
-        tweets = db_session.query(cls).filter_by(id=id).all()
-        if tweets:
-            tweet = tweets[0]
-        else:
-            tweet = Tweet(status_dict)
+        tweet = cls(status_dict)
         return tweet
 
     def add_type(self, type_):
@@ -165,6 +162,16 @@ class Tweet(Base):
         else:
             self.types_str = type_
 
+    def download_associated_media(self, db_session, media_path, new_ids=None):
+        # Retrieve media files.
+        if media_path and "media" in raw_tweet.raw_status_dict:
+            for media_item in raw_tweet.raw_status_dict["media"]:
+                media_url = media_item["media_url_https"]
+                tracked_file = TrackedFile.download_file(
+                    db_session, media_path, media_url)
+                if tracked_file is not None and tracked_file not in tweet.files:
+                    tweet.files.append(tracked_file)
+                db_session.commit()
 
 class TwitterUser(Base):
     """Class representing a file tweet by the database."""
@@ -228,19 +235,16 @@ class TwitterUser(Base):
             (self._id, self.user, self.in_reply_to_screen_name))
 
     @classmethod
-    def add_from_user_dict(cls, db_session, media_path, user_dict):
-        id = int(user_dict["id"])
-        twitter_users = db_session.query(cls).filter_by(id=id).all()
-        if twitter_users:
-            twitter_user = twitter_users[0]
-        else:
-            twitter_user = TwitterUser(user_dict)
-            db_session.add(twitter_user)
-            db_session.commit()
+    def add_from_user_dict(cls, db_session, user_dict):
+        twitter_user = TwitterUser(user_dict)
+        db_session.add(twitter_user)
+        db_session.commit()
+
+    def download_files(self, db_session, media_path):
         for media_url in (
-                twitter_user.profile_image_url,
-                twitter_user.profile_background_image_url,
-                twitter_user.profile_banner_url):
+                self.profile_image_url,
+                self.profile_background_image_url,
+                self.profile_banner_url):
             if media_url is None:
                 continue
 
@@ -248,6 +252,5 @@ class TwitterUser(Base):
             tracked_file = TrackedFile.download_file(
                 db_session=db_session, media_path=media_path, url=media_url)
             if tracked_file is not None:
-                twitter_user.files.append(tracked_file)
-                db_session.commit()
-        return twitter_user
+                self.files.append(tracked_file)
+        db_session.commit()

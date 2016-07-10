@@ -13,7 +13,6 @@ from twitter.error import TwitterError
 from sqlalchemy import desc
 from sqlalchemy.orm.exc import NoResultFound
 
-from myarchive.db.tables.file import TrackedFile
 from myarchive.db.tables.twittertables import (
     CSVTweet, RawTweet, Tweet, TwitterUser)
 
@@ -179,43 +178,6 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
     return new_ids
 
 
-def parse_tweets(db_session, media_path, new_ids=None):
-
-    if new_ids is not None:
-        raw_tweets = [db_session.query(RawTweet).filter_by(id=tweet_id).one()
-                      for tweet_id in new_ids]
-    else:
-        # Process all captured raw tweets.
-        raw_tweets = db_session.query(RawTweet)
-
-    for raw_tweet in raw_tweets:
-
-        # Generate User objects.
-        user_dict = raw_tweet.raw_status_dict["user"]
-        user = TwitterUser.add_from_user_dict(db_session, media_path, user_dict)
-
-        # Generate Tweet objects.
-        tweet = Tweet.add_from_raw(
-            db_session=db_session,
-            status_dict=raw_tweet.raw_status_dict,
-            user=user)
-        for type in raw_tweet.types:
-            tweet.add_type(type)
-        if tweet not in user.tweets:
-            user.tweets.append(tweet)
-            db_session.commit()
-
-        # Retrieve media files.
-        if media_path and "media" in raw_tweet.raw_status_dict:
-            for media_item in raw_tweet.raw_status_dict["media"]:
-                media_url = media_item["media_url_https"]
-                tracked_file = TrackedFile.download_file(
-                    db_session, media_path, media_url)
-                if tracked_file is not None and tracked_file not in tweet.files:
-                    tweet.files.append(tracked_file)
-                db_session.commit()
-
-
 def import_from_csv(db_session, csv_filepath, username):
     api = BulkApi(
         CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET,
@@ -291,6 +253,40 @@ def import_from_csv(db_session, csv_filepath, username):
         sliced_ids = csv_ids[index:100 + index]
 
     return new_api_tweets
+
+
+def parse_tweets(db_session, media_path, raw_tweets=None, csv_tweets=None,
+                 parse_all_raw=False, download_files=False):
+
+    if parse_all_raw is True:
+        # Process all captured raw tweets.
+        raw_tweets = db_session.query(RawTweet)
+
+    for raw_tweet in raw_tweets:
+
+        # Generate User objects.
+        user_dict = raw_tweet.raw_status_dict["user"]
+        user_id = int(user_dict["id"])
+        twitter_user_ids = db_session.query(TwitterUser.id).all()
+        if user_id not in twitter_user_ids:
+            user = TwitterUser.add_from_user_dict(db_session, user_dict)
+            if download_files is True:
+                user.download_files(db_session, media_path)
+        else:
+            user = db_session.query(TwitterUser).filter_by(id=user_id).one()
+
+        # Generate Tweet objects.
+        status_dict = raw_tweet.raw_status_dict
+        tweet_id = int(status_dict["id"])
+        tweet_ids = db_session.query(Tweet.id).filter_by(user_id=user.id).all()
+        if tweet_id not in tweet_ids:
+            tweet = Tweet(status_dict=status_dict)
+        else:
+            tweet = db_session.query(Tweet).filter_by(id=tweet_id).one()
+        for type in raw_tweet.types:
+            tweet.add_type(type)
+        user.tweets.append(tweet)
+        db_session.commit()
 
 
 def print_tweets(db_session):

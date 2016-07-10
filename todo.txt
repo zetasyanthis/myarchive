@@ -1,8 +1,7 @@
 Twitter
-    Save images with a prefix of their sha1sum.
-    Add symlinking of images with same sha1sum.
-    Add import from twitter bulk download CSV for first set of user tweets.
-        Make this just read the IDs and pull the tweets via the API.
+    Break out media download.
+    Speed up parsing. Maybe multiple processes can help.
+    Handle non-API CSV tweets.
     Add download of linked items somehow.
 
 Dreamwidth / LJ

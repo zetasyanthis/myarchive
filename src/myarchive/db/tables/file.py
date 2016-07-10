@@ -10,7 +10,6 @@ from hashlib import md5
 from urlparse import urlparse
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import backref, relationship
-from sqlalchemy.ext.hybrid import hybrid_property
 
 from myarchive.db.tables.base import Base
 from myarchive.db.tables.association_tables import at_file_tag
@@ -50,7 +49,7 @@ class TrackedFile(Base):
     @classmethod
     def add_file(cls, db_session, media_path, file_buffer=None,
                  original_filename=None, url=None):
-        if file_buffer:
+        if file_buffer is not None:
             md5sum = md5(file_buffer).hexdigest()
             # Detect an extension incase the URL doesn't have one.
             extension = os.path.splitext(original_filename)[1]

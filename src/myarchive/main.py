@@ -70,33 +70,36 @@ def main():
     else:
         tag_db = TagDB()
 
-    new_ids = None
+    raw_tweets = []
+    csv_tweets = []
     if args.import_tweets_from_api:
         if not args.username:
             logger.error("Username is required for tweet imports!")
             sys.exit(1)
-        new_ids = twitterlib.archive_tweets(
+        raw_tweets = twitterlib.archive_tweets(
             db_session=tag_db.session,
             username=args.username)
     if args.import_tweets_from_archive_csv:
         if not args.username:
             logger.error("Username is required for tweet imports!")
             sys.exit(1)
-        new_ids = twitterlib.import_from_csv(
+        raw_tweets = twitterlib.import_from_csv(
             db_session=tag_db.session,
             csv_filepath=args.import_tweets_from_archive_csv,
             username=args.username)
     if args.parse_tweets is True:
         twitterlib.parse_tweets(
-            db_session=tag_db.session, media_path=args.media_path)
+            db_session=tag_db.session, media_path=args.media_path,
+            parse_all_raw=True)
     if args.print_tweets is True:
         twitterlib.print_tweets(db_session=tag_db.session)
 
-    if new_ids:
-        print "Processing new tweets with the following IDs: %s" % new_ids
+    if raw_tweets or csv_tweets:
+        print "Processing %s new tweets..." % (
+            len(raw_tweets) + len(csv_tweets))
         twitterlib.parse_tweets(
             db_session=tag_db.session, media_path=args.media_path,
-            new_ids=new_ids)
+            raw_tweets=raw_tweets, csv_tweets=csv_tweets)
 
     # MainWindow(tag_db)
     # Gtk.main()
