@@ -89,8 +89,7 @@ def main():
             username=args.username)
     if args.parse_tweets is True:
         twitterlib.parse_tweets(
-            db_session=tag_db.session, media_path=args.media_path,
-            parse_all_raw=True)
+            db_session=tag_db.session, parse_all_raw=True)
     if args.print_tweets is True:
         twitterlib.print_tweets(db_session=tag_db.session)
 
@@ -98,8 +97,8 @@ def main():
         print "Processing %s new raw tweets and %s CSV-only tweets..." % (
             len(raw_tweets), len(csv_only_tweets))
         twitterlib.parse_tweets(
-            db_session=tag_db.session, media_path=args.media_path,
-            raw_tweets=raw_tweets, csv_only_tweets=csv_only_tweets)
+            db_session=tag_db.session, raw_tweets=raw_tweets,
+            csv_only_tweets=csv_only_tweets)
 
     # MainWindow(tag_db)
     # Gtk.main()

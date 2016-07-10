@@ -265,8 +265,8 @@ def import_from_csv(db_session, csv_filepath, username):
     return new_api_tweets, csv_only_tweets
 
 
-def parse_tweets(db_session, media_path, raw_tweets=None, csv_only_tweets=None,
-                 parse_all_raw=False, download_files=False):
+def parse_tweets(db_session, raw_tweets=None, csv_only_tweets=None,
+                 parse_all_raw=False):
 
     if parse_all_raw is True:
         # Process all captured raw tweets.
@@ -292,13 +292,10 @@ def parse_tweets(db_session, media_path, raw_tweets=None, csv_only_tweets=None,
         # Check with a tuple since SQLAlchemy will return a list of tuples.
         if (user_id,) not in twitter_user_ids:
             user = TwitterUser.add_from_user_dict(db_session, user_dict)
-            if download_files is True:
-                user.download_files(db_session, media_path)
         else:
             user = db_session.query(TwitterUser).filter_by(id=user_id).one()
 
         # Generate Tweet objects.
-        status_dict = raw_tweet.raw_status_dict
         tweet = Tweet.make_from_raw(raw_tweet)
         db_session.add(tweet)
         user.tweets.append(tweet)
