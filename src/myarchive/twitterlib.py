@@ -100,7 +100,7 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
     """
     Archives several types of new tweets along with their associated content.
     """
-    new_ids = []
+    new_tweets = []
     api = twitter.Api(
         CONSUMER_KEY, CONSUMER_SECRET, ACCESS_KEY, ACCESS_SECRET,
         sleep_on_rate_limit=True)
@@ -153,13 +153,12 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
                 if since_id is not None and status_id >= since_id:
                     early_termination = True
                     break
-                else:
-                    new_ids.append(status_id)
                 try:
                     raw_tweet = db_session.query(RawTweet).\
                         filter_by(id=status_id).one()
                 except NoResultFound:
                     raw_tweet = RawTweet(status_dict=status_dict)
+                    new_tweets.append(raw_tweet)
                     db_session.add(raw_tweet)
                 if type_ == FAVORITES:
                     raw_tweet.add_user_favorite(username)
@@ -170,14 +169,13 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
 
             # Twitter rate-limits us. Space this out a bit to avoid a
             # super-long sleep at the end doesn't kill the connection.
-            # (1 added due to buggy library.)
             duration = time.time() - start_time
-            if duration < (sleep_time + 1):
-                sleep_duration = (sleep_time + 1) - duration
+            if duration < sleep_time:
+                sleep_duration = sleep_time - duration
                 print ("Sleeping for %s seconds to ease up on rate "
                        "limit..." % sleep_duration)
                 sleep(sleep_duration)
-    return new_ids
+    return new_tweets
 
 
 def import_from_csv(db_session, csv_filepath, username):
@@ -248,8 +246,7 @@ def import_from_csv(db_session, csv_filepath, username):
 
                 # Sleep to not hit the rate limit.
                 # 60 requests per 15 minutes.
-                # (1 added due to buggy library.)
-                sleep_time = 15 + 1
+                sleep_time = 15
                 duration = time.time() - start_time
                 if duration < sleep_time:
                     sleep_duration = sleep_time - duration
