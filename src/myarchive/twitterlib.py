@@ -168,12 +168,12 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
                 if status_id < max_id or max_id is None:
                     max_id = status_id - 1
 
-            # Twitter rate-limits us to 15 requests / 15 minutes, so
-            # space this out a bit to avoid a super-long sleep at the
-            # end which could lose the connection.
+            # Twitter rate-limits us. Space this out a bit to avoid a
+            # super-long sleep at the end doesn't kill the connection.
+            # (1 added due to buggy library.)
             duration = time.time() - start_time
-            if duration < sleep_time:
-                sleep_duration = sleep_time - duration
+            if duration < (sleep_time + 1):
+                sleep_duration = (sleep_time + 1) - duration
                 print ("Sleeping for %s seconds to ease up on rate "
                        "limit..." % sleep_duration)
                 sleep(sleep_duration)
@@ -248,9 +248,11 @@ def import_from_csv(db_session, csv_filepath, username):
 
                 # Sleep to not hit the rate limit.
                 # 60 requests per 15 minutes.
+                # (1 added due to buggy library.)
+                sleep_time = 15 + 1
                 duration = time.time() - start_time
-                if duration < 15:
-                    sleep_duration = 15 - duration
+                if duration < sleep_time:
+                    sleep_duration = sleep_time - duration
                     print ("Sleeping for %s seconds to ease up on rate "
                            "limit..." % sleep_duration)
                     sleep(sleep_duration)
