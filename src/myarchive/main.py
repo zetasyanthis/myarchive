@@ -83,7 +83,7 @@ def main():
         if not args.username:
             logger.error("Username is required for tweet imports!")
             sys.exit(1)
-        raw_tweets = twitterlib.import_from_csv(
+        csv_tweets = twitterlib.import_from_csv(
             db_session=tag_db.session,
             csv_filepath=args.import_tweets_from_archive_csv,
             username=args.username)
