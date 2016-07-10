@@ -3,7 +3,7 @@ Module containing class definitions for files to be tagged.
 """
 
 from sqlalchemy import (
-    Binary, Boolean, Column, Integer, String, PickleType, ForeignKey)
+    LargeBinary, Boolean, Column, Integer, String, PickleType, ForeignKey)
 from sqlalchemy.orm import backref, relationship
 
 from myarchive.db.tables.base import Base
@@ -55,7 +55,7 @@ class CSVTweet(Base):
     in_reply_to_status_id = Column(Integer)
     in_reply_to_user_id = Column(Integer)
     timestamp = Column(String)
-    text = Column(Binary)
+    text = Column(LargeBinary)
     retweeted_status_id = Column(Integer)
     retweeted_status_user_id = Column(Integer)
     retweeted_status_timestamp = Column(String)
