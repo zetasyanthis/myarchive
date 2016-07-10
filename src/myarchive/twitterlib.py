@@ -124,6 +124,7 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
         while not early_termination:
             print ("Pulling 200 tweets from API starting with ID %s and "
                    "ending with ID %s..." % (since_id, max_id))
+            start_time = time.time()
             if type_ == FAVORITES:
                 statuses = api.GetFavorites(
                     screen_name=username,
@@ -170,10 +171,12 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
             # Twitter rate-limits us to 15 requests / 15 minutes, so
             # space this out a bit to avoid a super-long sleep at the
             # end which could lose the connection.
-            if early_termination is False:
-                print "Sleeping for %s seconds to ease up rate limit..." % (
-                    sleep_time)
-                sleep(sleep_time)
+            duration = time.time() - start_time
+            if duration < sleep_time:
+                sleep_duration = sleep_time - duration
+                print ("Sleeping for %s seconds to ease up on rate "
+                       "limit..." % sleep_duration)
+                sleep(sleep_duration)
     return new_ids
 
 
