@@ -229,7 +229,7 @@ def import_from_csv(db_session, csv_filepath, username):
                 new_ids.append(str(status_id))
         if new_ids:
             print "Attempting import of id %s to %s of %s..." % (
-                index + 1, index + 100, len(csv_ids))
+                index + 1, min(index + 100, len(csv_ids)), len(csv_ids))
             try:
                 statuses = api.LookupStatuses(
                     status_ids=new_ids, trim_user=False, include_entities=True)
