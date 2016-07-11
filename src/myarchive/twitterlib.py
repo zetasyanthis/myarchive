@@ -120,6 +120,7 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
         print type_, since_id
 
         start_time = -1
+        sleep_time = 0
         max_id = None
         early_termination = False
         while not early_termination:
