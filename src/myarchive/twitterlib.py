@@ -305,7 +305,6 @@ def parse_tweets(db_session, raw_tweets=None, csv_only_tweets=None,
 
         # Generate Tweet objects.
         tweet = Tweet.make_from_raw(raw_tweet)
-        print user
         user.tweets.append(tweet)
         db_session.commit()
 
