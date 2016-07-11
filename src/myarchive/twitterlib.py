@@ -119,12 +119,22 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
             since_id = since_id[0]
         print type_, since_id
 
+        start_time = -1
         max_id = None
         early_termination = False
         while not early_termination:
+            # Twitter rate-limits us. Space this out a bit to avoid a
+            # super-long sleep at the end doesn't kill the connection.
+            duration = time.time() - start_time
+            if duration < sleep_time:
+                sleep_duration = sleep_time - duration
+                print ("Sleeping for %s seconds to ease up on rate "
+                       "limit..." % sleep_duration)
+                sleep(sleep_duration)
+            start_time = time.time()
+
             print ("Pulling 200 tweets from API starting with ID %s and "
                    "ending with ID %s..." % (since_id, max_id))
-            start_time = time.time()
             if type_ == FAVORITES:
                 statuses = api.GetFavorites(
                     screen_name=username,
@@ -167,14 +177,6 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
                 if status_id < max_id or max_id is None:
                     max_id = status_id - 1
 
-            # Twitter rate-limits us. Space this out a bit to avoid a
-            # super-long sleep at the end doesn't kill the connection.
-            duration = time.time() - start_time
-            if duration < sleep_time:
-                sleep_duration = sleep_time - duration
-                print ("Sleeping for %s seconds to ease up on rate "
-                       "limit..." % sleep_duration)
-                sleep(sleep_duration)
     return new_tweets
 
 
@@ -210,9 +212,20 @@ def import_from_csv(db_session, csv_filepath, username):
     new_api_tweets = []
 
     print "Attempting API import..."
+    start_time = -1
     index = 0
     sliced_ids = csv_ids[:100]
     while sliced_ids:
+
+        # Sleep to not hit the rate limit.
+        # 60 requests per 15 minutes.
+        sleep_time = 15
+        duration = time.time() - start_time
+        if duration < sleep_time:
+            sleep_duration = sleep_time - duration
+            print ("Sleeping for %s seconds to ease up on rate "
+                   "limit..." % sleep_duration)
+            sleep(sleep_duration)
         start_time = time.time()
         new_ids = []
         for status_id in sliced_ids:
@@ -244,15 +257,6 @@ def import_from_csv(db_session, csv_filepath, username):
                     # Append to new list.
                     new_api_tweets.append(raw_tweet)
 
-                # Sleep to not hit the rate limit.
-                # 60 requests per 15 minutes.
-                sleep_time = 15
-                duration = time.time() - start_time
-                if duration < sleep_time:
-                    sleep_duration = sleep_time - duration
-                    print ("Sleeping for %s seconds to ease up on rate "
-                           "limit..." % sleep_duration)
-                    sleep(sleep_duration)
             except TwitterError as e:
                 print e
         index += 100
