@@ -72,15 +72,6 @@ def main():
 
     raw_tweets = []
     csv_only_tweets = []
-    if args.import_tweets_from_api:
-        if not args.username:
-            logger.error("Username is required for tweet imports!")
-            sys.exit(1)
-        raw_tweets.extend(
-            twitterlib.archive_tweets(
-                db_session=tag_db.session,
-                username=args.username)
-        )
     if args.import_tweets_from_archive_csv:
         if not args.username:
             logger.error("Username is required for tweet imports!")
@@ -90,6 +81,15 @@ def main():
             csv_filepath=args.import_tweets_from_archive_csv,
             username=args.username)
         raw_tweets.extend(csv_raw_tweets)
+    if args.import_tweets_from_api:
+        if not args.username:
+            logger.error("Username is required for tweet imports!")
+            sys.exit(1)
+        raw_tweets.extend(
+            twitterlib.archive_tweets(
+                db_session=tag_db.session,
+                username=args.username)
+        )
     if args.parse_tweets is True:
         twitterlib.parse_tweets(
             db_session=tag_db.session, parse_all_raw=True)

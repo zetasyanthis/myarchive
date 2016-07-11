@@ -267,7 +267,6 @@ def import_from_csv(db_session, csv_filepath, username):
 def parse_tweets(db_session, raw_tweets=None, csv_only_tweets=None,
                  parse_all_raw=False):
     user = None
-    twitter_user_ids = db_session.query(TwitterUser.id).all()
 
     if parse_all_raw is True:
         # Process all captured raw tweets.
@@ -293,15 +292,12 @@ def parse_tweets(db_session, raw_tweets=None, csv_only_tweets=None,
         user_id = int(user_dict["id"])
         if user and user.id == user_id:
             pass
-        elif (user_id,) in twitter_user_ids:
-            user = db_session.query(TwitterUser).filter_by(id=user_id).one()
         else:
-            twitter_user_ids = db_session.query(TwitterUser.id).all()
-            # Check with a tuple since SQLAlchemy will return a list of tuples.
-            if (user_id,) not in twitter_user_ids:
-                user = TwitterUser(user_dict)
-            else:
+            try:
                 user = db_session.query(TwitterUser).filter_by(id=user_id).one()
+            except NoResultFound:
+                user = TwitterUser(user_dict)
+                db_session.add(user)
 
         # Generate Tweet objects.
         tweet = Tweet.make_from_raw(raw_tweet)
