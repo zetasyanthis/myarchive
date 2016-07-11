@@ -17,7 +17,7 @@ class RawTweet(Base):
 
     __tablename__ = 'rawtweets'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, index=True, primary_key=True)
     favorited_by_str = Column(String, default="")
     raw_status_dict = Column(PickleType)
 
@@ -50,7 +50,7 @@ class CSVTweet(Base):
 
     __tablename__ = 'csvtweets'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, index=True, primary_key=True)
     username = Column(String)
     in_reply_to_status_id = Column(Integer)
     in_reply_to_user_id = Column(Integer)
@@ -92,7 +92,7 @@ class Tweet(Base):
 
     __tablename__ = 'tweets'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, index=True, primary_key=True)
     text = Column(String)
     in_reply_to_screen_name = Column(String)
     in_reply_to_status_id = Column(Integer)
@@ -153,7 +153,7 @@ class TwitterUser(Base):
 
     __tablename__ = 'twitter_users'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, index=True, primary_key=True)
     name = Column(String)
     screen_name = Column(String)
     url = Column(String)
