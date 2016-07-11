@@ -299,7 +299,7 @@ def parse_tweets(db_session, raw_tweets=None, csv_only_tweets=None,
             twitter_user_ids = db_session.query(TwitterUser.id).all()
             # Check with a tuple since SQLAlchemy will return a list of tuples.
             if (user_id,) not in twitter_user_ids:
-                user = TwitterUser.add_from_user_dict(db_session, user_dict)
+                user = TwitterUser(user_dict)
             else:
                 user = db_session.query(TwitterUser).filter_by(id=user_id).one()
 

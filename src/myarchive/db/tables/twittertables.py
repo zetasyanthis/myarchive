@@ -209,12 +209,6 @@ class TwitterUser(Base):
             "<Tweet(id='%s', user='%s', in_reply_to_screen_name='%s')>" %
             (self._id, self.user, self.in_reply_to_screen_name))
 
-    @classmethod
-    def add_from_user_dict(cls, db_session, user_dict):
-        twitter_user = TwitterUser(user_dict)
-        db_session.add(twitter_user)
-        db_session.commit()
-
     def download_files(self, db_session, media_path):
         for media_url in (
                 self.profile_image_url,
