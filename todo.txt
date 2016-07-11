@@ -3,6 +3,7 @@ Configuration
     Use ~/.myarchive/ as the default location.
 
 Twitter
+    Eliminate RawTweet table.
     Break out media download. Maybe multiple processes for file downloading and md5suming can help.
     Handle non-API CSV tweets.
     Add download of linked items somehow.
