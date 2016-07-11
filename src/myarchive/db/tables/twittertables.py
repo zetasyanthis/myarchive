@@ -129,7 +129,7 @@ class Tweet(Base):
                 [hashtag_dict[u"text"] for hashtag_dict in hashtags_list])
 
     def __repr__(self):
-        return "<Tweet(id='%s', text='%s')>" % (self._id, self.text)
+        return "<Tweet(id='%s', text='%s')>" % (self.id, self.text)
 
     @classmethod
     def make_from_raw(cls, raw_tweet):
@@ -206,8 +206,8 @@ class TwitterUser(Base):
 
     def __repr__(self):
         return (
-            "<Tweet(id='%s', user='%s', in_reply_to_screen_name='%s')>" %
-            (self._id, self.user, self.in_reply_to_screen_name))
+            "<TwitterUser(id='%s', name='%s' screen_name='%s')>" %
+            (self.id, self.name, self.screen_name))
 
     def download_files(self, db_session, media_path):
         for media_url in (
