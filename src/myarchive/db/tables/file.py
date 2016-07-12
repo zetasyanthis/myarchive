@@ -23,8 +23,8 @@ class TrackedFile(Base):
     _id = Column(Integer, name="id", primary_key=True)
     original_filename = Column(String)
     filepath = Column(String)
-    md5sum = Column(String(32), unique=True)
-    url = Column(String)
+    md5sum = Column(String(32), index=True, unique=True)
+    url = Column(String, index=True)
 
     tags = relationship(
         "Tag",
