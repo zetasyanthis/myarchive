@@ -23,7 +23,7 @@ class TrackedFile(Base):
     _id = Column(Integer, name="id", primary_key=True)
     original_filename = Column(String)
     filepath = Column(String)
-    md5sum = Column(String(32), index=True, unique=True)
+    md5sum = Column(String(32), index=True)
     url = Column(String, index=True)
 
     tags = relationship(
@@ -68,7 +68,6 @@ class TrackedFile(Base):
         if tracked_file:
             print "Repeated hash: %s [%s, %s]" % (
                 md5sum, tracked_file[0].filepath, filepath)
-            return tracked_file[0]
         return TrackedFile(original_filename, filepath, md5sum, url)
 
     @classmethod
