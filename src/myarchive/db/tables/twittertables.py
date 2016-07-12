@@ -5,6 +5,7 @@ Module containing class definitions for files to be tagged.
 from sqlalchemy import (
     LargeBinary, Boolean, Column, Integer, String, PickleType, ForeignKey)
 from sqlalchemy.orm import backref, relationship
+from sqlalchemy.orm.exc import NoResultFound
 
 from myarchive.db.tables.base import Base
 from myarchive.db.tables.file import TrackedFile
@@ -138,15 +139,19 @@ class Tweet(Base):
 
     def download_media(self, db_session, media_path):
         # Retrieve media files.
-        raw_tweet = db_session.query(RawTweet).filter_by(id=self.id).get(1)
-        if raw_tweet and "media" in raw_tweet.raw_status_dict:
-            for media_item in raw_tweet.raw_status_dict["media"]:
-                media_url = media_item["media_url_https"]
-                tracked_file = TrackedFile.download_file(
-                    db_session, media_path, media_url)
-                if tracked_file is not None and tracked_file not in self.files:
-                    self.files.append(tracked_file)
+        try:
+            raw_tweet = db_session.query(RawTweet).filter_by(id=self.id).one()
+            if "media" in raw_tweet.raw_status_dict:
+                for media_item in raw_tweet.raw_status_dict["media"]:
+                    media_url = media_item["media_url_https"]
+                    tracked_file = TrackedFile.download_file(
+                        db_session, media_path, media_url)
+                    if (tracked_file is not None and
+                            tracked_file not in self.files):
+                        self.files.append(tracked_file)
                 db_session.commit()
+        except NoResultFound:
+            pass
 
 
 class TwitterUser(Base):
