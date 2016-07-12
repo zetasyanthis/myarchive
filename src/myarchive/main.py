@@ -16,15 +16,10 @@ def main():
     parser = argparse.ArgumentParser(
         description='Manages tagged files.')
     parser.add_argument(
-        "-D", "--db_filename",
+        "--storage-folder",
         action="store",
-        default="/tmp/myarchive/db/archive.sqlite",
-        help="Database filename.")
-    parser.add_argument(
-        '--media-path',
-        action="store",
-        default="/tmp/myarchive/media/",
-        help='Prints all tweets.')
+        default=os.path.join(os.path.expanduser("~"), ".myarchive/"),
+        help="Storage folder.")
     parser.add_argument(
         "--import-folder",
         type=str,
@@ -63,12 +58,9 @@ def main():
         if not os.path.isdir(args.import_folder):
             raise Exception("Import folder path is not a folder!")
 
-    if args.db_filename:
-        tag_db = TagDB(
-            drivername='sqlite',
-            db_name=args.db_filename)
-    else:
-        tag_db = TagDB()
+    tag_db = TagDB(
+        drivername='sqlite',
+        db_name=os.path.join(args.storage_folder, "archive.sqlite"))
 
     raw_tweets = []
     csv_only_tweets = []
