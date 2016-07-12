@@ -136,15 +136,16 @@ class Tweet(Base):
         tweet = cls(raw_tweet.raw_status_dict)
         return tweet
 
-    def download_associated_media(self, db_session, media_path, new_ids=None):
+    def download_media(self, db_session, media_path):
         # Retrieve media files.
-        if media_path and "media" in raw_tweet.raw_status_dict:
+        raw_tweet = db_session.query(RawTweet).filter_by(id=self.id).get(1)
+        if raw_tweet and "media" in raw_tweet.raw_status_dict:
             for media_item in raw_tweet.raw_status_dict["media"]:
                 media_url = media_item["media_url_https"]
                 tracked_file = TrackedFile.download_file(
                     db_session, media_path, media_url)
-                if tracked_file is not None and tracked_file not in tweet.files:
-                    tweet.files.append(tracked_file)
+                if tracked_file is not None and tracked_file not in self.files:
+                    self.files.append(tracked_file)
                 db_session.commit()
 
 
@@ -209,7 +210,7 @@ class TwitterUser(Base):
             "<TwitterUser(id='%s', name='%s' screen_name='%s')>" %
             (self.id, self.name, self.screen_name))
 
-    def download_files(self, db_session, media_path):
+    def download_media(self, db_session, media_path):
         for media_url in (
                 self.profile_image_url,
                 self.profile_background_image_url,

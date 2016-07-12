@@ -4,6 +4,7 @@
 #
 
 import csv
+import os
 import time
 import twitter
 
@@ -311,6 +312,14 @@ def parse_tweets(db_session, raw_tweets=None, csv_only_tweets=None,
 
     if csv_only_tweets:
         print len(csv_only_tweets)
+
+
+def download_media(db_session, storage_folder):
+    media_path = os.path.join(storage_folder, "media/")
+    for user in db_session.query(TwitterUser):
+        user.download_media(db_session=db_session, media_path=media_path)
+    for tweet in db_session.query(Tweet):
+        tweet.download_media(db_session=db_session, media_path=media_path)
 
 
 def print_tweets(db_session):
