@@ -44,7 +44,7 @@ def main():
         default=False,
         help='Prints all tweets.')
     parser.add_argument(
-        '--download_media',
+        '--download-media',
         action="store_true",
         default=False,
         help="Downloads all associated media.")
