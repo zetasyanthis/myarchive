@@ -188,15 +188,16 @@ def import_from_csv(db_session, csv_filepath, username):
         sleep_on_rate_limit=True)
 
     print "Importing into CSVTweets..."
+    existing_tweet_ids = [
+        returned_tuple[0]
+        for returned_tuple in db_session.query(CSVTweet.id).all()]
     csv_rows_by_id = dict()
     with open(csv_filepath) as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             tweet_id = int(row['tweet_id'])
             csv_rows_by_id[tweet_id] = row
-            try:
-                db_session.query(CSVTweet).filter_by(id=tweet_id).one()
-            except NoResultFound:
+            if tweet_id not in existing_tweet_ids:
                 csv_tweet = CSVTweet(
                     id=tweet_id,
                     username=username,
@@ -209,11 +210,12 @@ def import_from_csv(db_session, csv_filepath, username):
                     retweeted_status_timestamp=row["retweeted_status_timestamp"],
                     expanded_urls=row["expanded_urls"])
                 db_session.add(csv_tweet)
-                db_session.commit()
+                existing_tweet_ids.append(tweet_id)
+    db_session.commit()
     csv_ids = list(csv_rows_by_id.keys())
-    new_api_tweets = []
 
     print "Attempting API import..."
+    new_api_tweets = []
     start_time = -1
     index = 0
     sliced_ids = csv_ids[:100]

@@ -2,6 +2,7 @@ Configuration
     Add config file.
 
 Twitter
+    Speed up tweet download by going at max speed prior to the n-1 permitted API pull.
     Handle non-API CSV tweets.
     Add download of linked items somehow.
 
