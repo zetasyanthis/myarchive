@@ -305,7 +305,7 @@ def import_from_csv(db_session, csv_filepath, username):
         except TwitterError as e:
             print e
         tweet_index += 100
-        sliced_ids = csv_ids[request_index:100 + request_index]
+        sliced_ids = csv_ids[tweet_index:100 + tweet_index]
 
     csv_only_tweets = db_session.query(CSVTweet.api_import_complete).\
         filter_by(api_import_complete=False).all()
