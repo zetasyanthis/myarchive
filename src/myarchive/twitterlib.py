@@ -126,6 +126,7 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
         early_termination = False
         request_index = 0
         requests_before_sleeps = 1
+        statuses = []
         while not early_termination:
             # Twitter rate-limits us. Space this out a bit to avoid a
             # super-long sleep at the end doesn't kill the connection.
@@ -142,7 +143,7 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
             print ("Pulling 200 tweets from API starting with ID %s and "
                    "ending with ID %s..." % (since_id, max_id))
             if type_ == FAVORITES:
-                statuses = api.GetFavorites(
+                loop_statuses = api.GetFavorites(
                     screen_name=username,
                     count=200,
                     since_id=since_id,
@@ -152,7 +153,7 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
                 requests_before_sleeps = 14
                 sleep_time = 60
             elif type_ == USER:
-                statuses = api.GetUserTimeline(
+                loop_statuses = api.GetUserTimeline(
                     screen_name=username,
                     count=200,
                     since_id=since_id,
@@ -161,29 +162,38 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
                 sleep_time = 3
                 requests_before_sleeps = 299
             print "Found %s tweets this iteration..." % len(statuses)
-            if not statuses:
+            # Check for "We ran out of tweets via this API" termination
+            # condition.
+            if not loop_statuses:
                 break
-
-            # Format things the way we want and handle max_id changes.
-            for status in statuses:
-                status_dict = status.AsDict()
-                status_id = int(status_dict["id"])
+            statuses.append(loop_statuses)
+            # Check for early termination condition.
+            for loop_status in loop_statuses:
+                status_id = int(loop_status.AsDict()["id"])
                 if since_id is not None and status_id >= since_id:
                     early_termination = True
                     break
-                try:
-                    raw_tweet = db_session.query(RawTweet).\
-                        filter_by(id=status_id).one()
-                except NoResultFound:
-                    raw_tweet = RawTweet(status_dict=status_dict)
-                    new_tweets.append(raw_tweet)
-                    db_session.add(raw_tweet)
-                if type_ == FAVORITES:
-                    raw_tweet.add_user_favorite(username)
-                db_session.commit()
-                # Capture new max_id
-                if status_id < max_id or max_id is None:
-                    max_id = status_id - 1
+            # Capture new max_id
+            if status_id < max_id or max_id is None:
+                max_id = status_id - 1
+
+        # Format things the way we want and handle max_id changes.
+        for status in statuses:
+            status_dict = status.AsDict()
+            status_id = int(status_dict["id"])
+            if since_id is not None and status_id >= since_id:
+                early_termination = True
+                break
+            try:
+                raw_tweet = db_session.query(RawTweet).\
+                    filter_by(id=status_id).one()
+            except NoResultFound:
+                raw_tweet = RawTweet(status_dict=status_dict)
+                new_tweets.append(raw_tweet)
+                db_session.add(raw_tweet)
+            if type_ == FAVORITES:
+                raw_tweet.add_user_favorite(username)
+            db_session.commit()
 
     return new_tweets
 
