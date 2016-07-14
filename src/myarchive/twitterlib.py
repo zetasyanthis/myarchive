@@ -173,9 +173,9 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
                 if since_id is not None and status_id >= since_id:
                     early_termination = True
                     break
-            # Capture new max_id
-            if status_id < max_id or max_id is None:
-                max_id = status_id - 1
+                # Capture new max_id
+                if status_id < max_id or max_id is None:
+                    max_id = status_id - 1
 
         # Format things the way we want and handle max_id changes.
         for status in statuses:
