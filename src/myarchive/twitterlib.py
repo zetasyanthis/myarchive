@@ -124,16 +124,20 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
         sleep_time = 0
         max_id = None
         early_termination = False
+        request_index = 0
+        requests_before_sleeps = 1
         while not early_termination:
             # Twitter rate-limits us. Space this out a bit to avoid a
             # super-long sleep at the end doesn't kill the connection.
-            duration = time.time() - start_time
-            if duration < sleep_time:
-                sleep_duration = sleep_time - duration
-                print ("Sleeping for %s seconds to ease up on rate "
-                       "limit..." % sleep_duration)
-                sleep(sleep_duration)
-            start_time = time.time()
+            if request_index >= requests_before_sleeps:
+                duration = time.time() - start_time
+                if duration < sleep_time:
+                    sleep_duration = sleep_time - duration
+                    print ("Sleeping for %s seconds to ease up on rate "
+                           "limit..." % sleep_duration)
+                    sleep(sleep_duration)
+                start_time = time.time()
+            request_index += 1
 
             print ("Pulling 200 tweets from API starting with ID %s and "
                    "ending with ID %s..." % (since_id, max_id))
@@ -145,6 +149,7 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
                     max_id=max_id,
                     include_entities=True)
                 # 15 requests per 15 minutes.
+                requests_before_sleeps = 14
                 sleep_time = 60
             elif type_ == USER:
                 statuses = api.GetUserTimeline(
@@ -154,6 +159,7 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
                     max_id=max_id)
                 # 300 requests per 15 minutes.
                 sleep_time = 3
+                requests_before_sleeps = 299
             print "Found %s tweets this iteration..." % len(statuses)
             if not statuses:
                 break
