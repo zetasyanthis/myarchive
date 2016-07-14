@@ -214,12 +214,9 @@ def import_from_csv(db_session, csv_filepath, username):
         sleep_on_rate_limit=True)
 
     print "Importing into CSVTweets..."
-    existing_csv_tweets = db_session.query(CSVTweet).all()
-    if existing_csv_tweets:
-        csv_tweets_by_id = dict(
-            (csv_tweet[0], csv_tweet) for csv_tweet in existing_csv_tweets)
-    else:
-        csv_tweets_by_id = dict()
+    csv_tweets_by_id = dict(
+        (csv_tweet[0], csv_tweet)
+        for csv_tweet in db_session.query(CSVTweet).all())
     with open(csv_filepath) as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
