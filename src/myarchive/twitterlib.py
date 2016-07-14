@@ -167,7 +167,7 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
                 if e.message[0][u'code'] == 88:
                     print (
                         "Overran rate limit. Sleeping %s seconds in an attempt "
-                        "to recover...")
+                        "to recover..." % sleep_time)
                     request_index = requests_before_sleeps
                     sleep(sleep_time)
                     continue
