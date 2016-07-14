@@ -215,7 +215,7 @@ def import_from_csv(db_session, csv_filepath, username):
 
     print "Importing into CSVTweets..."
     csv_tweets_by_id = dict(
-        (csv_tweet[0], csv_tweet)
+        (csv_tweet.id, csv_tweet)
         for csv_tweet in db_session.query(CSVTweet).all())
     with open(csv_filepath) as csvfile:
         reader = csv.DictReader(csvfile)
