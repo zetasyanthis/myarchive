@@ -259,26 +259,30 @@ def import_from_csv(db_session, csv_filepath, username):
 
     # API allows 60 requests per 15 minutes.
     sleep_time = 15
+    requests_before_sleeps = 60 - 1
 
     # Set loop starting values
-    index = 0
+    request_index = 0
     start_time = -1
     new_api_tweets = []
     sliced_ids = csv_ids[:100]
     while sliced_ids:
 
         # Sleep to not hit the rate limit.
-        duration = time.time() - start_time
-        if duration < sleep_time:
-            sleep_duration = sleep_time - duration
-            print ("Sleeping for %s seconds to ease up on rate "
-                   "limit..." % sleep_duration)
-            sleep(sleep_duration)
+        # Twitter rate-limits us. Space this out a bit to avoid a
+        # super-long sleep at the end doesn't kill the connection.
+        if request_index >= requests_before_sleeps:
+            duration = time.time() - start_time
+            if duration < sleep_time:
+                sleep_duration = sleep_time - duration
+                print ("Sleeping for %s seconds to ease up on rate "
+                       "limit..." % sleep_duration)
+                sleep(sleep_duration)
         start_time = time.time()
 
         # Perform the import.
         print "Attempting import of id %s to %s of %s..." % (
-            index + 1, min(index + 100, num_imports), num_imports)
+            request_index + 1, min(request_index + 100, num_imports), num_imports)
         try:
             statuses = api.LookupStatuses(
                 status_ids=[str(sliced_id) for sliced_id in sliced_ids],
@@ -298,8 +302,8 @@ def import_from_csv(db_session, csv_filepath, username):
 
         except TwitterError as e:
             print e
-        index += 100
-        sliced_ids = csv_ids[index:100 + index]
+        request_index += 100
+        sliced_ids = csv_ids[request_index:100 + request_index]
 
     csv_only_tweets = db_session.query(CSVTweet.api_import_complete).\
         filter_by(api_import_complete=False).all()
