@@ -161,12 +161,12 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
                 # 300 requests per 15 minutes.
                 sleep_time = 3
                 requests_before_sleeps = 299
-            print "Found %s tweets this iteration..." % len(statuses)
+            print "Found %s tweets this iteration..." % len(loop_statuses)
             # Check for "We ran out of tweets via this API" termination
             # condition.
             if not loop_statuses:
                 break
-            statuses.append(loop_statuses)
+            statuses.extend(loop_statuses)
             # Check for early termination condition.
             for loop_status in loop_statuses:
                 status_id = int(loop_status.AsDict()["id"])
