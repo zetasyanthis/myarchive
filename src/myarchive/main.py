@@ -90,11 +90,11 @@ def main():
     if args.parse_tweets is True:
         twitterlib.parse_tweets(
             db_session=tag_db.session, parse_all_raw=True)
-    if args.print_tweets is True:
-        twitterlib.print_tweets(db_session=tag_db.session)
     if args.download_media is True:
         twitterlib.download_media(
             db_session=tag_db.session, storage_folder=args.storage_folder)
+    if args.print_tweets is True:
+        twitterlib.print_tweets(db_session=tag_db.session)
 
     if raw_tweets or csv_only_tweets:
         print "Processing %s new raw tweets and %s CSV-only tweets..." % (
