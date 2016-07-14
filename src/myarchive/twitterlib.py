@@ -266,7 +266,6 @@ def import_from_csv(db_session, csv_filepath, username):
     new_api_tweets = []
     sliced_ids = csv_ids[:100]
     while sliced_ids:
-        sliced_ids = csv_ids[:100]
 
         # Sleep to not hit the rate limit.
         duration = time.time() - start_time
@@ -282,7 +281,9 @@ def import_from_csv(db_session, csv_filepath, username):
             index + 1, min(index + 100, num_imports), num_imports)
         try:
             statuses = api.LookupStatuses(
-                status_ids=sliced_ids, trim_user=False, include_entities=True)
+                status_ids=[str(sliced_id) for sliced_id in sliced_ids],
+                trim_user=False,
+                include_entities=True)
             for status in statuses:
                 status_dict = status.AsDict()
                 # Create the RawTweet
