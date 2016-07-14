@@ -142,25 +142,35 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
 
             print ("Pulling 200 tweets from API starting with ID %s and "
                    "ending with ID %s..." % (since_id, max_id))
-            if type_ == FAVORITES:
-                loop_statuses = api.GetFavorites(
-                    screen_name=username,
-                    count=200,
-                    since_id=since_id,
-                    max_id=max_id,
-                    include_entities=True)
-                # 15 requests per 15 minutes.
-                requests_before_sleeps = 14
-                sleep_time = 60
-            elif type_ == USER:
-                loop_statuses = api.GetUserTimeline(
-                    screen_name=username,
-                    count=200,
-                    since_id=since_id,
-                    max_id=max_id)
-                # 300 requests per 15 minutes.
-                sleep_time = 3
-                requests_before_sleeps = 299
+            try:
+                if type_ == FAVORITES:
+                    loop_statuses = api.GetFavorites(
+                        screen_name=username,
+                        count=200,
+                        since_id=since_id,
+                        max_id=max_id,
+                        include_entities=True)
+                    # 15 requests per 15 minutes.
+                    requests_before_sleeps = 15 - 1
+                    sleep_time = 60
+                elif type_ == USER:
+                    loop_statuses = api.GetUserTimeline(
+                        screen_name=username,
+                        count=200,
+                        since_id=since_id,
+                        max_id=max_id)
+                    # 300 requests per 15 minutes.
+                    sleep_time = 3
+                    requests_before_sleeps = 300 - 1
+            except twitter.error.TwitterError as e:
+                # If we overran the rate limit, try again.
+                if e.message[0][u'code'] == 88:
+                    print (
+                        "Overran rate limit. Sleeping %s seconds in an attempt "
+                        "to recover...")
+                    request_index = requests_before_sleeps
+                    sleep(sleep_time)
+                    continue
             print "Found %s tweets this iteration..." % len(loop_statuses)
             # Check for "We ran out of tweets via this API" termination
             # condition.
