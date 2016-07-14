@@ -136,7 +136,7 @@ def archive_tweets(username, db_session, types=(USER, FAVORITES)):
                     print ("Sleeping for %s seconds to ease up on rate "
                            "limit..." % sleep_duration)
                     sleep(sleep_duration)
-                start_time = time.time()
+            start_time = time.time()
             request_index += 1
 
             print ("Pulling 200 tweets from API starting with ID %s and "
