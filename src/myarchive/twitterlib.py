@@ -188,16 +188,14 @@ def import_from_csv(db_session, csv_filepath, username):
         sleep_on_rate_limit=True)
 
     print "Importing into CSVTweets..."
-    existing_tweet_ids = [
-        returned_tuple[0]
-        for returned_tuple in db_session.query(CSVTweet.id).all()]
-    csv_rows_by_id = dict()
+    csv_tweets_by_id = dict(
+        (csv_tweet[0], csv_tweet)
+        for csv_tweet in db_session.query(CSVTweet).all())
     with open(csv_filepath) as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             tweet_id = int(row['tweet_id'])
-            csv_rows_by_id[tweet_id] = row
-            if tweet_id not in existing_tweet_ids:
+            if tweet_id not in csv_tweets_by_id:
                 csv_tweet = CSVTweet(
                     id=tweet_id,
                     username=username,
@@ -210,20 +208,41 @@ def import_from_csv(db_session, csv_filepath, username):
                     retweeted_status_timestamp=row["retweeted_status_timestamp"],
                     expanded_urls=row["expanded_urls"])
                 db_session.add(csv_tweet)
-                existing_tweet_ids.append(tweet_id)
+                csv_tweets_by_id[tweet_id] = csv_tweet
     db_session.commit()
-    csv_ids = list(csv_rows_by_id.keys())
 
-    print "Attempting API import..."
-    new_api_tweets = []
-    start_time = -1
+    print "Scanning for existing RawTweets..."
+    existing_rawtweet_ids = [
+        returned_tuple[0]
+        for returned_tuple in db_session.query(RawTweet.id).all()]
+    ids_to_remove = []
+    for tweet_id, csv_tweet in csv_tweets_by_id.items():
+        # If any aren't set as imported and should be, clean that up.
+        if tweet_id in existing_rawtweet_ids:
+            ids_to_remove.append(tweet_id)
+            if not csv_tweet.api_import_complete:
+                csv_tweet.api_import_complete = True
+    db_session.commit()
+    for id_to_remove in ids_to_remove:
+        csv_tweets_by_id.pop(id_to_remove)
+
+    csv_ids = list(csv_tweets_by_id.keys())
+    num_imports = len(csv_ids)
+    print "Attempting API import of %s tweets based on CSV file..." % (
+        num_imports)
+
+    # API allows 60 requests per 15 minutes.
+    sleep_time = 15
+
+    # Set loop starting values
     index = 0
+    start_time = -1
+    new_api_tweets = []
     sliced_ids = csv_ids[:100]
     while sliced_ids:
+        sliced_ids = csv_ids[:100]
 
         # Sleep to not hit the rate limit.
-        # 60 requests per 15 minutes.
-        sleep_time = 15
         duration = time.time() - start_time
         if duration < sleep_time:
             sleep_duration = sleep_time - duration
@@ -231,38 +250,27 @@ def import_from_csv(db_session, csv_filepath, username):
                    "limit..." % sleep_duration)
             sleep(sleep_duration)
         start_time = time.time()
-        new_ids = []
-        for status_id in sliced_ids:
-            try:
-                # If the tweet is found, it's already been imported. Ignore it.
-                db_session.query(RawTweet.id).filter_by(id=status_id).one()
-                csv_tweet = db_session.query(CSVTweet).\
-                    filter_by(id=status_id).one()
-                csv_tweet.api_import_complete = True
-                db_session.commit()
-            except NoResultFound:
-                new_ids.append(str(status_id))
-        if new_ids:
-            print "Attempting import of id %s to %s of %s..." % (
-                index + 1, min(index + 100, len(csv_ids)), len(csv_ids))
-            try:
-                statuses = api.LookupStatuses(
-                    status_ids=new_ids, trim_user=False, include_entities=True)
-                for status in statuses:
-                    status_dict = status.AsDict()
-                    raw_tweet = RawTweet(status_dict=status_dict)
-                    db_session.add(raw_tweet)
-                    db_session.commit()
-                    # Mark CSV tweet appropriately.
-                    csv_tweet = db_session.query(CSVTweet).\
-                        filter_by(id=int(status_dict["id"])).one()
-                    csv_tweet.api_import_complete = True
-                    db_session.commit()
-                    # Append to new list.
-                    new_api_tweets.append(raw_tweet)
 
-            except TwitterError as e:
-                print e
+        # Perform the import.
+        print "Attempting import of id %s to %s of %s..." % (
+            index + 1, min(index + 100, num_imports), num_imports)
+        try:
+            statuses = api.LookupStatuses(
+                status_ids=sliced_ids, trim_user=False, include_entities=True)
+            for status in statuses:
+                status_dict = status.AsDict()
+                # Create the RawTweet
+                raw_tweet = RawTweet(status_dict=status_dict)
+                db_session.add(raw_tweet)
+                # Mark CSVTweet appropriately.
+                csv_tweet = csv_tweets_by_id[int(status_dict["id"])]
+                csv_tweet.api_import_complete = True
+                # Append to new list.
+                new_api_tweets.append(raw_tweet)
+            db_session.commit()
+
+        except TwitterError as e:
+            print e
         index += 100
         sliced_ids = csv_ids[index:100 + index]
 
