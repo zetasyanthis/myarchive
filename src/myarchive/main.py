@@ -90,20 +90,22 @@ def main():
     if args.parse_tweets is True:
         twitterlib.parse_tweets(
             db_session=tag_db.session, parse_all_raw=True)
-    if args.download_media is True:
-        twitterlib.download_media(
-            db_session=tag_db.session, storage_folder=args.storage_folder)
     if args.print_tweets is True:
         twitterlib.print_tweets(db_session=tag_db.session)
 
+    # Parse any downloaded tweets immediately.
     if raw_tweets or csv_only_tweets:
         print "Processing %s new raw tweets and %s CSV-only tweets..." % (
             len(raw_tweets), len(csv_only_tweets))
         twitterlib.parse_tweets(
             db_session=tag_db.session, raw_tweets=raw_tweets,
             csv_only_tweets=csv_only_tweets)
+    if args.download_media is True:
+        twitterlib.download_media(
+            db_session=tag_db.session, storage_folder=args.storage_folder)
 
-    # MainWindow(tag_db)
+
+            # MainWindow(tag_db)
     # Gtk.main()
 
 
