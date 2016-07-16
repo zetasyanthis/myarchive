@@ -5,6 +5,7 @@ import os
 import sys
 
 import twitterlib
+from account_info import LJ_ACCOUNTS, TWITTER_ACCOUNTS
 from db import TagDB
 # from gui import Gtk, MainWindow
 from util.logger import myarchive_LOGGER as logger
