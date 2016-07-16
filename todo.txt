@@ -3,6 +3,7 @@ Misc
     Add download of linked items somehow.
 
 Twitter
+    Kill RawTweets if possible. It's a huge storage hog.
     Handle non-API CSV tweets.
 
 Dreamwidth / LJ
