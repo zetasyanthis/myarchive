@@ -146,7 +146,12 @@ def main():
             ljapi.download_journals_and_comments()
             ljapis.append(ljapi)
         for ljapi in ljapis:
-            print ljapi.journal
+            for entry in ljapi.journal["entries"].values():
+                print
+                print
+                print
+                for k, v in entry.items():
+                    print k, v
 
     # MainWindow(tag_db)
     # Gtk.main()
