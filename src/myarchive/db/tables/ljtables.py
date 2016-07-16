@@ -26,6 +26,11 @@ class LJHost(Base):
     def __init__(self, url):
         self.url = url
 
+    users = relationship(
+        "LJUser",
+        backref=backref('host')
+    )
+
 
 class LJUser(Base):
     """Class representing a user retrieved from a LJ-like service."""

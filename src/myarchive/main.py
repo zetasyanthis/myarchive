@@ -137,6 +137,7 @@ def main():
     if args.import_lj_entries:
         for lj_api_account in LJ_API_ACCOUNTS:
             ljapi = LJAPIConnection(
+                db_session=tag_db.session,
                 host=lj_api_account.host,
                 user_agent=lj_api_account.user_agent,
                 username=lj_api_account.username,

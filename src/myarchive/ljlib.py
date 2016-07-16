@@ -6,12 +6,21 @@ from lj import lj
 from lj.backup import (
     DEFAULT_JOURNAL, update_journal_entries, update_journal_comments)
 
-from myarchive.db.tables.ljtables import LJComment, LJEntries, LJUser
+from myarchive.db.tables.ljtables import LJComment, LJEntries, LJHost, LJUser
 
 
 class LJAPIConnection(object):
 
-    def __init__(self, host, user_agent, username, password):
+    def __init__(self, db_session, host, user_agent, username, password):
+        """
+        WARNING: MUST use HTTPS since this API uses *md5sum* for
+        authentication! D:
+        :param db_session:
+        :param host:
+        :param user_agent:
+        :param username:
+        :param password:
+        """
         self.journal = DEFAULT_JOURNAL.copy()
         self._server = lj.LJServer(
             "Python-Blog3/1.0",
@@ -20,12 +29,16 @@ class LJAPIConnection(object):
         self.journal['login'] = self.login = self._server.login(
             user=username,
             password=password)
+        try:
+            self.ljhost = db_session.query(LJHost).filter_by(url=host).one()
+        except NoResultFound:
+            self.ljhost = LJHost(url=host)
+            db_session.add(self.ljhost)
+            db_session.commit()
 
     def post_journal(self, subject, post, tags):
         """
         Posts a journal to the specified LJ server.
-
-        WARNING: MUST use HTTPS since this API uses *md5sum* for authentication! D:
         """
         self._server.postevent(
             event=post,
@@ -56,7 +69,7 @@ class LJAPIConnection(object):
             try:
                 db_session.query(LJUser).filter_by(user_id=user_id).one()
             except NoResultFound:
-                db_session.add(
+                self.ljhost.users.append(
                     LJUser(user_id=user_id, username=username))
         db_session.commit()
 
