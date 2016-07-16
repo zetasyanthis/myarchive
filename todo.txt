@@ -6,7 +6,6 @@ Twitter
     Handle non-API CSV tweets.
 
 Dreamwidth / LJ
-    Build out tables.
     Add download of posts.
     Add download of comments.
 

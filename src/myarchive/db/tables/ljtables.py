@@ -1,10 +1,10 @@
 from sqlalchemy import (
     Column, Integer, String, TIMESTAMP, ForeignKey)
 from sqlalchemy.orm import backref, relationship
-from sqlalchemy.orm.exc import NoResultFound
 
+from myarchive.db.tables.association_tables import (
+    at_ljcomment_tag, at_ljentry_tag)
 from myarchive.db.tables.base import Base
-from myarchive.db.tables.file import TrackedFile
 
 
 class CircularDependencyError(Exception):
@@ -21,7 +21,7 @@ class LJHost(Base):
     __tablename__ = 'lj_hosts'
 
     id = Column(Integer, index=True, primary_key=True)
-    url = Column(String)
+    url = Column(String, nullable=False)
 
     def __init__(self, url):
         self.url = url
@@ -38,8 +38,8 @@ class LJUser(Base):
     __tablename__ = 'lj_users'
 
     user_id = Column(Integer, index=True, primary_key=True)
-    username = Column(String)
-    host_id = Column(Integer, ForeignKey("lj_hosts.id"))
+    username = Column(String, nullable=False)
+    host_id = Column(Integer, ForeignKey("lj_hosts.id"), nullable=False)
 
     def __init__(self, user_id, username):
         self.user_id = user_id
@@ -58,7 +58,16 @@ class LJEntries(Base):
     subject = Column(String)
     text = Column(String)
     current_music = Column(String)
-    user_id = Column(Integer, ForeignKey("lj_users.user_id"))
+    user_id = Column(Integer, ForeignKey("lj_users.user_id"), nullable=False)
+
+    tags = relationship(
+        "Tag",
+        backref=backref(
+            "lj_entries",
+            doc="Entries associated with this tag"),
+        doc="Tags that have been applied to this LJ entry.",
+        secondary=at_ljentry_tag
+    )
 
     def __init__(self, itemid, eventtime, subject, text, current_music):
         self.itemid = itemid
@@ -79,11 +88,19 @@ class LJComment(Base):
     body = Column(String)
     date = Column(TIMESTAMP)
     parent_id = Column(Integer, ForeignKey("lj_comments.id"))
-    entry_id = Column(Integer, ForeignKey("lj_entries.id"))
+    entry_id = Column(Integer, ForeignKey("lj_entries.id"), nullable=False)
 
     children = relationship(
         "LJComment",
         backref=backref('parent', remote_side=[id])
+    )
+    tags = relationship(
+        "Tag",
+        backref=backref(
+            "lj_comments",
+            doc="Entries associated with this tag"),
+        doc="Tags that have been applied to this entry.",
+        secondary=at_ljcomment_tag
     )
 
     def add_child(self, lj_comment):
