@@ -40,6 +40,7 @@ class LJAPIConnection(object):
 
         print("Updated %d entries and %d comments" % (nj, nc))
 
+        username = self.journal['login']["username"]
         for entry in self.journal["entries"]:
             pass
         for comment_poster in self.journal["comment_posters"]:
