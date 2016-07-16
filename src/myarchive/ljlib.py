@@ -7,14 +7,14 @@ from lj.backup import (
 class LJAPIConnection(object):
 
     def __init__(self, host, user_agent, username, password):
+        self.journal = DEFAULT_JOURNAL.copy()
         self._server = lj.LJServer(
             "Python-Blog3/1.0",
             user_agent=user_agent,
             host=host)
-        self._server.login(
+        self.journal['login'] = self.login = self._server.login(
             user=username,
             password=password)
-        self.journal = DEFAULT_JOURNAL.copy()
 
     def post_journal(self, subject, post, tags):
         """
@@ -29,7 +29,7 @@ class LJAPIConnection(object):
 
     def download_journals_and_comments(self):
         """Downloads journals and comments to a defined dictionary."""
-        self.journal = DEFAULT_JOURNAL.copy()
+
         # Sync entries from the server
         print("Downloading journal entries")
         nj = update_journal_entries(server=self._server, journal=self.journal)
@@ -39,3 +39,10 @@ class LJAPIConnection(object):
         nc = update_journal_comments(server=self._server, journal=self.journal)
 
         print("Updated %d entries and %d comments" % (nj, nc))
+
+        for entry in self.journal["entries"]:
+            pass
+        for comment_poster in self.journal["comment_posters"]:
+            pass
+        for comment in self.journal["comments"]:
+            pass
