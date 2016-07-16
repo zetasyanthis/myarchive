@@ -6,4 +6,6 @@ LJApiAccount = namedtuple(
 
 TwitterApiAccount = namedtuple(
     'TwitterApiAccount',
-    ["consumer_key", "consumer_secret", "access_key", "access_secret"])
+    ["username", "consumer_key", "consumer_secret", "access_key",
+     "access_secret"]
+)

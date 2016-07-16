@@ -9,6 +9,6 @@ from myarchive.db.tables.association_tables import (
     at_tweet_tag, at_tweet_file, at_twuser_file)
 
 
-class RawTweet(Base):
+class LJJournal(Base):
     """Class representing a raw tweet."""
     pass

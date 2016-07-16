@@ -4,11 +4,12 @@ import argparse
 import os
 import sys
 
-import twitterlib
-from account_info import LJ_ACCOUNTS, TWITTER_ACCOUNTS
+from twitterlib import BulkApi as TwitterAPI
+from accounts import LJ_API_ACCOUNTS, TWITTER_API_ACCOUNTS
 from db import TagDB
 # from gui import Gtk, MainWindow
 from util.logger import myarchive_LOGGER as logger
+
 
 
 def main():
@@ -71,42 +72,50 @@ def main():
     raw_tweets = []
     csv_only_tweets = []
     if args.import_tweets_from_api:
-        if not args.username:
-            logger.error("Username is required for tweet imports!")
-            sys.exit(1)
-        raw_tweets.extend(
-            twitterlib.archive_tweets(
-                db_session=tag_db.session,
-                username=args.username)
-        )
+        for twitter_api_account in TWITTER_API_ACCOUNTS:
+            api = TwitterAPI(
+                consumer_key=twitter_api_account.username,
+                consumer_secret=twitter_api_account.consumer_secret,
+                access_token_key=twitter_api_account.access_key,
+                access_token_secret=twitter_api_account.access_secret,
+                sleep_on_rate_limit=True)
+            raw_tweets.extend(
+                api.archive_tweets(
+                    db_session=tag_db.session,
+                    username=args.username
+                )
+            )
     if args.import_tweets_from_archive_csv:
-        if not args.username:
-            logger.error("Username is required for tweet imports!")
-            sys.exit(1)
-        csv_raw_tweets, csv_only_tweets = twitterlib.import_from_csv(
-            db_session=tag_db.session,
-            csv_filepath=args.import_tweets_from_archive_csv,
-            username=args.username)
-        raw_tweets.extend(csv_raw_tweets)
+        for twitter_api_account in TWITTER_API_ACCOUNTS:
+            api = TwitterAPI(
+                consumer_key=twitter_api_account.username,
+                consumer_secret=twitter_api_account.consumer_secret,
+                access_token_key=twitter_api_account.access_key,
+                access_token_secret=twitter_api_account.access_secret,
+                sleep_on_rate_limit=True)
+            csv_raw_tweets, csv_only_tweets = api.import_from_csv(
+                db_session=tag_db.session,
+                csv_filepath=args.import_tweets_from_archive_csv,
+                username=args.username)
+            raw_tweets.extend(csv_raw_tweets)
     if args.parse_tweets is True:
-        twitterlib.parse_tweets(
+        TwitterAPI.parse_tweets(
             db_session=tag_db.session, parse_all_raw=True)
     if args.print_tweets is True:
-        twitterlib.print_tweets(db_session=tag_db.session)
+        TwitterAPI.print_tweets(db_session=tag_db.session)
 
     # Parse any downloaded tweets immediately.
     if raw_tweets or csv_only_tweets:
         print "Processing %s new raw tweets and %s CSV-only tweets..." % (
             len(raw_tweets), len(csv_only_tweets))
-        twitterlib.parse_tweets(
+        TwitterAPI.parse_tweets(
             db_session=tag_db.session, raw_tweets=raw_tweets,
             csv_only_tweets=csv_only_tweets)
     if args.download_media is True:
-        twitterlib.download_media(
+        TwitterAPI.download_media(
             db_session=tag_db.session, storage_folder=args.storage_folder)
 
-
-            # MainWindow(tag_db)
+    # MainWindow(tag_db)
     # Gtk.main()
 
 

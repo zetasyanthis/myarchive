@@ -38,4 +38,4 @@ class LJAPIServerConnection(object):
         print("Downloading comments")
         nc = update_journal_comments(server=self._server, journal=self.journal)
 
-        print "Updated %d entries and %d comments" % (nj, nc)
+        print("Updated %d entries and %d comments" % (nj, nc))
