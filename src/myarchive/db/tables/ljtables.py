@@ -80,13 +80,14 @@ class LJEntry(Base):
 
     __tablename__ = 'lj_entries'
 
-    user_id = Column(Integer, index=True, primary_key=True)
-    username = Column(String, nullable=False, )
     itemid = Column(Integer, index=True, primary_key=True)
     eventtime = Column(TIMESTAMP)
     subject = Column(String)
     text = Column(String)
     current_music = Column(String)
+    user_id = Column(
+        Integer, ForeignKey("lj_users.user_id"),
+        nullable=False, primary_key=True)
 
     comments = relationship(
         "LJComment",
