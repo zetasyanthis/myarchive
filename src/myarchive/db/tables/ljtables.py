@@ -41,12 +41,20 @@ class LJUser(Base):
     username = Column(String, nullable=False)
     host_id = Column(Integer, ForeignKey("lj_hosts.id"), nullable=False)
 
+    entries = relationship(
+        "LJEntry",
+        backref=backref(
+            "lj_user",
+            doc="Entries associated with this tag"),
+        doc="Tags that have been applied to this LJ entry."
+    )
+
     def __init__(self, user_id, username):
         self.user_id = user_id
         self.username = username
 
 
-class LJEntries(Base):
+class LJEntry(Base):
     """Class representing an entry retrieved from a LJ-like service."""
 
     __tablename__ = 'lj_entries'

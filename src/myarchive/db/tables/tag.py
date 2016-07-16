@@ -59,7 +59,7 @@ class Tag(Base):
     @classmethod
     def get_tag(cls, db_session, tag_name):
         try:
-            return db_session.query(cls).filter(name=tag_name).one()
+            return db_session.query(cls).filter_by(name=tag_name).one()
         except NoResultFound:
             tag = cls(name=tag_name)
             db_session.add(tag)

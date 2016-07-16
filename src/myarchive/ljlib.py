@@ -4,9 +4,11 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from lj import lj
 from lj.backup import (
-    DEFAULT_JOURNAL, update_journal_entries, update_journal_comments)
+    DEFAULT_JOURNAL, update_journal_entries, update_journal_comments,
+    datetime_from_string)
 
-from myarchive.db.tables.ljtables import LJComment, LJEntries, LJHost, LJUser
+from myarchive.db.tables.ljtables import LJComment, LJEntry, LJHost, LJUser
+from myarchive.db.tables.tag import Tag
 
 
 class LJAPIConnection(object):
@@ -65,15 +67,31 @@ class LJAPIConnection(object):
         for user_id, username in self.journal["comment_posters"].items():
             users[int(user_id)] = username
 
+        poster = None
         for user_id, username in users.items():
             try:
-                db_session.query(LJUser).filter_by(user_id=user_id).one()
+                ljuser = db_session.query(LJUser).filter_by(user_id=user_id).one()
             except NoResultFound:
-                self.ljhost.users.append(
-                    LJUser(user_id=user_id, username=username))
+                ljuser = LJUser(user_id=user_id, username=username)
+                self.ljhost.users.append(ljuser)
+            if user_id == int(self.journal['login']["userid"]):
+                poster = ljuser
         db_session.commit()
 
         for entry_id, entry in self.journal["entries"].items():
-            pass
+            ljentry = LJEntry(
+                itemid=entry_id,
+                eventtime=datetime_from_string(entry["eventtime"]),
+                subject=entry["subject"],
+                text=entry["event"],
+                current_music=entry["props"].get("current_music"))
+            poster.entries.append(ljentry)
+            tag_names = entry["props"].get("taglist")
+            if tag_names:
+                for tag_name in tag_names.split(", "):
+                    tag = Tag.get_tag(db_session=db_session, tag_name=tag_name)
+                    ljentry.tags.append(tag)
+        db_session.commit()
+
         for comment_id, comment in self.journal["comments"].items():
             pass
