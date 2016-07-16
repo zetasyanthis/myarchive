@@ -4,6 +4,7 @@ Module containing definitions of tag hierarchies.
 
 from sqlalchemy import Column, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import backref, relationship
+from sqlalchemy.orm.exc import NoResultFound
 
 from myarchive.db.tables.base import Base
 
@@ -54,3 +55,13 @@ class Tag(Base):
                 "Attempting to create a self-referential tag loop!")
         else:
             self.children.append(tag)
+
+    @classmethod
+    def get_tag(cls, db_session, tag_name):
+        try:
+            return db_session.query(cls).filter(name=tag_name).one()
+        except NoResultFound:
+            tag = cls(name=tag_name)
+            db_session.add(tag)
+            db_session.commit()
+            return tag
