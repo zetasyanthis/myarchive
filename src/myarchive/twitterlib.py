@@ -160,8 +160,8 @@ class BulkApi(twitter.Api):
                     # If we overran the rate limit, try again.
                     if e.message[0][u'code'] == 88:
                         print (
-                            "Overran rate limit. Sleeping %s seconds in an attempt "
-                            "to recover..." % sleep_time)
+                            "Overran rate limit. Sleeping %s seconds in an "
+                            "attempt to recover..." % sleep_time)
                         request_index = requests_before_sleeps
                         sleep(sleep_time)
                         continue
@@ -219,8 +219,10 @@ class BulkApi(twitter.Api):
                         timestamp=row["timestamp"],
                         text=row["text"],
                         retweeted_status_id=row["retweeted_status_id"],
-                        retweeted_status_user_id=row["retweeted_status_user_id"],
-                        retweeted_status_timestamp=row["retweeted_status_timestamp"],
+                        retweeted_status_user_id=
+                        row["retweeted_status_user_id"],
+                        retweeted_status_timestamp=
+                        row["retweeted_status_timestamp"],
                         expanded_urls=row["expanded_urls"])
                     db_session.add(csv_tweet)
                     csv_tweets_by_id[tweet_id] = csv_tweet
