@@ -74,7 +74,7 @@ def main():
     if args.import_tweets_from_api:
         for twitter_api_account in TWITTER_API_ACCOUNTS:
             api = TwitterAPI(
-                consumer_key=twitter_api_account.username,
+                consumer_key=twitter_api_account.consumer_key,
                 consumer_secret=twitter_api_account.consumer_secret,
                 access_token_key=twitter_api_account.access_key,
                 access_token_secret=twitter_api_account.access_secret,
@@ -82,21 +82,21 @@ def main():
             raw_tweets.extend(
                 api.archive_tweets(
                     db_session=tag_db.session,
-                    username=args.username
+                    username=twitter_api_account.username
                 )
             )
     if args.import_tweets_from_archive_csv:
         for twitter_api_account in TWITTER_API_ACCOUNTS:
             api = TwitterAPI(
                 consumer_key=twitter_api_account.username,
-                consumer_secret=twitter_api_account.consumer_secret,
+                consumer_secret=twitter_api_account.consumer_key,
                 access_token_key=twitter_api_account.access_key,
                 access_token_secret=twitter_api_account.access_secret,
                 sleep_on_rate_limit=True)
             csv_raw_tweets, csv_only_tweets = api.import_from_csv(
                 db_session=tag_db.session,
                 csv_filepath=args.import_tweets_from_archive_csv,
-                username=args.username)
+                username=twitter_api_account.username)
             raw_tweets.extend(csv_raw_tweets)
     if args.parse_tweets is True:
         TwitterAPI.parse_tweets(
