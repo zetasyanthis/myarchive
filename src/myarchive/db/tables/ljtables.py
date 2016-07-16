@@ -34,13 +34,54 @@ class LJHost(Base):
     )
 
 
+class LJUser(Base):
+    """Class representing a user retrieved from a LJ-like service."""
+
+    __tablename__ = 'lj_users'
+
+    user_id = Column(Integer, index=True, primary_key=True)
+    username = Column(String, nullable=False)
+    host_id = Column(
+        Integer, ForeignKey("lj_hosts.id"),
+        nullable=False, primary_key=True)
+
+    entries = relationship(
+        "LJEntry",
+        backref=backref(
+            "lj_user",
+            doc="The user who wrote this entry.",
+            uselist=False),
+        doc="Entries written by this user."
+    )
+    comments = relationship(
+        "LJComment",
+        backref=backref(
+            "lj_user",
+            doc="User this comment belongs to.",
+            uselist=False),
+        doc="Comments on this entry.",
+    )
+
+    def __init__(self, user_id, username):
+        self.user_id = user_id
+        self.username = username
+
+    @classmethod
+    def get_user(cls, db_session, user_id, username):
+        try:
+            ljuser = db_session.query(cls).filter_by(user_id=user_id).one()
+        except NoResultFound:
+            ljuser = LJUser(user_id=user_id, username=username)
+        return ljuser
+
+
 class LJEntry(Base):
     """Class representing an entry retrieved from a LJ-like service."""
 
     __tablename__ = 'lj_entries'
 
     user_id = Column(Integer, index=True, primary_key=True)
-    username = Column(String, index=True, primary_key=True)
+    username = Column(String, nullable=False, )
     itemid = Column(Integer, index=True, primary_key=True)
     eventtime = Column(TIMESTAMP)
     subject = Column(String)
@@ -93,8 +134,6 @@ class LJComment(Base):
 
     __tablename__ = 'lj_comments'
 
-    user_id = Column(Integer, index=True, primary_key=True)
-    username = Column(String, index=True, primary_key=True)
     itemid = Column(Integer, index=True, primary_key=True)
     subject = Column(String)
     body = Column(String)
@@ -102,6 +141,9 @@ class LJComment(Base):
     parent_id = Column(Integer, ForeignKey("lj_comments.itemid"))
     entry_id = Column(
         Integer, ForeignKey("lj_entries.itemid"),
+        nullable=False, primary_key=True)
+    user_id = Column(
+        Integer, ForeignKey("lj_users.user_id"),
         nullable=False, primary_key=True)
 
     children = relationship(
