@@ -165,6 +165,7 @@ class BulkApi(twitter.Api):
                         request_index = requests_before_sleeps
                         sleep(sleep_time)
                         continue
+                    raise
                 print "Found %s tweets this iteration..." % len(loop_statuses)
                 # Check for "We ran out of tweets via this API" termination
                 # condition.
