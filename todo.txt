@@ -1,9 +1,9 @@
-Configuration
-    Add config file.
+Misc
+    Add config file in ./myarchive/
+    Add download of linked items somehow.
 
 Twitter
     Handle non-API CSV tweets.
-    Add download of linked items somehow.
 
 Dreamwidth / LJ
     Build out tables.
