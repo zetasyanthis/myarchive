@@ -7,6 +7,14 @@ from myarchive.db.tables.base import Base
 from myarchive.db.tables.file import TrackedFile
 
 
+class CircularDependencyError(Exception):
+    """
+    Specific exception for attempting to create a self-referential
+    infinite loop.
+    """
+    pass
+
+
 class LJHost(Base):
     """Class representing a user retrieved from a LJ-like service."""
 
@@ -57,7 +65,7 @@ class LJEntries(Base):
         # props["current_music"]
 
 
-class LJComments(Base):
+class LJComment(Base):
     """Class representing a comment retrieved from a LJ-like service."""
 
     __tablename__ = 'lj_comments'
@@ -67,3 +75,16 @@ class LJComments(Base):
     date = Column(TIMESTAMP)
     parent_id = Column(Integer, ForeignKey("lj_comments.id"))
     entry_id = Column(Integer, ForeignKey("lj_entries.id"))
+
+    children = relationship(
+        "LJComment",
+        backref=backref('parent', remote_side=[id])
+    )
+
+    def add_child(self, lj_comment):
+        """Creates an instance, performing a safety check first."""
+        if self in lj_comment.children:
+            raise CircularDependencyError(
+                "Attempting to create a self-referential tag loop!")
+        else:
+            self.children.append(lj_comment)
