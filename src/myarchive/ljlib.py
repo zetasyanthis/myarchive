@@ -4,7 +4,7 @@ from lj.backup import (
     DEFAULT_JOURNAL, update_journal_entries, update_journal_comments)
 
 
-class LJAPIServerConnection(object):
+class LJAPIConnection(object):
 
     def __init__(self, host, user_agent, username, password):
         self._server = lj.LJServer(

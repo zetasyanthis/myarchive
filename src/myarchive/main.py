@@ -4,12 +4,12 @@ import argparse
 import os
 import sys
 
-from twitterlib import BulkApi as TwitterAPI
+from twitterlib import TwitterAPI
+from ljlib import LJAPIConnection
 from accounts import LJ_API_ACCOUNTS, TWITTER_API_ACCOUNTS
 from db import TagDB
 # from gui import Gtk, MainWindow
 from util.logger import myarchive_LOGGER as logger
-
 
 
 def main():
@@ -55,6 +55,12 @@ def main():
         action="store_true",
         default=False,
         help='Prints all tweets.')
+    parser.add_argument(
+        '--import_lj_entries',
+        action="store_true",
+        default=False,
+        help='Imports LJ entries.'
+    )
     args = parser.parse_args()
 
     logger.debug(args)
@@ -122,6 +128,25 @@ def main():
     if args.download_media is True:
         TwitterAPI.download_media(
             db_session=tag_db.session, storage_folder=args.storage_folder)
+
+
+    """
+    LIVEJOURNAL SECTION
+    """
+
+    if args.import_lj_entries:
+        ljapis = []
+        for lj_api_account in LJ_API_ACCOUNTS:
+            ljapi = LJAPIConnection(
+                host=lj_api_account.host,
+                user_agent=lj_api_account.user_agent,
+                username=lj_api_account.username,
+                password=lj_api_account.password
+            )
+            ljapi.download_journals_and_comments()
+            ljapis.append(ljapi)
+        for ljapi in ljapis:
+            print ljapi.journal
 
     # MainWindow(tag_db)
     # Gtk.main()

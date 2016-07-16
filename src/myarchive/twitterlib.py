@@ -48,7 +48,7 @@ KEYS = [
 ]
 
 
-class BulkApi(twitter.Api):
+class TwitterAPI(twitter.Api):
     """API with an extra call."""
 
     def LookupStatuses(self, status_ids, trim_user=False,
