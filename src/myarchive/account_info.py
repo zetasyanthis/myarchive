@@ -2,7 +2,9 @@ from collections import namedtuple
 
 LJApiAccount = namedtuple(
     'LJApiAccount',
-    ["host", "user_agent", "email_address", "username", "password"])
+    ["host", "user_agent", "email_address", "username",
+     "password"]
+)
 
 TwitterApiAccount = namedtuple(
     'TwitterApiAccount',
