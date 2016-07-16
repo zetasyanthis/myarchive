@@ -1,10 +1,12 @@
 from sqlalchemy import (
     Column, Integer, String, TIMESTAMP, ForeignKey)
 from sqlalchemy.orm import backref, relationship
+from sqlalchemy.orm.exc import NoResultFound
 
 from myarchive.db.tables.association_tables import (
     at_ljcomment_tag, at_ljentry_tag)
 from myarchive.db.tables.base import Base
+from myarchive.db.tables.tag import Tag
 
 
 class CircularDependencyError(Exception):
@@ -53,6 +55,14 @@ class LJUser(Base):
         self.user_id = user_id
         self.username = username
 
+    @classmethod
+    def get_user(cls, db_session, user_id, username):
+        try:
+            ljuser = db_session.query(cls).filter_by(user_id=user_id).one()
+        except NoResultFound:
+            ljuser = LJUser(user_id=user_id, username=username)
+        return ljuser
+
 
 class LJEntry(Base):
     """Class representing an entry retrieved from a LJ-like service."""
@@ -83,8 +93,23 @@ class LJEntry(Base):
         self.subject = subject
         self.text = text
         self.current_music = current_music
-        # props["taglist"]
-        # props["current_music"]
+
+    @classmethod
+    def add_entry(cls, db_session, lj_user, itemid, eventtime, subject, text,
+                  current_music, tag_list):
+        try:
+            lj_entry = db_session.query(cls).\
+                filter_by(itemid=itemid).filter_by(user_id=lj_user.user_id).\
+                one()
+        except NoResultFound:
+            lj_entry = LJEntry(
+                itemid, eventtime, subject, text, current_music)
+        lj_user.entries.append(lj_entry)
+        if tag_list:
+            for tag_name in tag_list.split(", "):
+                tag = Tag.get_tag(db_session=db_session, tag_name=tag_name)
+                lj_entry.tags.append(tag)
+        return lj_entry
 
 
 class LJComment(Base):

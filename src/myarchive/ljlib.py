@@ -8,7 +8,6 @@ from lj.backup import (
     datetime_from_string)
 
 from myarchive.db.tables.ljtables import LJComment, LJEntry, LJHost, LJUser
-from myarchive.db.tables.tag import Tag
 
 
 class LJAPIConnection(object):
@@ -68,30 +67,29 @@ class LJAPIConnection(object):
             users[int(user_id)] = username
 
         poster = None
+        ljuser_lookup = dict()
         for user_id, username in users.items():
-            try:
-                ljuser = db_session.query(LJUser).filter_by(user_id=user_id).one()
-            except NoResultFound:
-                ljuser = LJUser(user_id=user_id, username=username)
-                self.ljhost.users.append(ljuser)
+            ljuser = LJUser.get_user(
+                db_session=db_session, user_id=user_id, username=username)
+            self.ljhost.users.append(ljuser)
+            ljuser_lookup[user_id] = ljuser
             if user_id == int(self.journal['login']["userid"]):
                 poster = ljuser
         db_session.commit()
 
         for entry_id, entry in self.journal["entries"].items():
-            ljentry = LJEntry(
+            LJEntry.add_entry(
+                db_session=db_session,
+                lj_user=poster,
                 itemid=entry_id,
                 eventtime=datetime_from_string(entry["eventtime"]),
                 subject=entry["subject"],
                 text=entry["event"],
-                current_music=entry["props"].get("current_music"))
-            poster.entries.append(ljentry)
-            tag_names = entry["props"].get("taglist")
-            if tag_names:
-                for tag_name in tag_names.split(", "):
-                    tag = Tag.get_tag(db_session=db_session, tag_name=tag_name)
-                    ljentry.tags.append(tag)
+                current_music=entry["props"].get("current_music"),
+                tag_list=entry["props"].get("taglist")
+            )
         db_session.commit()
 
         for comment_id, comment in self.journal["comments"].items():
+            # LJComment.get_comment()
             pass
