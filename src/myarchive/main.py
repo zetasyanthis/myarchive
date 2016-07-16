@@ -35,11 +35,11 @@ def main():
         '--import-tweets-from-api',
         action="store_true",
         default=False,
-        help='Downloads favorites. Accepts a Twitter username.')
+        help='Downloads user tweets and favorites..')
     parser.add_argument(
         '--import-tweets-from-archive-csv',
         action="store",
-        help='Downloads favorites. Accepts a Twitter username.')
+        help='Accepts a CSV filepath..')
     parser.add_argument(
         '--parse-tweets',
         action="store_true",
@@ -86,18 +86,26 @@ def main():
                 )
             )
     if args.import_tweets_from_archive_csv:
+        if not args.username:
+            logger.error("Username is required for CSV imports!")
+            sys.exit(1)
         for twitter_api_account in TWITTER_API_ACCOUNTS:
-            api = TwitterAPI(
-                consumer_key=twitter_api_account.username,
-                consumer_secret=twitter_api_account.consumer_key,
-                access_token_key=twitter_api_account.access_key,
-                access_token_secret=twitter_api_account.access_secret,
-                sleep_on_rate_limit=True)
-            csv_raw_tweets, csv_only_tweets = api.import_from_csv(
-                db_session=tag_db.session,
-                csv_filepath=args.import_tweets_from_archive_csv,
-                username=twitter_api_account.username)
-            raw_tweets.extend(csv_raw_tweets)
+            if args.username == twitter_api_account.username:
+                api = TwitterAPI(
+                    consumer_key=twitter_api_account.consumer_key,
+                    consumer_secret=twitter_api_account.consumer_key,
+                    access_token_key=twitter_api_account.access_key,
+                    access_token_secret=twitter_api_account.access_secret,
+                    sleep_on_rate_limit=True)
+                csv_raw_tweets, csv_only_tweets = api.import_from_csv(
+                    db_session=tag_db.session,
+                    csv_filepath=args.import_tweets_from_archive_csv,
+                    username=twitter_api_account.username)
+                raw_tweets.extend(csv_raw_tweets)
+                break
+            else:
+                raise Exception(
+                    "Unable to find matching TwitterAPIAccount for CSV import.")
     if args.parse_tweets is True:
         TwitterAPI.parse_tweets(
             db_session=tag_db.session, parse_all_raw=True)
