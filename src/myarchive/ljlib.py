@@ -1,5 +1,6 @@
 # Requires python-lj 0.2.
 
+from datetime import datetime
 from sqlalchemy.orm.exc import NoResultFound
 
 from lj import lj
@@ -67,18 +68,19 @@ class LJAPIConnection(object):
             users[int(user_id)] = username
 
         poster = None
-        ljuser_lookup = dict()
+        lj_users = dict()
         for user_id, username in users.items():
             ljuser = LJUser.get_user(
                 db_session=db_session, user_id=user_id, username=username)
             self.ljhost.users.append(ljuser)
-            ljuser_lookup[user_id] = ljuser
+            lj_users[user_id] = ljuser
             if user_id == int(self.journal['login']["userid"]):
                 poster = ljuser
         db_session.commit()
 
+        lj_entries = dict()
         for entry_id, entry in self.journal["entries"].items():
-            LJEntry.add_entry(
+            lj_entry = LJEntry.get_or_add_entry(
                 db_session=db_session,
                 lj_user=poster,
                 itemid=entry_id,
@@ -88,8 +90,19 @@ class LJAPIConnection(object):
                 current_music=entry["props"].get("current_music"),
                 tag_list=entry["props"].get("taglist")
             )
+            lj_entries[entry_id] = lj_entry
         db_session.commit()
 
         for comment_id, comment in self.journal["comments"].items():
-            # LJComment.get_comment()
-            pass
+            if comment["parentid"]:
+                LJComment.get_or_add_comment(
+                    db_session=db_session,
+                    lj_user=lj_users[int(comment["posterid"])],
+                    lj_entry=lj_entries[int(comment["jitemid"])],
+                    itemid=int(comment_id),
+                    subject=comment["subject"],
+                    body=comment["body"],
+                    date=datetime.strptime(comment["date"], "%Y-%m-%dT%H:%M:%SZ"),
+                    parent_id=comment["parentid"]
+                )
+        db_session.commit()
