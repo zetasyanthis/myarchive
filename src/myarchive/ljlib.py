@@ -1,7 +1,12 @@
 # Requires python-lj 0.2.
+
+from sqlalchemy.orm.exc import NoResultFound
+
 from lj import lj
 from lj.backup import (
     DEFAULT_JOURNAL, update_journal_entries, update_journal_comments)
+
+from myarchive.db.tables.ljtables import LJComment, LJEntries, LJUser
 
 
 class LJAPIConnection(object):
@@ -27,7 +32,7 @@ class LJAPIConnection(object):
             subject=subject,
             props={"taglist": ",".join(tags)})
 
-    def download_journals_and_comments(self):
+    def download_journals_and_comments(self, db_session):
         """Downloads journals and comments to a defined dictionary."""
 
         # Sync entries from the server
@@ -40,10 +45,22 @@ class LJAPIConnection(object):
 
         print("Updated %d entries and %d comments" % (nj, nc))
 
-        username = self.journal['login']["username"]
-        for entry in self.journal["entries"]:
+        users = {
+            int(self.journal['login']["userid"]):
+                self.journal['login']["username"],
+        }
+        for user_id, username in self.journal["comment_posters"].items():
+            users[int(user_id)] = username
+
+        for user_id, username in users.items():
+            try:
+                db_session.query(LJUser).filter_by(user_id=user_id).one()
+            except NoResultFound:
+                db_session.add(
+                    LJUser(user_id=user_id, username=username))
+        db_session.commit()
+
+        for entry_id, entry in self.journal["entries"].items():
             pass
-        for comment_poster in self.journal["comment_posters"]:
-            pass
-        for comment in self.journal["comments"]:
+        for comment_id, comment in self.journal["comments"].items():
             pass

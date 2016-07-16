@@ -32,12 +32,12 @@ class LJUser(Base):
 
     __tablename__ = 'lj_users'
 
-    id = Column(Integer, index=True, primary_key=True)
+    user_id = Column(Integer, index=True, primary_key=True)
     username = Column(String)
     host_id = Column(Integer, ForeignKey("lj_hosts.id"))
 
     def __init__(self, user_id, username):
-        self.id = user_id
+        self.user_id = user_id
         self.username = username
 
 
@@ -53,7 +53,7 @@ class LJEntries(Base):
     subject = Column(String)
     text = Column(String)
     current_music = Column(String)
-    user_id = Column(Integer, ForeignKey("lj_users.id"))
+    user_id = Column(Integer, ForeignKey("lj_users.user_id"))
 
     def __init__(self, itemid, eventtime, subject, text, current_music):
         self.itemid = itemid

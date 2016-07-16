@@ -135,7 +135,6 @@ def main():
     """
 
     if args.import_lj_entries:
-        ljapis = []
         for lj_api_account in LJ_API_ACCOUNTS:
             ljapi = LJAPIConnection(
                 host=lj_api_account.host,
@@ -143,15 +142,7 @@ def main():
                 username=lj_api_account.username,
                 password=lj_api_account.password
             )
-            ljapi.download_journals_and_comments()
-            ljapis.append(ljapi)
-        for ljapi in ljapis:
-            for entry in ljapi.journal["entries"].values():
-                print
-                print
-                print
-                for k, v in entry.items():
-                    print k, v
+            ljapi.download_journals_and_comments(db_session=tag_db.session)
 
     # MainWindow(tag_db)
     # Gtk.main()
