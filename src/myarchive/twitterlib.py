@@ -295,7 +295,15 @@ class BulkApi(twitter.Api):
                 db_session.commit()
 
             except TwitterError as e:
-                print e
+                # If we overran the rate limit, try again.
+                if e.message[0][u'code'] == 88:
+                    print (
+                        "Overran rate limit. Sleeping %s seconds in an "
+                        "attempt to recover..." % sleep_time)
+                    request_index = requests_before_sleeps
+                    sleep(sleep_time)
+                    continue
+                raise
             tweet_index += 100
             sliced_ids = csv_ids[tweet_index:100 + tweet_index]
 
