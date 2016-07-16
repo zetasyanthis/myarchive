@@ -94,15 +94,14 @@ class LJAPIConnection(object):
         db_session.commit()
 
         for comment_id, comment in self.journal["comments"].items():
-            if comment["parentid"]:
-                LJComment.get_or_add_comment(
-                    db_session=db_session,
-                    lj_user=lj_users[int(comment["posterid"])],
-                    lj_entry=lj_entries[int(comment["jitemid"])],
-                    itemid=int(comment_id),
-                    subject=comment["subject"],
-                    body=comment["body"],
-                    date=datetime.strptime(comment["date"], "%Y-%m-%dT%H:%M:%SZ"),
-                    parent_id=comment["parentid"]
-                )
+            LJComment.get_or_add_comment(
+                db_session=db_session,
+                lj_user=lj_users[int(comment["posterid"])],
+                lj_entry=lj_entries[int(comment["jitemid"])],
+                itemid=int(comment_id),
+                subject=comment["subject"],
+                body=comment["body"],
+                date=datetime.strptime(comment["date"], "%Y-%m-%dT%H:%M:%SZ"),
+                parent_id=comment["parentid"]
+            )
         db_session.commit()
