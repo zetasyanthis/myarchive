@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Column, Integer, String, TIMESTAMP, ForeignKey)
+    Column, Integer, String, TIMESTAMP, ForeignKey, UniqueConstraint)
 from sqlalchemy.orm import backref, relationship
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -39,11 +39,14 @@ class LJUser(Base):
 
     __tablename__ = 'lj_users'
 
-    user_id = Column(Integer, index=True, primary_key=True)
+    id = Column(Integer, index=True, primary_key=True)
+    user_id = Column(Integer)
     username = Column(String, nullable=False)
-    host_id = Column(
-        Integer, ForeignKey("lj_hosts.id"),
-        nullable=False, primary_key=True)
+    host_id = Column(Integer, ForeignKey("lj_hosts.id"), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(user_id, host_id),
+    )
 
     entries = relationship(
         "LJEntry",
@@ -80,14 +83,17 @@ class LJEntry(Base):
 
     __tablename__ = 'lj_entries'
 
-    itemid = Column(Integer, index=True, primary_key=True)
+    id = Column(Integer, index=True, primary_key=True)
+    itemid = Column(Integer)
     eventtime = Column(TIMESTAMP)
     subject = Column(String)
     text = Column(String)
     current_music = Column(String)
-    user_id = Column(
-        Integer, ForeignKey("lj_users.user_id"),
-        nullable=False, primary_key=True)
+    user_id = Column(Integer, ForeignKey("lj_users.id"), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(itemid, user_id),
+    )
 
     comments = relationship(
         "LJComment",
@@ -135,21 +141,22 @@ class LJComment(Base):
 
     __tablename__ = 'lj_comments'
 
-    itemid = Column(Integer, index=True, primary_key=True)
+    id = Column(Integer, index=True, primary_key=True)
+    itemid = Column(Integer)
+    entry_id = Column(Integer, ForeignKey("lj_entries.id"))
+    user_id = Column(Integer, ForeignKey("lj_users.id"))
     subject = Column(String)
     body = Column(String)
     date = Column(TIMESTAMP)
-    parent_id = Column(Integer, ForeignKey("lj_comments.itemid"))
-    entry_id = Column(
-        Integer, ForeignKey("lj_entries.itemid"),
-        nullable=False, primary_key=True)
-    user_id = Column(
-        Integer, ForeignKey("lj_users.user_id"),
-        nullable=False, primary_key=True)
+    parent_id = Column(Integer, ForeignKey("lj_comments.id"))
+
+    __table_args__ = (
+        UniqueConstraint(itemid, entry_id, user_id),
+    )
 
     children = relationship(
         "LJComment",
-        backref=backref('parent_comment', remote_side=[itemid])
+        backref=backref('parent_comment', remote_side=[id])
     )
     tags = relationship(
         "Tag",
