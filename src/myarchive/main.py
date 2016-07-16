@@ -99,7 +99,7 @@ def main():
             if args.username == twitter_api_account.username:
                 api = TwitterAPI(
                     consumer_key=twitter_api_account.consumer_key,
-                    consumer_secret=twitter_api_account.consumer_key,
+                    consumer_secret=twitter_api_account.consumer_secret,
                     access_token_key=twitter_api_account.access_key,
                     access_token_secret=twitter_api_account.access_secret,
                     sleep_on_rate_limit=True)
