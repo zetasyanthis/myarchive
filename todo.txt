@@ -1,5 +1,6 @@
 Misc
-    Add config file in ./myarchive/
+    Comments
+    Add config file in ./myarchive/ for account info.
     Add download of linked items somehow.
 
 Twitter
@@ -17,6 +18,8 @@ Goodreads
 SoFurry
 Weasyl
 Youtube videos
+    youtube-dl for video downloads
+    API for uploads only: https://github.com/youtube/api-samples/tree/master/python
 RSS Feeds
 Internet archive API may be of help.
 
