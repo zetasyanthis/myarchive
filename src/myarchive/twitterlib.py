@@ -4,6 +4,7 @@
 #
 
 import csv
+import logging
 import os
 import time
 import twitter
@@ -15,6 +16,10 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from myarchive.db.tables.twittertables import (
     CSVTweet, RawTweet, Tweet, TwitterUser)
+
+
+LOGGER = logging.getLogger(__name__)
+
 
 USER = "USER"
 FAVORITES = "FAVORITES"
@@ -112,7 +117,7 @@ class TwitterAPI(twitter.Api):
                     order_by(desc(RawTweet.id)).first()
             if since_id:
                 since_id = since_id[0]
-            print type_, since_id
+            # print(type_, since_id)
 
             start_time = -1
             sleep_time = 0
@@ -128,14 +133,16 @@ class TwitterAPI(twitter.Api):
                     duration = time.time() - start_time
                     if duration < sleep_time:
                         sleep_duration = sleep_time - duration
-                        print ("Sleeping for %s seconds to ease up on rate "
-                               "limit..." % sleep_duration)
+                        LOGGER.info(
+                            "Sleeping for %s seconds to ease up on rate "
+                            "limit...", sleep_duration)
                         sleep(sleep_duration)
                 start_time = time.time()
                 request_index += 1
 
-                print ("Pulling 200 tweets from API starting with ID %s and "
-                       "ending with ID %s..." % (since_id, max_id))
+                LOGGER.info(
+                    "Pulling 200 tweets from API starting with ID %s and "
+                    "ending with ID %s...", since_id, max_id)
                 try:
                     if type_ == FAVORITES:
                         loop_statuses = self.GetFavorites(
@@ -159,14 +166,15 @@ class TwitterAPI(twitter.Api):
                 except twitter.error.TwitterError as e:
                     # If we overran the rate limit, try again.
                     if e.message[0][u'code'] == 88:
-                        print (
+                        LOGGER.warning(
                             "Overran rate limit. Sleeping %s seconds in an "
-                            "attempt to recover..." % sleep_time)
+                            "attempt to recover...", sleep_time)
                         request_index = requests_before_sleeps
                         sleep(sleep_time)
                         continue
                     raise
-                print "Found %s tweets this iteration..." % len(loop_statuses)
+                LOGGER.info(
+                    "Found %s tweets this iteration...", len(loop_statuses))
                 # Check for "We ran out of tweets via this API" termination
                 # condition.
                 if not loop_statuses:
@@ -184,7 +192,7 @@ class TwitterAPI(twitter.Api):
                         max_id = status_id - 1
 
             # Format things the way we want and handle max_id changes.
-            print "Adding %s tweets to DB..." % len(statuses)
+            LOGGER.info("Adding %s tweets to DB...", len(statuses))
             existing_rawtweet_ids = [
                 returned_tuple[0]
                 for returned_tuple in db_session.query(RawTweet.id).all()]
@@ -203,7 +211,7 @@ class TwitterAPI(twitter.Api):
         return new_tweets
 
     def import_from_csv(self, db_session, csv_filepath, username):
-        print "Importing into CSVTweets..."
+        LOGGER.info("Importing into CSVTweets...")
         csv_tweets_by_id = dict(
             (csv_tweet.id, csv_tweet)
             for csv_tweet in db_session.query(CSVTweet).all())
@@ -229,7 +237,7 @@ class TwitterAPI(twitter.Api):
                     csv_tweets_by_id[tweet_id] = csv_tweet
         db_session.commit()
 
-        print "Scanning for existing RawTweets..."
+        LOGGER.info("Scanning for existing RawTweets...")
         existing_rawtweet_ids = [
             returned_tuple[0]
             for returned_tuple in db_session.query(RawTweet.id).all()]
@@ -246,7 +254,8 @@ class TwitterAPI(twitter.Api):
 
         csv_ids = list(csv_tweets_by_id.keys())
         num_imports = len(csv_ids)
-        print "Attempting API import of %s tweets based on CSV file..." % (
+        LOGGER.info(
+            "Attempting API import of %s tweets based on CSV file...",
             num_imports)
 
         # API allows 60 requests per 15 minutes.
@@ -268,15 +277,18 @@ class TwitterAPI(twitter.Api):
                 duration = time.time() - start_time
                 if duration < sleep_time:
                     sleep_duration = sleep_time - duration
-                    print ("Sleeping for %s seconds to ease up on rate "
-                           "limit..." % sleep_duration)
+                    LOGGER.info(
+                        "Sleeping for %s seconds to ease up on rate limit...",
+                        sleep_duration)
                     sleep(sleep_duration)
             request_index += 1
             start_time = time.time()
 
             # Perform the import.
-            print "Attempting import of id %s to %s of %s..." % (
-                tweet_index + 1, min(tweet_index + 100, num_imports), num_imports)
+            LOGGER.info(
+                "Attempting import of id %s to %s of %s...",
+                tweet_index + 1, min(tweet_index + 100, num_imports),
+                num_imports)
             try:
                 statuses = self.LookupStatuses(
                     status_ids=[str(sliced_id) for sliced_id in sliced_ids],
@@ -297,9 +309,9 @@ class TwitterAPI(twitter.Api):
             except TwitterError as e:
                 # If we overran the rate limit, try again.
                 if e.message[0][u'code'] == 88:
-                    print (
+                    LOGGER.warning(
                         "Overran rate limit. Sleeping %s seconds in an "
-                        "attempt to recover..." % sleep_time)
+                        "attempt to recover...", sleep_time)
                     request_index = requests_before_sleeps
                     sleep(sleep_time)
                     continue
@@ -327,11 +339,12 @@ class TwitterAPI(twitter.Api):
         raw_tweets_to_parse = [
             raw_tweet for raw_tweet in raw_tweets
             if (int(raw_tweet.raw_status_dict["id"]),) not in existing_tweet_ids]
-        print "Found %s tweets to parse." % len(raw_tweets_to_parse)
+        LOGGER.info("Found %s tweets to parse.", len(raw_tweets_to_parse))
 
         for index, raw_tweet in enumerate(raw_tweets_to_parse):
             if index % 100 == 0:
-                print "Parsing tweet %s to %s of %s..." % (
+                LOGGER.info(
+                    "Parsing tweet %s to %s of %s...",
                     index,
                     min(index + 100, len(raw_tweets_to_parse)),
                     len(raw_tweets_to_parse))
@@ -354,7 +367,7 @@ class TwitterAPI(twitter.Api):
         db_session.commit()
 
         if csv_only_tweets:
-            print "CSV Only: %s" % len(csv_only_tweets)
+            print("CSV Only: %s" % len(csv_only_tweets))
 
     @staticmethod
     def download_media(db_session, storage_folder):
@@ -367,4 +380,4 @@ class TwitterAPI(twitter.Api):
     @staticmethod
     def print_tweets(db_session):
         for raw_tweet in db_session.query(RawTweet).all():
-            print raw_tweet
+            print(raw_tweet)

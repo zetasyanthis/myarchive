@@ -3,6 +3,7 @@ Module containing class definitions for files to be tagged.
 """
 
 import imghdr
+import logging
 import os
 import requests
 
@@ -13,6 +14,9 @@ from sqlalchemy.orm import backref, relationship
 
 from myarchive.db.tables.base import Base
 from myarchive.db.tables.association_tables import at_file_tag
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class TrackedFile(Base):
@@ -66,7 +70,8 @@ class TrackedFile(Base):
         tracked_file = db_session.query(cls).\
             filter_by(md5sum=md5sum).all()
         if tracked_file:
-            print "Repeated hash: %s [%s, %s]" % (
+            LOGGER.debug(
+                "Repeated hash: %s [%s, %s]",
                 md5sum, tracked_file[0].filepath, filepath)
         return TrackedFile(original_filename, filepath, md5sum, url)
 
@@ -78,7 +83,7 @@ class TrackedFile(Base):
 
         # Download the file.
         filename = os.path.basename(urlparse(url).path)
-        print "Downloading %s..." % url
+        LOGGER.info("Downloading %s...", url)
         media_request = requests.get(url)
 
         # Add file to DB (runs a md5sum).

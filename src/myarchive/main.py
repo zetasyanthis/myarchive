@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import argparse
 import os
@@ -10,6 +10,12 @@ from accounts import LJ_API_ACCOUNTS, TWITTER_API_ACCOUNTS
 from db import TagDB
 # from gui import Gtk, MainWindow
 from util.logger import myarchive_LOGGER as logger
+
+
+from logging import getLogger
+
+
+LOGGER = getLogger("myarchive")
 
 
 def main():
@@ -121,7 +127,8 @@ def main():
 
     # Parse any downloaded tweets immediately.
     if raw_tweets or csv_only_tweets:
-        print "Processing %s new raw tweets and %s CSV-only tweets..." % (
+        LOGGER.info(
+            "Processing %s new raw tweets and %s CSV-only tweets...",
             len(raw_tweets), len(csv_only_tweets))
         TwitterAPI.parse_tweets(
             db_session=tag_db.session, raw_tweets=raw_tweets,
