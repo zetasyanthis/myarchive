@@ -25,5 +25,6 @@ Internet archive API may be of help.
 
 
 Requirements
-    python-lj
-    python-twitter
+    python3-lj
+    python3-twitter
+    python3-chardet
