@@ -8,7 +8,7 @@ import os
 import requests
 
 from hashlib import md5
-from urlparse import urlparse
+from urllib.parse import urlparse
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import backref, relationship
 
