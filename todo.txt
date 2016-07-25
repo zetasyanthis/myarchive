@@ -1,26 +1,25 @@
 Misc
-    Comments
     Add config file in ./myarchive/ for account info.
     Add download of linked items somehow.
+    Comment the damned code
+    Pylint/PEP8
 
 Twitter
     Kill RawTweets if possible. It's a huge storage hog.
     Handle non-API CSV tweets.
-
-Dreamwidth / LJ
-    Add download of posts.
-    Add download of comments.
-
 Medium
     https://medium.com/developers/welcome-to-the-medium-api-3418f956552#.9aey342sp
-Podcasts
-Goodreads
 SoFurry
 Weasyl
+Goodreads
+Podcasts
 Youtube videos
     youtube-dl for video downloads
     API for uploads only: https://github.com/youtube/api-samples/tree/master/python
 RSS Feeds
+Dreamwidth / LJ
+    Add download of posts.
+    Add download of comments.
 Internet archive API may be of help.
 
 
