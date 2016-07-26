@@ -13,6 +13,7 @@ Twitter
 Medium
     https://medium.com/developers/welcome-to-the-medium-api-3418f956552#.9aey342sp
     https://github.com/Medium/medium-sdk-python
+    https://medium.com/me/settings
 Github Gist
     https://developer.github.com/v3/gists/
 SoFurry
