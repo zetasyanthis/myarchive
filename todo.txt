@@ -4,22 +4,27 @@ Misc
     Comment the damned code
     Pylint/PEP8
 
+Dreamwidth / LJ
+    Add download of posts.
+    Add download of comments.
 Twitter
     Kill RawTweets if possible. It's a huge storage hog.
     Handle non-API CSV tweets.
 Medium
     https://medium.com/developers/welcome-to-the-medium-api-3418f956552#.9aey342sp
+    https://github.com/Medium/medium-sdk-python
+Github Gist
+    https://developer.github.com/v3/gists/
 SoFurry
 Weasyl
 Goodreads
+LibraryThing
 Podcasts
 Youtube videos
     youtube-dl for video downloads
     API for uploads only: https://github.com/youtube/api-samples/tree/master/python
 RSS Feeds
-Dreamwidth / LJ
-    Add download of posts.
-    Add download of comments.
+Github Repository (Auto-pull updates?)
 Internet archive API may be of help.
 
 
