@@ -62,7 +62,7 @@ class TrackedFile(Base):
                 if imghdr_extension:
                     extension = "." + imghdr_extension
             filepath = os.path.join(media_path, str(md5sum)) + extension
-            with open(filepath, "w") as fptr:
+            with open(filepath, "wb") as fptr:
                 fptr.write(file_buffer)
         else:
             filepath = os.path.join(os.path.join(media_path, original_filename))

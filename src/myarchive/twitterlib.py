@@ -188,7 +188,7 @@ class TwitterAPI(twitter.Api):
                     # Only append if we don't breach since_id.
                     statuses.append(loop_status)
                     # Capture new max_id
-                    if status_id < max_id or max_id is None:
+                    if max_id is None or status_id < max_id:
                         max_id = status_id - 1
 
             # Format things the way we want and handle max_id changes.
