@@ -348,7 +348,7 @@ class TwitterAPI(twitter.Api):
         existing_tweet_ids = db_session.query(Tweet.id).all()
         raw_tweets_to_parse = [
             raw_tweet for raw_tweet in raw_tweets
-            if (int(raw_tweet.raw_status_dict["id"]),) not in existing_tweet_ids]
+            if (raw_tweet.id,) not in existing_tweet_ids]
         LOGGER.info("Found %s tweets to parse.", len(raw_tweets_to_parse))
 
         for index, raw_tweet in enumerate(raw_tweets_to_parse):
@@ -384,9 +384,9 @@ class TwitterAPI(twitter.Api):
         raw_tweets = db_session.query(RawTweet).all()
         raw_tweets_by_id = {
             raw_tweet.id: raw_tweet for raw_tweet in raw_tweets}
-        # for user in db_session.query(TwitterUser):
-        #     user.download_media(db_session=db_session, media_path=media_path)
         for tweet in db_session.query(Tweet):
             tweet.download_media(
                 db_session=db_session, media_path=media_path,
                 raw_tweets_by_id=raw_tweets_by_id)
+        for user in db_session.query(TwitterUser):
+            user.download_media(db_session=db_session, media_path=media_path)

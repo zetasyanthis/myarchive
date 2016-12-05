@@ -163,14 +163,15 @@ class Tweet(Base):
     def download_media(self, db_session, media_path, raw_tweets_by_id):
         # Retrieve media files.
         raw_tweet = raw_tweets_by_id.get(self.id)
-        if raw_tweet is not None and "media" in raw_tweet.raw_status_dict:
-            for media_item in raw_tweet.raw_status_dict["media"]:
-                media_url = media_item["media_url_https"]
-                tracked_file = TrackedFile.download_file(
-                    db_session, media_path, media_url)
-                if (tracked_file is not None and
-                        tracked_file not in self.files):
-                    self.files.append(tracked_file)
+        if raw_tweet is not None:
+            if "media" in raw_tweet.raw_status_dict:
+                for media_item in raw_tweet.raw_status_dict["media"]:
+                    media_url = media_item["media_url_https"]
+                    tracked_file = TrackedFile.download_file(
+                        db_session, media_path, media_url)
+                    if (tracked_file is not None and
+                            tracked_file not in self.files):
+                        self.files.append(tracked_file)
             db_session.delete(raw_tweet)
 
 

@@ -1,3 +1,6 @@
+Twitter
+    Fix up how we detect new tweets. That query is *totally broken*!
+    Make username handling a bit more robust. (zetasyanthis vs. ZetaSyanthis, etc...) We can check when we start to see if that user exists and suggest near matches. Use like for case insensitive search.
 General
     Add config file in ./myarchive/.
         Move account info here.
@@ -10,10 +13,6 @@ General
     https://wiki.python.org/moin/SortingListsOfDictionaries
     https://www.python.org/dev/peps/pep-3148/
     Consider compressing DB with lzop. Saves a ton of space and it's very fast.
-Twitter
-    File download REQUIRES RawTweet right now. Eww.
-    Make username handling a bit more robust. (zetasyanthis vs. ZetaSyanthis, etc...)
-    We can check when we start to see if that user exists and suggest near matches. Use like for case insensitive search.
 Shotwell
     DB and file import
 Dreamwidth / LJ
