@@ -369,7 +369,6 @@ class TwitterAPI(twitter.Api):
         if csv_only_tweets:
             print("CSV Only: %s" % len(csv_only_tweets))
             for csv_only_tweet in csv_only_tweets:
-                print(csv_only_tweet.username)
                 user = db_session.query(TwitterUser).\
                     filter_by(screen_name=csv_only_tweet.username).one()
                 tweet = Tweet.make_from_csvtweet(csv_only_tweet)
