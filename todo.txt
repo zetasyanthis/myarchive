@@ -1,4 +1,5 @@
 Twitter
+    Compress DB with lzop. Saves a ton of space and it's very fast.
     Save a compressed version of the imported CSV (with timestamp).
     Handle non-API CSV tweets.
     Eliminate CSVTweets?
