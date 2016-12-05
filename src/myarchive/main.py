@@ -156,6 +156,8 @@ def main():
     # MainWindow(tag_db)
     # Gtk.main()
 
+    tag_db.clean_db_and_close()
+
 
 if __name__ == '__main__':
     main()

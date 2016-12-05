@@ -8,7 +8,7 @@ from sqlalchemy.engine.url import URL as SQLAlchemyURL
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import IntegrityError
 
-from myarchive.db.tables import Base, TrackedFile, Tag, Tweet
+from myarchive.db.tables import Base, TrackedFile, Tag, Tweet, CSVTweet
 
 # Get the module logger.
 logger = logging.getLogger(__name__)
@@ -125,6 +125,22 @@ class TagDB(DB):
                 logger.warning(
                     "Ignoring previously imported file: %s" % filename)
         logger.debug("Import Complete!")
+
+    def clean_db_and_close(self):
+
+        imported_tweets = self.session.query(CSVTweet). \
+            filter_by(api_import_complete=True).all()
+        for imported_tweet in imported_tweets:
+            self.session.delete(imported_tweet)
+        self.session.commit()
+
+        # Run VACUUM.
+        self.session.close()
+        connection = self.engine.raw_connection()
+        cursor = connection.cursor()
+        cursor.execute("VACUUM")
+        connection.commit()
+        cursor.close()
 
 
 if __name__ == '__main__':
