@@ -79,7 +79,7 @@ def main():
 
     tag_db = TagDB(
         drivername='sqlite',
-        db_name=os.path.join(args.storage_folder, "archive.sqlite"))
+        db_name=os.path.join(args.storage_folder, "myarchive.sqlite"))
     tag_db.session.autocommit = False
 
     raw_tweets = []
