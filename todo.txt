@@ -1,11 +1,17 @@
 Twitter
-    Make username handling a bit more robust. (zetasyanthis vs. ZetaSyanthis, etc...) We can check when we start to see if that user exists and suggest near matches. Use like for case insensitive search.
+    Force media download and always kill RawTweets.
+    Don't bother grabbing the RawTweet if the ID exists in Tweets.
 General
     Add config file in ./myarchive/.
         Move account info here.
         Optionally save a compressed copy of the imported tweet CSV (with timestamp).
         Optionally (default is True) delete from RawTweets if they're parsed. (Saves 90% of DB space!)
             http://stackoverflow.com/a/34834205/3804199
+    Add multithreaded support for background updates.
+        http://stackoverflow.com/questions/6297404/multi-threaded-use-of-sqlalchemy
+        http://stackoverflow.com/questions/9619789/sqlalchemy-proper-session-handling-in-multi-thread-applications
+        http://docs.sqlalchemy.org/en/latest/dialects/sqlite.html#threading-pooling-behavior
+        http://docs.sqlalchemy.org/en/latest/orm/session_basics.html#when-do-i-make-a-sessionmaker
     Add attempted download of linked pages if possible.
     Comment the damned code
     Pylint/PEP8
@@ -14,6 +20,7 @@ General
     Consider compressing DB with lzop. Saves a ton of space and it's very fast.
 Shotwell
     DB and file import
+    Use md5sums for storage, but save original filename in DB.
 Dreamwidth / LJ
     Add download of posts.
     Add download of comments.
