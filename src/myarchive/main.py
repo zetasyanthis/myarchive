@@ -4,12 +4,12 @@ import argparse
 import os
 import sys
 
-from twitterlib import TwitterAPI
-from ljlib import LJAPIConnection
-from accounts import LJ_API_ACCOUNTS, TWITTER_API_ACCOUNTS
-from db import TagDB
+from myarchive.twitterlib import TwitterAPI
+from myarchive.ljlib import LJAPIConnection
+from myarchive.accounts import LJ_API_ACCOUNTS, TWITTER_API_ACCOUNTS
+from myarchive.db import TagDB
 # from gui import Gtk, MainWindow
-from util.logger import myarchive_LOGGER as logger
+from myarchive.util.logger import myarchive_LOGGER as logger
 
 
 from logging import getLogger
@@ -84,7 +84,6 @@ def main():
     tag_db.session.autocommit = False
 
     raw_tweets = []
-    csv_only_tweets = []
     if args.import_tweets_from_api:
         for twitter_api_account in TWITTER_API_ACCOUNTS:
             api = TwitterAPI(
@@ -111,7 +110,7 @@ def main():
                     access_token_key=twitter_api_account.access_key,
                     access_token_secret=twitter_api_account.access_secret,
                     sleep_on_rate_limit=True)
-                csv_raw_tweets, csv_only_tweets = api.import_from_csv(
+                csv_raw_tweets = api.import_from_csv(
                     db_session=tag_db.session,
                     csv_filepath=args.import_tweets_from_archive_csv,
                     username=twitter_api_account.username)
@@ -120,25 +119,22 @@ def main():
             else:
                 raise Exception(
                     "Unable to find matching TwitterAPIAccount for CSV import.")
+
+    # If we've been told to parse, try to parse everything.
     if args.parse_tweets is True:
         TwitterAPI.parse_tweets(
-            db_session=tag_db.session, parse_all_raw=True,
-            username=args.username)
-    if args.print_tweets is True:
-        TwitterAPI.print_tweets(db_session=tag_db.session)
-
-    # Parse any downloaded tweets immediately.
-    if raw_tweets or csv_only_tweets:
+            db_session=tag_db.session, parse_all_raw=True)
+    # Regardless, parse any downloaded tweets immediately.
+    elif raw_tweets:
         LOGGER.info(
-            "Processing %s new raw tweets and %s CSV-only tweets...",
-            len(raw_tweets), len(csv_only_tweets))
+            "Processing %s new raw tweets...", len(raw_tweets))
         TwitterAPI.parse_tweets(
-            db_session=tag_db.session, raw_tweets=raw_tweets,
-            csv_only_tweets=csv_only_tweets)
+            db_session=tag_db.session, raw_tweets=raw_tweets)
+
+    # Optionally, force download of associated media.
     if args.download_media is True:
         TwitterAPI.download_media(
             db_session=tag_db.session, storage_folder=args.storage_folder)
-
 
     """
     LIVEJOURNAL SECTION

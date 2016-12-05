@@ -237,14 +237,14 @@ class TwitterAPI(twitter.Api):
                     csv_tweets_by_id[tweet_id] = csv_tweet
         db_session.commit()
 
-        LOGGER.info("Scanning for existing RawTweets...")
-        existing_rawtweet_ids = [
+        LOGGER.info("Scanning for existing Tweets...")
+        existing_tweet_ids = [
             returned_tuple[0]
-            for returned_tuple in db_session.query(RawTweet.id).all()]
+            for returned_tuple in db_session.query(Tweet.id).all()]
         ids_to_remove = []
         for tweet_id, csv_tweet in csv_tweets_by_id.items():
             # If any aren't set as imported and should be, clean that up.
-            if tweet_id in existing_rawtweet_ids:
+            if tweet_id in existing_tweet_ids:
                 ids_to_remove.append(tweet_id)
                 if not csv_tweet.api_import_complete:
                     csv_tweet.api_import_complete = True
@@ -322,11 +322,21 @@ class TwitterAPI(twitter.Api):
         csv_only_tweets = db_session.query(CSVTweet).\
             filter_by(api_import_complete=False).all()
 
-        return new_api_tweets, csv_only_tweets
+        LOGGER.info("Parsing out %s CSV-only tweets..." % len(csv_only_tweets))
+        for csv_only_tweet in csv_only_tweets:
+            user = db_session.query(TwitterUser). \
+                filter_by(screen_name=csv_only_tweet.username).one()
+            tweet = Tweet.make_from_csvtweet(csv_only_tweet)
+            user.tweets.append(tweet)
+            csv_only_tweet.api_import_complete = True
+        db_session.commit()
+
+        LOGGER.info("Downloading associated media files...")
+
+        return new_api_tweets
 
     @staticmethod
-    def parse_tweets(db_session, raw_tweets=None, csv_only_tweets=None,
-                     parse_all_raw=False, username=None):
+    def parse_tweets(db_session, raw_tweets=None, parse_all_raw=False):
         user = None
 
         if parse_all_raw is True:
@@ -356,7 +366,8 @@ class TwitterAPI(twitter.Api):
                 pass
             else:
                 try:
-                    user = db_session.query(TwitterUser).filter_by(id=user_id).one()
+                    user = db_session.query(TwitterUser).\
+                        filter_by(id=user_id).one()
                 except NoResultFound:
                     user = TwitterUser(user_dict)
                     db_session.add(user)
@@ -366,25 +377,11 @@ class TwitterAPI(twitter.Api):
             user.tweets.append(tweet)
         db_session.commit()
 
-        if csv_only_tweets:
-            print("CSV Only: %s" % len(csv_only_tweets))
-            for csv_only_tweet in csv_only_tweets:
-                user = db_session.query(TwitterUser).\
-                    filter_by(screen_name=csv_only_tweet.username).one()
-                tweet = Tweet.make_from_csvtweet(csv_only_tweet)
-                user.tweets.append(tweet)
-                csv_only_tweet.api_import_complete = True
-            db_session.commit()
-
     @staticmethod
     def download_media(db_session, storage_folder):
         media_path = os.path.join(storage_folder, "media/")
+        os.makedirs(media_path, exist_ok=True)
         for user in db_session.query(TwitterUser):
             user.download_media(db_session=db_session, media_path=media_path)
         for tweet in db_session.query(Tweet):
             tweet.download_media(db_session=db_session, media_path=media_path)
-
-    @staticmethod
-    def print_tweets(db_session):
-        for raw_tweet in db_session.query(RawTweet).all():
-            print(raw_tweet)

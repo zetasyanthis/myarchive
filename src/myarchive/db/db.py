@@ -128,6 +128,7 @@ class TagDB(DB):
 
     def clean_db_and_close(self):
 
+        # Clean all imported CSVTweets.
         imported_tweets = self.session.query(CSVTweet). \
             filter_by(api_import_complete=True).all()
         for imported_tweet in imported_tweets:

@@ -103,6 +103,7 @@ class Tweet(Base):
     in_reply_to_screen_name = Column(String)
     in_reply_to_status_id = Column(Integer)
     user_id = Column(Integer, ForeignKey("twitter_users.id"), nullable=True)
+    files_downloaded = Column(Boolean, default=False)
 
     files = relationship(
         "TrackedFile",
@@ -131,6 +132,7 @@ class Tweet(Base):
         if hashtags_list:
             self.hashtags = ",".join(
                 [hashtag_dict[u"text"] for hashtag_dict in hashtags_list])
+        self.files_downloaded = False
 
     def __repr__(self):
         return "<Tweet(id='%s', text='%s')>" % (self.id, self.text)
@@ -170,6 +172,7 @@ class Tweet(Base):
                     if (tracked_file is not None and
                             tracked_file not in self.files):
                         self.files.append(tracked_file)
+                db_session.delete(raw_tweet)
                 db_session.commit()
         except NoResultFound:
             pass
