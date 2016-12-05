@@ -381,7 +381,12 @@ class TwitterAPI(twitter.Api):
     def download_media(db_session, storage_folder):
         media_path = os.path.join(storage_folder, "media/")
         os.makedirs(media_path, exist_ok=True)
-        for user in db_session.query(TwitterUser):
-            user.download_media(db_session=db_session, media_path=media_path)
+        raw_tweets = db_session.query(RawTweet).all()
+        raw_tweets_by_id = {
+            raw_tweet.id: raw_tweet for raw_tweet in raw_tweets}
+        # for user in db_session.query(TwitterUser):
+        #     user.download_media(db_session=db_session, media_path=media_path)
         for tweet in db_session.query(Tweet):
-            tweet.download_media(db_session=db_session, media_path=media_path)
+            tweet.download_media(
+                db_session=db_session, media_path=media_path,
+                raw_tweets_by_id=raw_tweets_by_id)
