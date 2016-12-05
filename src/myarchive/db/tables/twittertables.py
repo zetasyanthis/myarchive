@@ -121,15 +121,13 @@ class Tweet(Base):
         secondary=at_tweet_tag
     )
 
-    def __init__(self, status_dict):
-        self.id = int(status_dict["id"])
-        self.text = status_dict["text"]
-        in_reply_to_status_id = status_dict.get(
-            "in_reply_to_status_id")
+    def __init__(self, id, text, in_reply_to_status_id, created_at,
+                 hashtags_list):
+        self.id = int(id)
+        self.text = text
         if in_reply_to_status_id is not None:
             self.in_reply_to_status_id = int(in_reply_to_status_id)
-        self.created_at = status_dict["created_at"]
-        hashtags_list = status_dict.get("hashtags")
+        self.created_at = created_at
         if hashtags_list:
             self.hashtags = ",".join(
                 [hashtag_dict[u"text"] for hashtag_dict in hashtags_list])
@@ -139,20 +137,25 @@ class Tweet(Base):
 
     @classmethod
     def make_from_raw(cls, raw_tweet):
-        tweet = cls(raw_tweet.raw_status_dict)
+
+        tweet = cls(
+            id=raw_tweet.raw_status_dict["id"],
+            text=raw_tweet.raw_status_dict["text"],
+            in_reply_to_status_id=raw_tweet.raw_status_dict.get(
+                "in_reply_to_status_id"),
+            created_at=raw_tweet.raw_status_dict["created_at"],
+            hashtags_list=raw_tweet.raw_status_dict.get("hashtags"),
+            )
         return tweet
 
     @classmethod
     def make_from_csvtweet(cls, csv_tweet):
-        in_reply_to_status_id = csv_tweet.in_reply_to_status_id
-        if in_reply_to_status_id is not None:
-            in_reply_to_status_id = int(in_reply_to_status_id)
         return cls(
             id=csv_tweet.id,
             text=csv_tweet.text,
-            in_reply_to_status_id=in_reply_to_status_id,
+            in_reply_to_status_id=csv_tweet.in_reply_to_status_id,
             created_at=csv_tweet.timestamp,
-            hashtags_list=re.findall(HASHTAG_REGEX, csv_tweet.text),
+            hashtags_list=re.findall(HASHTAG_REGEX, str(csv_tweet.text)),
         )
 
     def download_media(self, db_session, media_path):

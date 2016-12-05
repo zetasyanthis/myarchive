@@ -10,7 +10,7 @@ General
     https://www.python.org/dev/peps/pep-3148/
     Consider compressing DB with lzop. Saves a ton of space and it's very fast.
 Twitter
-    Handle non-API CSV tweets.
+    Make username handling a bit more robust. (zetasyanthis vs. ZetaSyanthis, etc...)
 Shotwell
     DB and file import
 Dreamwidth / LJ
