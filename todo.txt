@@ -1,5 +1,4 @@
 Twitter
-    Fix up how we detect new tweets. That query is *totally broken*!
     Make username handling a bit more robust. (zetasyanthis vs. ZetaSyanthis, etc...) We can check when we start to see if that user exists and suggest near matches. Use like for case insensitive search.
 General
     Add config file in ./myarchive/.
