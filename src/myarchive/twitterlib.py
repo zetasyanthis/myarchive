@@ -105,20 +105,8 @@ class TwitterAPI(twitter.Api):
         new_tweets = []
 
         for type_ in types:
-
-            # For favorites, always do a full sweep. We can't guarantee an older
-            # tweet wasn't recently favorited!
-            if type_ == FAVORITES:
-                since_id = None
-            else:
-                since_id = db_session.query(RawTweet.id).\
-                    filter(RawTweet.favorited_by_str.
-                           like("%%%s%%" % username)).\
-                    order_by(desc(RawTweet.id)).first()
-            if since_id:
-                since_id = since_id[0]
-            # print(type_, since_id)
-
+            # Always start with None to pick up max number of new tweets.
+            since_id = None
             start_time = -1
             sleep_time = 0
             max_id = None
