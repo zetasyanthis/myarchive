@@ -326,7 +326,7 @@ class TwitterAPI(twitter.Api):
 
     @staticmethod
     def parse_tweets(db_session, raw_tweets=None, csv_only_tweets=None,
-                     parse_all_raw=False):
+                     parse_all_raw=False, username=None):
         user = None
 
         if parse_all_raw is True:
@@ -368,6 +368,12 @@ class TwitterAPI(twitter.Api):
 
         if csv_only_tweets:
             print("CSV Only: %s" % len(csv_only_tweets))
+            for csv_only_tweet in csv_only_tweets:
+                user = db_session.query(TwitterUser).\
+                    filter_by(screen_name=csv_only_tweet.username).one()
+                tweet = Tweet.make_from_csvtweet(csv_only_tweet)
+                user.tweets.append(tweet)
+            db_session.commit()
 
     @staticmethod
     def download_media(db_session, storage_folder):

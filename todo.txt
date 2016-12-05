@@ -1,5 +1,8 @@
 General
     Add config file in ./myarchive/ for account info.
+        Optionally save a compressed copy of the imported tweet CSV (with timestamp).
+        Optionally delete from RawTweets if they're parsed.
+            http://stackoverflow.com/a/34834205/3804199
     Add attempted download of linked pages if possible.
     Comment the damned code
     Pylint/PEP8
@@ -7,10 +10,7 @@ General
     https://www.python.org/dev/peps/pep-3148/
     Consider compressing DB with lzop. Saves a ton of space and it's very fast.
 Twitter
-    Optionally save a compressed copy of the imported tweet CSV (with timestamp).
     Handle non-API CSV tweets.
-    Delete from RawTweets as we parse them. VACUUM after we're done.
-        http://stackoverflow.com/a/34834205/3804199
 Shotwell
     DB and file import
 Dreamwidth / LJ

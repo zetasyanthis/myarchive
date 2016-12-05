@@ -36,6 +36,7 @@ def main():
     parser.add_argument(
         '--username',
         action="store",
+        default=None,
         help='Accepts a service username.')
     parser.add_argument(
         '--import-tweets-from-api',
@@ -121,7 +122,8 @@ def main():
                     "Unable to find matching TwitterAPIAccount for CSV import.")
     if args.parse_tweets is True:
         TwitterAPI.parse_tweets(
-            db_session=tag_db.session, parse_all_raw=True)
+            db_session=tag_db.session, parse_all_raw=True,
+            username=args.username)
     if args.print_tweets is True:
         TwitterAPI.print_tweets(db_session=tag_db.session)
 

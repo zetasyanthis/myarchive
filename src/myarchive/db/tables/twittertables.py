@@ -2,6 +2,8 @@
 Module containing class definitions for files to be tagged.
 """
 
+import re
+
 from sqlalchemy import (
     LargeBinary, Boolean, Column, Integer, String, PickleType, ForeignKey)
 from sqlalchemy.orm import backref, relationship
@@ -11,6 +13,9 @@ from myarchive.db.tables.base import Base
 from myarchive.db.tables.file import TrackedFile
 from myarchive.db.tables.association_tables import (
     at_tweet_tag, at_tweet_file, at_twuser_file)
+
+
+HASHTAG_REGEX = r"'#[\\d\\w]+'"
 
 
 class RawTweet(Base):
@@ -136,6 +141,19 @@ class Tweet(Base):
     def make_from_raw(cls, raw_tweet):
         tweet = cls(raw_tweet.raw_status_dict)
         return tweet
+
+    @classmethod
+    def make_from_csvtweet(cls, csv_tweet):
+        in_reply_to_status_id = csv_tweet.in_reply_to_status_id
+        if in_reply_to_status_id is not None:
+            in_reply_to_status_id = int(in_reply_to_status_id)
+        return cls(
+            id=csv_tweet.id,
+            text=csv_tweet.text,
+            in_reply_to_status_id=in_reply_to_status_id,
+            created_at=csv_tweet.timestamp,
+            hashtags_list=re.findall(HASHTAG_REGEX, csv_tweet.text),
+        )
 
     def download_media(self, db_session, media_path):
         # Retrieve media files.
