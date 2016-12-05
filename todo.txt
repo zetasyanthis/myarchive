@@ -1,5 +1,3 @@
-Twitter
-    Make username handling a bit more robust. (zetasyanthis vs. ZetaSyanthis, etc...) We can check when we start to see if that user exists and suggest near matches. Use like for case insensitive search.
 General
     Add config file in ./myarchive/.
         Move account info here.
