@@ -1,6 +1,9 @@
 Twitter
-    Move RawTweets to a huge JSON file and compress it to save space.
+    Save a compressed version of the imported CSV (with timestamp).
     Handle non-API CSV tweets.
+    Eliminate CSVTweets?
+    Delete from RawTweets as we parse them. VACUUM after we're done.
+        http://stackoverflow.com/a/34834205/3804199
 Dreamwidth / LJ
     Add download of posts.
     Add download of comments.

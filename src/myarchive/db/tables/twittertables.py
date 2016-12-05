@@ -56,7 +56,7 @@ class CSVTweet(Base):
     in_reply_to_status_id = Column(Integer)
     in_reply_to_user_id = Column(Integer)
     timestamp = Column(String)
-    text = Column(LargeBinary)
+    text = Column(String)
     retweeted_status_id = Column(Integer)
     retweeted_status_user_id = Column(Integer)
     retweeted_status_timestamp = Column(String)
