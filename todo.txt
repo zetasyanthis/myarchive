@@ -1,5 +1,5 @@
 Twitter
-    Kill RawTweets if possible. It's a huge storage hog.
+    Move RawTweets to a huge JSON file and compress it to save space.
     Handle non-API CSV tweets.
 Dreamwidth / LJ
     Add download of posts.
@@ -12,12 +12,15 @@ Misc
     https://wiki.python.org/moin/SortingListsOfDictionaries
     https://www.python.org/dev/peps/pep-3148/
 RSS Feeds
+    Either use gpo, or import its functions.  https://github.com/gpodder/gpodder
     https://pypi.python.org/pypi/feedparser
     http://www.pythonforbeginners.com/feedparser/using-feedparser-in-python
     Podcasts
 Youtube videos
     youtube-dl for video downloads
     API for uploads only: https://github.com/youtube/api-samples/tree/master/python
+Shotwell
+    DB and file import
 
 
 
