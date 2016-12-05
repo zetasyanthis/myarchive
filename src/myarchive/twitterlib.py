@@ -319,7 +319,7 @@ class TwitterAPI(twitter.Api):
             tweet_index += 100
             sliced_ids = csv_ids[tweet_index:100 + tweet_index]
 
-        csv_only_tweets = db_session.query(CSVTweet.api_import_complete).\
+        csv_only_tweets = db_session.query(CSVTweet).\
             filter_by(api_import_complete=False).all()
 
         return new_api_tweets, csv_only_tweets
