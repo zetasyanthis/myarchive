@@ -1,4 +1,4 @@
-"""Generic database module using SQLAlchemy."""
+"""Main database used by myarchive."""
 
 import logging
 import os
@@ -6,7 +6,7 @@ import os
 from myarchive.db.db import DB
 from sqlalchemy.exc import IntegrityError
 
-from myarchive.db.tag_db import Base, TrackedFile, Tag, Tweet, CSVTweet
+from myarchive.db.tag_db.tables import Base, TrackedFile, Tag, Tweet, CSVTweet
 
 # Get the module logger.
 logger = logging.getLogger(__name__)

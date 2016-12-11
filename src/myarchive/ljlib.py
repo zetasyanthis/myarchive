@@ -1,14 +1,14 @@
 # Requires python-lj 0.2.
 
 from datetime import datetime
-from sqlalchemy.orm.exc import NoResultFound
 
 from lj import lj
 from lj.backup import (
     DEFAULT_JOURNAL, update_journal_entries, update_journal_comments,
     datetime_from_string)
+from sqlalchemy.orm.exc import NoResultFound
 
-from myarchive.db.tag_db.ljtables import LJComment, LJEntry, LJHost, LJUser
+from myarchive.db.tag_db.tables.ljtables import LJComment, LJEntry, LJHost, LJUser
 
 
 class LJAPIConnection(object):

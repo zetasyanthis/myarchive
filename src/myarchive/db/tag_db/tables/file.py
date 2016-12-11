@@ -5,16 +5,15 @@ Module containing class definitions for files to be tagged.
 import imghdr
 import logging
 import os
-import requests
-
 from hashlib import md5
 from urllib.parse import urlparse
+
+import requests
+from myarchive.db.tag_db.tables.base import Base
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import backref, relationship
 
-from myarchive.db.tag_db.base import Base
-from myarchive.db.tag_db.association_tables import at_file_tag
-
+from myarchive.db.tag_db.tables.association_tables import at_file_tag
 
 LOGGER = logging.getLogger(__name__)
 
