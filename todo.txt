@@ -1,6 +1,5 @@
 Shotwell
-    DB and file import
-    Use md5sums for storage, but save original filename in DB.
+    Stop unnecessary file copies.
 Twitter
     Don't bother grabbing the RawTweet if the ID exists in Tweets.
 General

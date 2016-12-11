@@ -68,11 +68,11 @@ class TrackedFile(Base):
             with open(filepath, "wb") as fptr:
                 fptr.write(file_buffer)
         elif copy_from_filepath is not None:
-            original_filename = os.path.basename(original_filename)
+            original_filename = os.path.basename(copy_from_filepath)
             extension = os.path.splitext(original_filename)[1]
             md5sum = md5(open(copy_from_filepath, 'rb').read()).hexdigest()
             filepath = os.path.join(media_path, md5sum + extension)
-            shutil.copy2(src=original_filename, dst=media_path)
+            shutil.copy2(src=copy_from_filepath, dst=filepath)
         else:
             filepath = os.path.join(os.path.join(media_path, original_filename))
             md5sum = md5(open(filepath, 'rb').read()).hexdigest()

@@ -50,7 +50,7 @@ def main():
         action="store",
         help='Accepts a CSV filepath..')
     parser.add_argument(
-        '--import_tweets_from_shotwell_db',
+        '--import_from_shotwell_db',
         action="store",
         help='Accepts a shotwell database filepath.')
     parser.add_argument(
@@ -99,11 +99,11 @@ def main():
     Shotwell Section
     """
 
-    if args.import_tweets_from_shotwell_db:
+    if args.import_from_shotwell_db:
         import_from_shotwell_db(
             tag_db=tag_db,
             media_path=media_path,
-            sw_database_path=args.import_tweets_from_shotwell_db,
+            sw_database_path=args.import_from_shotwell_db,
             sw_storage_folder_override=None)
 
     """

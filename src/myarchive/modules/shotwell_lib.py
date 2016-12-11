@@ -4,9 +4,9 @@ import os
 
 from collections import defaultdict
 
-from myarchive.db.tag_db.tables.file import TrackedFile
+from myarchive.db.tag_db.tables import TrackedFile, Tag
 from myarchive.db.shotwell.shotwell_db import ShotwellDB
-from myarchive.db.shotwell.tables import PhotoTable, TagTable
+from myarchive.db.shotwell.tables import PhotoTable, VideoTable, TagTable
 
 
 def import_from_shotwell_db(
@@ -18,28 +18,42 @@ def import_from_shotwell_db(
     )
 
     # Grab all the photos and add them.
-    photos_by_id = dict()
-    for photo_row in sw_db.session.query(PhotoTable):
-        filepath = str(photo_row.filename)
-        # if sw_storage_folder_override:
-        #     stripped_filename = filename.replace("", "")
-        #     filename = os.path.join(
-        #         sw_storage_folder_override, stripped_filename)
-        tracked_file = TrackedFile.add_file(
-            db_session=tag_db.session, media_path=media_path,
-            copy_from_filepath=filepath)
-        photos_by_id[int(photo_row.id)] = tracked_file
-        tag_db.session.add(tracked_file)
+    files_by_id = dict()
+    for table in (PhotoTable, VideoTable):
+        for photo_row in sw_db.session.query(table):
+            filepath = str(photo_row.filename)
+            # if sw_storage_folder_override:
+            #     stripped_filename = filename.replace("", "")
+            #     filename = os.path.join(
+            #         sw_storage_folder_override, stripped_filename)
+            tracked_file = TrackedFile.add_file(
+                db_session=tag_db.session, media_path=media_path,
+                copy_from_filepath=filepath)
+            files_by_id[int(photo_row.id)] = tracked_file
+            tag_db.session.add(tracked_file)
     tag_db.session.commit()
 
     # Grab all the tags and apply them to the photos.
-    ids_by_tag = dict()
-    for tag_row in sw_db.session.query(TagTable):
-        tag_name = tag_row.name
-        tag_ids = [
-            int(photo_id[5:], 16)
-            for photo_id in tag_row.photo_id_list.split(",")]
-        ids_by_tag[tag_name] = tag_ids
+    tags_by_id = defaultdict(list)
+    tags_by_tag_name = dict()
+    for tag_tuple in sw_db.session.query(
+            TagTable.name, TagTable.photo_id_list).all():
+        tag_name = tag_tuple[0]
+        tag_ids = list()
+        photo_id_str = tag_tuple[1]
+        if not photo_id_str:
+            continue
+        for photo_id in photo_id_str.split(","):
+            if not photo_id:
+                continue
+            tag_ids.append(int(photo_id[5:], 16))
+        for tag_id in tag_ids:
+            tags_by_id[tag_id].append(tag_name)
+        tags_by_tag_name[tag_name] = \
+            Tag.get_tag(db_session=tag_db.session, tag_name=tag_name)
 
-    for id, tracked_file in photos_by_id.items():
-        pass
+    for photo_id, tracked_file in files_by_id.items():
+        for tag_name in tags_by_id[photo_id]:
+            tag = tags_by_tag_name[tag_name]
+            tracked_file.tags.append(tag)
+    tag_db.session.commit()
