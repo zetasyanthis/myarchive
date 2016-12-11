@@ -98,6 +98,15 @@ class TagDB(DB):
             db_name=db_name, host=host, port=port, pool_size=pool_size
         )
         self.metadata.create_all(self.engine)
+        self.existing_tweet_ids = None
+
+    def get_existing_tweet_ids(self):
+        if not self.existing_tweet_ids:
+            self.existing_tweet_ids = tuple([
+               returned_tuple[0]
+               for returned_tuple in
+               self.session.query(Tweet.id).all()])
+        return self.existing_tweet_ids
 
     def import_files(self, path):
         if os.path.isdir(path):

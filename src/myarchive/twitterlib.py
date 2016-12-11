@@ -11,9 +11,9 @@ import twitter
 
 from time import sleep
 from twitter.error import TwitterError
-from sqlalchemy import desc
 from sqlalchemy.orm.exc import NoResultFound
 
+from myarchive.accounts import TWITTER_API_ACCOUNTS
 from myarchive.db.tables.twittertables import (
     CSVTweet, RawTweet, Tweet, TwitterUser)
 
@@ -56,6 +56,9 @@ KEYS = [
 class TwitterAPI(twitter.Api):
     """API with an extra call."""
 
+    def __init__(self, **kwargs):
+        super(TwitterAPI, self).__init__(sleep_on_rate_limit=True, **kwargs)
+
     def LookupStatuses(self, status_ids, trim_user=False,
                        include_entities=True):
         """
@@ -97,14 +100,28 @@ class TwitterAPI(twitter.Api):
 
         return [twitter.Status.NewFromJsonDict(x) for x in data]
 
-    def archive_tweets(self, username, db_session, types=(USER, FAVORITES)):
+    @classmethod
+    def import_tweets_from_api(cls, database, username=None):
+        for twitter_api_account in TWITTER_API_ACCOUNTS.values():
+            api = cls(
+                consumer_key=twitter_api_account.consumer_key,
+                consumer_secret=twitter_api_account.consumer_secret,
+                access_token_key=twitter_api_account.access_key,
+                access_token_secret=twitter_api_account.access_secret,
+            )
+            api.archive_tweets(
+                database=database,
+                username=twitter_api_account.username,
+            )
+
+    def archive_tweets(self, database, username):
         """
         Archives several types of new tweets along with their associated
         content.
         """
         new_tweets = []
 
-        for type_ in types:
+        for type_ in (USER, FAVORITES):
             # Always start with None to pick up max number of new tweets.
             since_id = None
             start_time = -1
@@ -183,7 +200,7 @@ class TwitterAPI(twitter.Api):
             LOGGER.info("Adding %s tweets to DB...", len(statuses))
             existing_rawtweet_ids = [
                 returned_tuple[0]
-                for returned_tuple in db_session.query(RawTweet.id).all()]
+                for returned_tuple in database.session.query(RawTweet.id).all()]
             for status in statuses:
                 status_dict = status.AsDict()
                 status_id = int(status_dict["id"])
@@ -191,18 +208,40 @@ class TwitterAPI(twitter.Api):
                     continue
                 raw_tweet = RawTweet(status_dict=status_dict)
                 new_tweets.append(raw_tweet)
-                db_session.add(raw_tweet)
+                database.session.add(raw_tweet)
                 if type_ == FAVORITES:
                     raw_tweet.add_user_favorite(username)
-            db_session.commit()
+            database.session.commit()
 
         return new_tweets
 
-    def import_from_csv(self, db_session, csv_filepath, username):
+    @classmethod
+    def import_tweets_from_csv(cls, database, username, csv_filepath):
+        try:
+            twitter_api_account = TWITTER_API_ACCOUNTS[username]
+        except KeyError:
+            raise KeyError(
+                "Unable to find matching TwitterAPIAccount for CSV import: "
+                "%s" % username)
+        api = cls(
+            consumer_key=twitter_api_account.consumer_key,
+            consumer_secret=twitter_api_account.consumer_secret,
+            access_token_key=twitter_api_account.access_key,
+            access_token_secret=twitter_api_account.access_secret,
+        )
+        api.import_from_csv(
+            database=database,
+            csv_filepath=csv_filepath,
+            username=twitter_api_account.username,
+        )
+
+    def import_from_csv(self, database, csv_filepath, username):
+        existing_tweet_ids = database.get_existing_tweet_ids()
+
         LOGGER.info("Importing into CSVTweets...")
         csv_tweets_by_id = dict(
             (csv_tweet.id, csv_tweet)
-            for csv_tweet in db_session.query(CSVTweet).all())
+            for csv_tweet in database.session.query(CSVTweet).all())
         with open(csv_filepath) as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
@@ -221,14 +260,11 @@ class TwitterAPI(twitter.Api):
                         retweeted_status_timestamp=
                         row["retweeted_status_timestamp"],
                         expanded_urls=row["expanded_urls"])
-                    db_session.add(csv_tweet)
+                    database.session.add(csv_tweet)
                     csv_tweets_by_id[tweet_id] = csv_tweet
-        db_session.commit()
+                database.session.commit()
 
         LOGGER.info("Scanning for existing Tweets...")
-        existing_tweet_ids = [
-            returned_tuple[0]
-            for returned_tuple in db_session.query(Tweet.id).all()]
         ids_to_remove = []
         for tweet_id, csv_tweet in csv_tweets_by_id.items():
             # If any aren't set as imported and should be, clean that up.
@@ -236,7 +272,7 @@ class TwitterAPI(twitter.Api):
                 ids_to_remove.append(tweet_id)
                 if not csv_tweet.api_import_complete:
                     csv_tweet.api_import_complete = True
-        db_session.commit()
+        database.session.commit()
         for id_to_remove in ids_to_remove:
             csv_tweets_by_id.pop(id_to_remove)
 
@@ -286,13 +322,13 @@ class TwitterAPI(twitter.Api):
                     status_dict = status.AsDict()
                     # Create the RawTweet
                     raw_tweet = RawTweet(status_dict=status_dict)
-                    db_session.add(raw_tweet)
+                    database.session.add(raw_tweet)
                     # Mark CSVTweet appropriately.
                     csv_tweet = csv_tweets_by_id[int(status_dict["id"])]
                     csv_tweet.api_import_complete = True
                     # Append to new list.
                     new_api_tweets.append(raw_tweet)
-                db_session.commit()
+                database.session.commit()
 
             except TwitterError as e:
                 # If we overran the rate limit, try again.
@@ -307,38 +343,32 @@ class TwitterAPI(twitter.Api):
             tweet_index += 100
             sliced_ids = csv_ids[tweet_index:100 + tweet_index]
 
-        csv_only_tweets = db_session.query(CSVTweet).\
+        csv_only_tweets = database.session.query(CSVTweet).\
             filter_by(api_import_complete=False).all()
 
         LOGGER.info("Parsing out %s CSV-only tweets..." % len(csv_only_tweets))
         for csv_only_tweet in csv_only_tweets:
-            user = db_session.query(TwitterUser). \
+            user = database.session.query(TwitterUser). \
                 filter_by(screen_name=csv_only_tweet.username).one()
             tweet = Tweet.make_from_csvtweet(csv_only_tweet)
             user.tweets.append(tweet)
             csv_only_tweet.api_import_complete = True
-        db_session.commit()
-
-        LOGGER.info("Downloading associated media files...")
-
-        return new_api_tweets
+        database.session.commit()
 
     @staticmethod
-    def parse_tweets(db_session, raw_tweets=None, parse_all_raw=False):
-        user = None
-
-        if parse_all_raw is True:
-            # Process all captured raw tweets.
-            raw_tweets = db_session.query(RawTweet)
+    def parse_tweets(database):
+        """Converts RawTweets to Tweets."""
+        existing_tweet_ids = database.get_existing_tweet_ids()
+        raw_tweets = database.session.query(RawTweet)
 
         # Filter out existing tweets, making sure to compare with a a tuple
         # since SQLAlchemy will return a list of tuples.
-        existing_tweet_ids = db_session.query(Tweet.id).all()
         raw_tweets_to_parse = [
             raw_tweet for raw_tweet in raw_tweets
-            if (raw_tweet.id,) not in existing_tweet_ids]
+            if raw_tweet.id not in existing_tweet_ids]
         LOGGER.info("Found %s tweets to parse.", len(raw_tweets_to_parse))
 
+        user = None
         for index, raw_tweet in enumerate(raw_tweets_to_parse):
             if index % 100 == 0:
                 LOGGER.info(
@@ -354,27 +384,28 @@ class TwitterAPI(twitter.Api):
                 pass
             else:
                 try:
-                    user = db_session.query(TwitterUser).\
+                    user = database.session.query(TwitterUser).\
                         filter_by(id=user_id).one()
                 except NoResultFound:
                     user = TwitterUser(user_dict)
-                    db_session.add(user)
+                    database.session.add(user)
 
             # Generate Tweet objects.
             tweet = Tweet.make_from_raw(raw_tweet)
             user.tweets.append(tweet)
-        db_session.commit()
+        database.session.commit()
 
     @staticmethod
-    def download_media(db_session, storage_folder):
+    def download_media(database, storage_folder):
         media_path = os.path.join(storage_folder, "media/")
         os.makedirs(media_path, exist_ok=True)
-        raw_tweets = db_session.query(RawTweet).all()
+        raw_tweets = database.session.query(RawTweet).all()
         raw_tweets_by_id = {
             raw_tweet.id: raw_tweet for raw_tweet in raw_tweets}
-        for tweet in db_session.query(Tweet):
+        for tweet in database.session.query(Tweet):
             tweet.download_media(
-                db_session=db_session, media_path=media_path,
+                db_session=database.session, media_path=media_path,
                 raw_tweets_by_id=raw_tweets_by_id)
-        for user in db_session.query(TwitterUser):
-            user.download_media(db_session=db_session, media_path=media_path)
+        for user in database.session.query(TwitterUser):
+            user.download_media(
+                db_session=database.session, media_path=media_path)
