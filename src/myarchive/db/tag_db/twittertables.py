@@ -9,9 +9,9 @@ from sqlalchemy import (
 from sqlalchemy.orm import backref, relationship
 from sqlalchemy.orm.exc import NoResultFound
 
-from myarchive.db.tables.base import Base
-from myarchive.db.tables.file import TrackedFile
-from myarchive.db.tables.association_tables import (
+from myarchive.db.tag_db.base import Base
+from myarchive.db.tag_db.file import TrackedFile
+from myarchive.db.tag_db.association_tables import (
     at_tweet_tag, at_tweet_file, at_twuser_file)
 
 

@@ -6,7 +6,7 @@ from sqlalchemy import Column, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import backref, relationship
 from sqlalchemy.orm.exc import NoResultFound
 
-from myarchive.db.tables.base import Base
+from myarchive.db.tag_db.base import Base
 
 
 class CircularDependencyError(Exception):

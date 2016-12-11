@@ -12,8 +12,8 @@ from urllib.parse import urlparse
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import backref, relationship
 
-from myarchive.db.tables.base import Base
-from myarchive.db.tables.association_tables import at_file_tag
+from myarchive.db.tag_db.base import Base
+from myarchive.db.tag_db.association_tables import at_file_tag
 
 
 LOGGER = logging.getLogger(__name__)

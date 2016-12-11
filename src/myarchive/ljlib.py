@@ -8,7 +8,7 @@ from lj.backup import (
     DEFAULT_JOURNAL, update_journal_entries, update_journal_comments,
     datetime_from_string)
 
-from myarchive.db.tables.ljtables import LJComment, LJEntry, LJHost, LJUser
+from myarchive.db.tag_db.ljtables import LJComment, LJEntry, LJHost, LJUser
 
 
 class LJAPIConnection(object):

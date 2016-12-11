@@ -14,7 +14,7 @@ from twitter.error import TwitterError
 from sqlalchemy.orm.exc import NoResultFound
 
 from myarchive.accounts import TWITTER_API_ACCOUNTS
-from myarchive.db.tables.twittertables import (
+from myarchive.db.tag_db.twittertables import (
     CSVTweet, RawTweet, Tweet, TwitterUser)
 
 

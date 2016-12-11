@@ -7,7 +7,7 @@ import sys
 from myarchive.twitterlib import TwitterAPI
 from myarchive.ljlib import LJAPIConnection
 from myarchive.accounts import LJ_API_ACCOUNTS
-from myarchive.db import TagDB
+from myarchive.db.tag_db.tag_db import TagDB
 # from gui import Gtk, MainWindow
 from myarchive.util.logger import myarchive_LOGGER as logger
 
