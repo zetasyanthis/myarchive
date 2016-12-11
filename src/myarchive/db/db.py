@@ -151,25 +151,3 @@ class TagDB(DB):
         cursor.execute("VACUUM")
         connection.commit()
         cursor.close()
-
-
-if __name__ == '__main__':
-
-    # Establish DB connection and session.
-    db = DB()
-    db.metadata.create_all(db.engine)
-
-    tag1 = Tag('tag1')
-    tag2 = Tag('tag2')
-    db.session.add(tag1)
-    tag1.add_child(tag2)
-
-    # Try to cause an explosion.
-    from myarchive.db.tables.tag import CircularDependencyError
-    try:
-        tag2.add_child(tag1)
-    except CircularDependencyError as e:
-        logger.error("  Error: %s", e)
-
-    for tag in db.session.query(Tag):
-        logger.info(tag)
