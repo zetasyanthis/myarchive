@@ -4,10 +4,11 @@ import argparse
 import os
 import sys
 
-from myarchive.twitterlib import TwitterAPI
-from myarchive.ljlib import LJAPIConnection
 from myarchive.accounts import LJ_API_ACCOUNTS
 from myarchive.db.tag_db.tag_db import TagDB
+from myarchive.modules.ljl_ib import LJAPIConnection
+from myarchive.modules.twitter_lib import TwitterAPI
+
 # from gui import Gtk, MainWindow
 from myarchive.util.logger import myarchive_LOGGER as logger
 
