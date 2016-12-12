@@ -1,20 +1,26 @@
 General
+    Deduplicate TrackedFiles.
     Add config file in ./myarchive/.
         Move account info here.
         Optionally save a compressed copy of the imported tweet CSV (with timestamp).
-        Optionally (default is True) delete from RawTweets if they're parsed. (Saves 90% of DB space!)
-            http://stackoverflow.com/a/34834205/3804199
+    Add multithreaded support for background updates.
+        http://stackoverflow.com/questions/6297404/multi-threaded-use-of-sqlalchemy
+        http://stackoverflow.com/questions/9619789/sqlalchemy-proper-session-handling-in-multi-thread-applications
+        http://docs.sqlalchemy.org/en/latest/dialects/sqlite.html#threading-pooling-behavior
+        http://docs.sqlalchemy.org/en/latest/orm/session_basics.html#when-do-i-make-a-sessionmaker
     Add attempted download of linked pages if possible.
     Comment the damned code
     Pylint/PEP8
     https://wiki.python.org/moin/SortingListsOfDictionaries
     https://www.python.org/dev/peps/pep-3148/
     Consider compressing DB with lzop. Saves a ton of space and it's very fast.
-Shotwell
-    DB and file import
 Dreamwidth / LJ
     Add download of posts.
     Add download of comments.
+Shotwell
+    Add support for files/databases that have moved from their original locations.
+Twitter
+    Don't bother grabbing the RawTweet if the ID exists in Tweets.
 RSS Feeds
     Either use gpo, or import its functions.  https://github.com/gpodder/gpodder
     https://pypi.python.org/pypi/feedparser
@@ -35,7 +41,6 @@ Goodreads
 LibraryThing
 Github Repository (Auto-pull updates?)
 Internet archive API may be of help.
-
 
 Requirements
     python3-lj
