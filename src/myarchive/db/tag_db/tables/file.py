@@ -66,24 +66,30 @@ class TrackedFile(Base):
                 if imghdr_extension:
                     extension = "." + imghdr_extension
             filepath = os.path.join(media_path, str(md5sum)) + extension
-            with open(filepath, "wb") as fptr:
-                fptr.write(file_buffer)
+            tracked_file = db_session.query(cls).filter_by(md5sum=md5sum).all()
+            if tracked_file:
+                LOGGER.debug(
+                    "Repeated hash: %s [%s, %s]",
+                    md5sum, tracked_file[0].filepath, filepath)
+            else:
+                with open(filepath, "wb") as fptr:
+                    fptr.write(file_buffer)
         elif copy_from_filepath is not None:
             original_filename = os.path.basename(copy_from_filepath)
             extension = os.path.splitext(original_filename)[1]
             with open(copy_from_filepath, 'rb') as fptr:
                 md5sum = cls.get_file_md5sum(fptr=fptr)
             filepath = os.path.join(media_path, md5sum + extension)
-            shutil.copy2(src=copy_from_filepath, dst=filepath)
+            tracked_file = db_session.query(cls).filter_by(md5sum=md5sum).all()
+            if tracked_file:
+                LOGGER.debug(
+                    "Repeated hash: %s [%s, %s]",
+                    md5sum, tracked_file[0].filepath, filepath)
+            else:
+                shutil.copy2(src=copy_from_filepath, dst=filepath)
         else:
-            filepath = os.path.join(os.path.join(media_path, original_filename))
-            with open(copy_from_filepath, 'rb') as fptr:
-                md5sum = cls.get_file_md5sum(fptr=fptr)
-        tracked_file = db_session.query(cls).filter_by(md5sum=md5sum).all()
-        if tracked_file:
-            LOGGER.debug(
-                "Repeated hash: %s [%s, %s]",
-                md5sum, tracked_file[0].filepath, filepath)
+            raise Exception("Not sure what to do with this???")
+
         return TrackedFile(original_filename, filepath, md5sum, url)
 
     @classmethod
@@ -114,4 +120,4 @@ class TrackedFile(Base):
             if not data:
                 break
             md5.update(data)
-        return md5.digest()
+        return md5.hexdigest()

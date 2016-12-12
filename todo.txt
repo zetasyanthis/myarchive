@@ -1,8 +1,7 @@
-Shotwell
-    Stop unnecessary file copies.
 Twitter
     Don't bother grabbing the RawTweet if the ID exists in Tweets.
 General
+    Deduplicate TrackedFiles.
     Add config file in ./myarchive/.
         Move account info here.
         Optionally save a compressed copy of the imported tweet CSV (with timestamp).
