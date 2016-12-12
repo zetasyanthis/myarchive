@@ -64,6 +64,12 @@ def main():
         default=False,
         help='Imports LJ entries.'
     )
+    parser.add_argument(
+        "--check_duplicates",
+        action="store_true",
+        default=False,
+        help='Displays duplicates in TrackedFiles.'
+    )
     args = parser.parse_args()
     logger.debug(args)
 
@@ -130,6 +136,21 @@ def main():
                 password=lj_api_account.password
             )
             ljapi.download_journals_and_comments(db_session=tag_db.session)
+
+    if args.check_duplicates:
+        from collections import defaultdict
+        from myarchive.db.tag_db.tables import TrackedFile
+        dup_dict = defaultdict(list)
+        for tracked_file in tag_db.session.query(TrackedFile):
+            dup_dict[tracked_file.md5sum].append(tracked_file.original_filename)
+        duplicated_hashes = 0
+        for md5sum, filenames in dup_dict.items():
+            if len(filenames) > 1:
+                print(md5sum)
+                for filename in filenames:
+                    print("    %s" % filename)
+                duplicated_hashes += 1
+        print("Duplicated hashes: %s" % duplicated_hashes)
 
     # MainWindow(tag_db)
     # Gtk.main()

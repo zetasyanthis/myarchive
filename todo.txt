@@ -17,10 +17,6 @@ General
 Dreamwidth / LJ
     Add download of posts.
     Add download of comments.
-Shotwell
-    Add support for files/databases that have moved from their original locations.
-Twitter
-    Don't bother grabbing the RawTweet if the ID exists in Tweets.
 RSS Feeds
     Either use gpo, or import its functions.  https://github.com/gpodder/gpodder
     https://pypi.python.org/pypi/feedparser
