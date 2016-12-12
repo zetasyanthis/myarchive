@@ -4,12 +4,14 @@ import argparse
 import os
 import sys
 
-from myarchive.twitterlib import TwitterAPI
-from myarchive.ljlib import LJAPIConnection
 from myarchive.accounts import LJ_API_ACCOUNTS
-from myarchive.db import TagDB
-# from gui import Gtk, MainWindow
+from myarchive.db.tag_db.tag_db import TagDB
+from myarchive.modules.ljl_ib import LJAPIConnection
+from myarchive.modules.twitter_lib import TwitterAPI
+from myarchive.modules.shotwell_lib import import_from_shotwell_db
 from myarchive.util.logger import myarchive_LOGGER as logger
+
+# from gui import Gtk, MainWindow
 
 
 from logging import getLogger
@@ -48,10 +50,9 @@ def main():
         action="store",
         help='Accepts a CSV filepath..')
     parser.add_argument(
-        '--parse-tweets',
-        action="store_true",
-        default=False,
-        help='Prints all tweets.')
+        '--import_from_shotwell_db',
+        action="store",
+        help='Accepts a shotwell database filepath.')
     parser.add_argument(
         '--import_lj_entries',
         action="store_true",
@@ -61,10 +62,12 @@ def main():
     args = parser.parse_args()
     logger.debug(args)
 
+    # Set up objects used everywhere.
     tag_db = TagDB(
         drivername='sqlite',
         db_name=os.path.join(args.storage_folder, "myarchive.sqlite"))
     tag_db.session.autocommit = False
+    media_path = os.path.join(args.storage_folder, "media/")
 
     if args.import_folder:
         if not os.path.exists(args.import_folder):
@@ -91,6 +94,17 @@ def main():
         TwitterAPI.parse_tweets(database=tag_db)
         TwitterAPI.download_media(
             database=tag_db, storage_folder=args.storage_folder)
+
+    """
+    Shotwell Section
+    """
+
+    if args.import_from_shotwell_db:
+        import_from_shotwell_db(
+            tag_db=tag_db,
+            media_path=media_path,
+            sw_database_path=args.import_from_shotwell_db,
+            sw_storage_folder_override=None)
 
     """
     LIVEJOURNAL SECTION

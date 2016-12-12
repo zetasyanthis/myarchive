@@ -7,16 +7,15 @@ import csv
 import logging
 import os
 import time
-import twitter
-
 from time import sleep
-from twitter.error import TwitterError
+
+import twitter
 from sqlalchemy.orm.exc import NoResultFound
+from twitter.error import TwitterError
 
 from myarchive.accounts import TWITTER_API_ACCOUNTS
-from myarchive.db.tables.twittertables import (
+from myarchive.db.tag_db.tables.twittertables import (
     CSVTweet, RawTweet, Tweet, TwitterUser)
-
 
 LOGGER = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 Twitter
-    Force media download and always kill RawTweets.
     Don't bother grabbing the RawTweet if the ID exists in Tweets.
 General
+    Deduplicate TrackedFiles.
     Add config file in ./myarchive/.
         Move account info here.
         Optionally save a compressed copy of the imported tweet CSV (with timestamp).
@@ -18,9 +18,6 @@ General
     https://wiki.python.org/moin/SortingListsOfDictionaries
     https://www.python.org/dev/peps/pep-3148/
     Consider compressing DB with lzop. Saves a ton of space and it's very fast.
-Shotwell
-    DB and file import
-    Use md5sums for storage, but save original filename in DB.
 Dreamwidth / LJ
     Add download of posts.
     Add download of comments.

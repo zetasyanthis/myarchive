@@ -5,7 +5,7 @@ mappings.
 
 from sqlalchemy import Column, ForeignKey, Integer, Table
 
-from myarchive.db.tables.base import Base
+from myarchive.db.tag_db.tables.base import Base
 
 at_file_tag = Table(
     'at_file_tag', Base.metadata,
