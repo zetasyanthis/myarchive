@@ -1,2 +1,2 @@
 
-from myarchive.db.db import DB, TagDB
+from myarchive.db.db import DB

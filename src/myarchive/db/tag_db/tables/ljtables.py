@@ -1,12 +1,12 @@
+from myarchive.db.tag_db.tables.association_tables import (
+    at_ljcomment_tag, at_ljentry_tag)
+from myarchive.db.tag_db.tables.base import Base
 from sqlalchemy import (
     Column, Integer, String, TIMESTAMP, ForeignKey, UniqueConstraint)
 from sqlalchemy.orm import backref, relationship
 from sqlalchemy.orm.exc import NoResultFound
 
-from myarchive.db.tables.association_tables import (
-    at_ljcomment_tag, at_ljentry_tag)
-from myarchive.db.tables.base import Base
-from myarchive.db.tables.tag import Tag
+from myarchive.db.tag_db.tables.tag import Tag
 
 
 class CircularDependencyError(Exception):

@@ -2,19 +2,20 @@
 Module containing class definitions for files to be tagged.
 """
 
+import hashlib
 import imghdr
 import logging
 import os
 import requests
+import shutil
 
 from hashlib import md5
 from urllib.parse import urlparse
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import backref, relationship
 
-from myarchive.db.tables.base import Base
-from myarchive.db.tables.association_tables import at_file_tag
-
+from myarchive.db.tag_db.tables.association_tables import at_file_tag
+from myarchive.db.tag_db.tables.base import Base
 
 LOGGER = logging.getLogger(__name__)
 
@@ -51,8 +52,11 @@ class TrackedFile(Base):
                 (self.original_filename, self.filepath, self.md5sum, self.url))
 
     @classmethod
-    def add_file(cls, db_session, media_path, file_buffer=None,
-                 original_filename=None, url=None):
+    def add_file(cls, db_session, media_path,
+                 file_buffer=None,
+                 copy_from_filepath=None,
+                 original_filename=None,
+                 url=None):
         if file_buffer is not None:
             md5sum = md5(file_buffer).hexdigest()
             # Detect an extension incase the URL doesn't have one.
@@ -62,17 +66,30 @@ class TrackedFile(Base):
                 if imghdr_extension:
                     extension = "." + imghdr_extension
             filepath = os.path.join(media_path, str(md5sum)) + extension
-            with open(filepath, "wb") as fptr:
-                fptr.write(file_buffer)
+            tracked_file = db_session.query(cls).filter_by(md5sum=md5sum).all()
+            if tracked_file:
+                LOGGER.debug(
+                    "Repeated hash: %s [%s, %s]",
+                    md5sum, tracked_file[0].filepath, filepath)
+            else:
+                with open(filepath, "wb") as fptr:
+                    fptr.write(file_buffer)
+        elif copy_from_filepath is not None:
+            original_filename = os.path.basename(copy_from_filepath)
+            extension = os.path.splitext(original_filename)[1]
+            with open(copy_from_filepath, 'rb') as fptr:
+                md5sum = cls.get_file_md5sum(fptr=fptr)
+            filepath = os.path.join(media_path, md5sum + extension)
+            tracked_file = db_session.query(cls).filter_by(md5sum=md5sum).all()
+            if tracked_file:
+                LOGGER.debug(
+                    "Repeated hash: %s [%s, %s]",
+                    md5sum, tracked_file[0].filepath, filepath)
+            else:
+                shutil.copy2(src=copy_from_filepath, dst=filepath)
         else:
-            filepath = os.path.join(os.path.join(media_path, original_filename))
-            md5sum = md5(open(filepath, 'rb').read()).hexdigest()
-        tracked_file = db_session.query(cls).\
-            filter_by(md5sum=md5sum).all()
-        if tracked_file:
-            LOGGER.debug(
-                "Repeated hash: %s [%s, %s]",
-                md5sum, tracked_file[0].filepath, filepath)
+            raise Exception("Not sure what to do with this???")
+
         return TrackedFile(original_filename, filepath, md5sum, url)
 
     @classmethod
@@ -94,3 +111,13 @@ class TrackedFile(Base):
             original_filename=filename,
             url=url)
         return tracked_file
+
+    @staticmethod
+    def get_file_md5sum(fptr, block_size=2 ** 20):
+        md5 = hashlib.md5()
+        while True:
+            data = fptr.read(block_size)
+            if not data:
+                break
+            md5.update(data)
+        return md5.hexdigest()

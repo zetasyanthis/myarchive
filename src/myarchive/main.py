@@ -4,12 +4,14 @@ import argparse
 import os
 import sys
 
-from myarchive.twitterlib import TwitterAPI
-from myarchive.ljlib import LJAPIConnection
-from myarchive.accounts import LJ_API_ACCOUNTS, TWITTER_API_ACCOUNTS
-from myarchive.db import TagDB
-# from gui import Gtk, MainWindow
+from myarchive.accounts import LJ_API_ACCOUNTS
+from myarchive.db.tag_db.tag_db import TagDB
+from myarchive.modules.ljl_ib import LJAPIConnection
+from myarchive.modules.twitter_lib import TwitterAPI
+from myarchive.modules.shotwell_lib import import_from_shotwell_db
 from myarchive.util.logger import myarchive_LOGGER as logger
+
+# from gui import Gtk, MainWindow
 
 
 from logging import getLogger
@@ -48,20 +50,9 @@ def main():
         action="store",
         help='Accepts a CSV filepath..')
     parser.add_argument(
-        '--parse-tweets',
-        action="store_true",
-        default=False,
-        help='Prints all tweets.')
-    parser.add_argument(
-        '--download-media',
-        action="store_true",
-        default=False,
-        help="Downloads all associated media.")
-    parser.add_argument(
-        '--print-tweets',
-        action="store_true",
-        default=False,
-        help='Prints all tweets.')
+        '--import_from_shotwell_db',
+        action="store",
+        help='Accepts a shotwell database filepath.')
     parser.add_argument(
         '--import_lj_entries',
         action="store_true",
@@ -69,8 +60,14 @@ def main():
         help='Imports LJ entries.'
     )
     args = parser.parse_args()
-
     logger.debug(args)
+
+    # Set up objects used everywhere.
+    tag_db = TagDB(
+        drivername='sqlite',
+        db_name=os.path.join(args.storage_folder, "myarchive.sqlite"))
+    tag_db.session.autocommit = False
+    media_path = os.path.join(args.storage_folder, "media/")
 
     if args.import_folder:
         if not os.path.exists(args.import_folder):
@@ -78,63 +75,36 @@ def main():
         if not os.path.isdir(args.import_folder):
             raise Exception("Import folder path is not a folder!")
 
-    tag_db = TagDB(
-        drivername='sqlite',
-        db_name=os.path.join(args.storage_folder, "myarchive.sqlite"))
-    tag_db.session.autocommit = False
-
-    raw_tweets = []
     if args.import_tweets_from_api:
-        for twitter_api_account in TWITTER_API_ACCOUNTS:
-            api = TwitterAPI(
-                consumer_key=twitter_api_account.consumer_key,
-                consumer_secret=twitter_api_account.consumer_secret,
-                access_token_key=twitter_api_account.access_key,
-                access_token_secret=twitter_api_account.access_secret,
-                sleep_on_rate_limit=True)
-            raw_tweets.extend(
-                api.archive_tweets(
-                    db_session=tag_db.session,
-                    username=twitter_api_account.username
-                )
-            )
+        TwitterAPI.import_tweets_from_api(
+            database=tag_db,
+            username=args.username,
+        )
     if args.import_tweets_from_archive_csv:
         if not args.username:
             logger.error("Username is required for CSV imports!")
             sys.exit(1)
-        for twitter_api_account in TWITTER_API_ACCOUNTS:
-            if args.username == twitter_api_account.username:
-                api = TwitterAPI(
-                    consumer_key=twitter_api_account.consumer_key,
-                    consumer_secret=twitter_api_account.consumer_secret,
-                    access_token_key=twitter_api_account.access_key,
-                    access_token_secret=twitter_api_account.access_secret,
-                    sleep_on_rate_limit=True)
-                csv_raw_tweets = api.import_from_csv(
-                    db_session=tag_db.session,
-                    csv_filepath=args.import_tweets_from_archive_csv,
-                    username=twitter_api_account.username)
-                raw_tweets.extend(csv_raw_tweets)
-                break
-            else:
-                raise Exception(
-                    "Unable to find matching TwitterAPIAccount for CSV import.")
-
-    # If we've been told to parse, try to parse everything.
-    if args.parse_tweets is True:
-        TwitterAPI.parse_tweets(
-            db_session=tag_db.session, parse_all_raw=True)
-    # Regardless, parse any downloaded tweets immediately.
-    elif raw_tweets:
-        LOGGER.info(
-            "Processing %s new raw tweets...", len(raw_tweets))
-        TwitterAPI.parse_tweets(
-            db_session=tag_db.session, raw_tweets=raw_tweets)
-
-    # Optionally, force download of associated media.
-    if args.download_media is True:
+        TwitterAPI.import_tweets_from_csv(
+            database=tag_db,
+            username=args.username,
+            csv_filepath=args.import_tweets_from_archive_csv,
+        )
+    if args.import_tweets_from_api or args.import_tweets_from_archive_csv:
+        # Parse the tweets and download associated media.
+        TwitterAPI.parse_tweets(database=tag_db)
         TwitterAPI.download_media(
-            db_session=tag_db.session, storage_folder=args.storage_folder)
+            database=tag_db, storage_folder=args.storage_folder)
+
+    """
+    Shotwell Section
+    """
+
+    if args.import_from_shotwell_db:
+        import_from_shotwell_db(
+            tag_db=tag_db,
+            media_path=media_path,
+            sw_database_path=args.import_from_shotwell_db,
+            sw_storage_folder_override=None)
 
     """
     LIVEJOURNAL SECTION

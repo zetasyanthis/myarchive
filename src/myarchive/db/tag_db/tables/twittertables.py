@@ -4,15 +4,14 @@ Module containing class definitions for files to be tagged.
 
 import re
 
-from sqlalchemy import (
-    LargeBinary, Boolean, Column, Integer, String, PickleType, ForeignKey)
-from sqlalchemy.orm import backref, relationship
-from sqlalchemy.orm.exc import NoResultFound
-
-from myarchive.db.tables.base import Base
-from myarchive.db.tables.file import TrackedFile
-from myarchive.db.tables.association_tables import (
+from myarchive.db.tag_db.tables.association_tables import (
     at_tweet_tag, at_tweet_file, at_twuser_file)
+from myarchive.db.tag_db.tables.base import Base
+from sqlalchemy import (
+    Boolean, Column, Integer, String, PickleType, ForeignKey)
+from sqlalchemy.orm import backref, relationship
+
+from myarchive.db.tag_db.tables.file import TrackedFile
 
 
 HASHTAG_REGEX = r"'#[\\d\\w]+'"
