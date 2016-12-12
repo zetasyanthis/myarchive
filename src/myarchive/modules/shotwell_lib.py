@@ -17,15 +17,21 @@ def import_from_shotwell_db(
         db_name=sw_database_path,
     )
 
+    if sw_storage_folder_override:
+        photo_paths = []
+        for photo_path, in sw_db.session.query(PhotoTable.filename):
+            photo_paths.append(photo_path)
+        original_storage_path = os.path.commonprefix(photo_paths)
+        del photo_paths
+
     # Grab all the photos and add them.
     files_by_id = dict()
     for table in (PhotoTable, VideoTable):
         for photo_row in sw_db.session.query(table):
             filepath = str(photo_row.filename)
-            # if sw_storage_folder_override:
-            #     stripped_filename = filename.replace("", "")
-            #     filename = os.path.join(
-            #         sw_storage_folder_override, stripped_filename)
+            if sw_storage_folder_override:
+                filepath = filepath.replace(
+                    original_storage_path, sw_storage_folder_override)
             tracked_file = TrackedFile.add_file(
                 db_session=tag_db.session, media_path=media_path,
                 copy_from_filepath=filepath)

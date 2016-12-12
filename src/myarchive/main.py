@@ -41,18 +41,23 @@ def main():
         default=None,
         help='Accepts a service username.')
     parser.add_argument(
-        '--import-tweets-from-api',
+        '--import_tweets_from_api',
         action="store_true",
         default=False,
         help='Downloads user tweets and favorites..')
     parser.add_argument(
-        '--import-tweets-from-archive-csv',
+        '--import_tweets_from_archive-csv',
         action="store",
         help='Accepts a CSV filepath..')
     parser.add_argument(
         '--import_from_shotwell_db',
         action="store",
-        help='Accepts a shotwell database filepath.')
+        help='Accepts a Shotwell database filepath.')
+    parser.add_argument(
+        '--shotwell_storage_folder_override',
+        action="store",
+        default=None,
+        help='Accepts a Shotwell file storage folder path.')
     parser.add_argument(
         '--import_lj_entries',
         action="store_true",
@@ -74,6 +79,10 @@ def main():
             raise Exception("Import folder path does not exist!")
         if not os.path.isdir(args.import_folder):
             raise Exception("Import folder path is not a folder!")
+
+    """
+    Twitter Section
+    """
 
     if args.import_tweets_from_api:
         TwitterAPI.import_tweets_from_api(
@@ -104,10 +113,11 @@ def main():
             tag_db=tag_db,
             media_path=media_path,
             sw_database_path=args.import_from_shotwell_db,
-            sw_storage_folder_override=None)
+            sw_storage_folder_override=args.shotwell_storage_folder_override,
+        )
 
     """
-    LIVEJOURNAL SECTION
+    Livejournal Section
     """
 
     if args.import_lj_entries:
