@@ -6,7 +6,8 @@ import os
 from myarchive.db.db import DB
 from sqlalchemy.exc import IntegrityError
 
-from myarchive.db.tag_db.tables import Base, TrackedFile, Tag, Tweet, CSVTweet
+from myarchive.db.tag_db.tables import (
+    Base, TrackedFile, Tag, RawTweet, Tweet)
 
 # Get the module logger.
 logger = logging.getLogger(__name__)
@@ -26,12 +27,17 @@ class TagDB(DB):
         self.existing_tweet_ids = None
 
     def get_existing_tweet_ids(self):
-        if not self.existing_tweet_ids:
-            self.existing_tweet_ids = tuple([
-               returned_tuple[0]
-               for returned_tuple in
-               self.session.query(Tweet.id).all()])
-        return self.existing_tweet_ids
+        tweet_ids = [
+            returned_tuple[0]
+            for returned_tuple in
+            self.session.query(Tweet.id).all()]
+        rawtweet_ids = [
+            returned_tuple[0]
+            for returned_tuple in
+            self.session.query(RawTweet.id).all()]
+        tweet_id_set = set(tweet_ids)
+        tweet_id_set.update(rawtweet_ids)
+        return tweet_id_set
 
     def import_files(self, path):
         if os.path.isdir(path):
@@ -61,14 +67,6 @@ class TagDB(DB):
         logger.debug("Import Complete!")
 
     def clean_db_and_close(self):
-
-        # Clean all imported CSVTweets.
-        imported_tweets = self.session.query(CSVTweet). \
-            filter_by(api_import_complete=True).all()
-        for imported_tweet in imported_tweets:
-            self.session.delete(imported_tweet)
-        self.session.commit()
-
         # Run VACUUM.
         self.session.close()
         connection = self.engine.raw_connection()

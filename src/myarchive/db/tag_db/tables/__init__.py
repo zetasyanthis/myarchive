@@ -3,4 +3,4 @@
 from .base import Base
 from .file import TrackedFile
 from .tag import Tag
-from .twittertables import Tweet, CSVTweet
+from .twittertables import RawTweet, Tweet
