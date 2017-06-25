@@ -44,6 +44,7 @@ class DB(object):
                 'program close!')
             self.__db_url = self.SQLITE_MEMORY_URL
         else:
+            logger.debug([drivername, username, password, host, port, db_name])
             self.__db_url = SQLAlchemyURL(
                 drivername=drivername,
                 username=username,
@@ -52,7 +53,7 @@ class DB(object):
                 port=port,
                 database=db_name
             )
-            logger.debug(self.__db_url)
+            #logger.debug(self.__db_url)
 
         logger.debug("Creating database connection.")
         if 'sqlite' in str(self.db_url):

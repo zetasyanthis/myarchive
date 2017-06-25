@@ -3,32 +3,38 @@
 import os
 
 from collections import defaultdict
+from logging import getLogger
 
 from myarchive.db.tag_db.tables import TrackedFile, Tag
 from myarchive.db.shotwell.shotwell_db import ShotwellDB
 from myarchive.db.shotwell.tables import PhotoTable, VideoTable, TagTable
 
 
+LOGGER = getLogger("myarchive")
+
+
 def import_from_shotwell_db(
-        tag_db, media_path, sw_database_path, sw_storage_folder_override=None):
+        tag_db, media_path, sw_database_path=None,
+        sw_storage_folder_override=None):
     """Imports images from the shotwell DB into ours."""
     sw_db = ShotwellDB(
         drivername='sqlite',
-        db_name=sw_database_path,
+        # db_name=sw_database_path,
     )
 
-    if sw_storage_folder_override:
-        photo_paths = []
-        for photo_path, in sw_db.session.query(PhotoTable.filename):
-            photo_paths.append(photo_path)
-        original_storage_path = os.path.commonprefix(photo_paths)
-        del photo_paths
+    # if sw_storage_folder_override:
+    #     photo_paths = []
+    #     for photo_path, in sw_db.session.query(PhotoTable.filename):
+    #         photo_paths.append(photo_path)
+    #     original_storage_path = os.path.commonprefix(photo_paths)
+    #     del photo_paths
 
     # Grab all the photos and add them.
     files_by_id = dict()
     for table in (PhotoTable, VideoTable):
         for photo_row in sw_db.session.query(table):
             media_filepath = str(photo_row.filename)
+            LOGGER.critical(media_filepath)
             # if sw_storage_folder_override:
             #     filepath = original_storage_path.replace(
             #         original_storage_path, sw_storage_folder_override)
@@ -36,6 +42,7 @@ def import_from_shotwell_db(
                 db_session=tag_db.session, media_path=media_path,
                 copy_from_filepath=media_filepath)
             files_by_id[int(photo_row.id)] = tracked_file
+            tracked_file.tags.append(Tag(name="shotwell"))
             tag_db.session.add(tracked_file)
     tag_db.session.commit()
 

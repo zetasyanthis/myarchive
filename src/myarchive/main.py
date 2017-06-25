@@ -75,6 +75,8 @@ def main():
         db_name=os.path.join(args.storage_folder, "myarchive.sqlite"))
     tag_db.session.autocommit = False
     media_path = os.path.join(args.storage_folder, "media/")
+    if not os.path.exists(media_path):
+        os.makedirs(media_path)
 
     if args.import_folder:
         if not os.path.exists(args.import_folder):

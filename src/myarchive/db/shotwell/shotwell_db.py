@@ -1,6 +1,7 @@
 """Shotwell database, used for imports."""
 
 import logging
+import os
 
 from myarchive.db.db import DB
 
@@ -13,7 +14,9 @@ logger = logging.getLogger(__name__)
 class ShotwellDB(DB):
 
     def __init__(self,
-                 drivername=None, username=None, password=None, db_name=None,
+                 drivername="sqlite", username=None, password=None,
+                 db_name=os.path.expanduser(
+                     "~/.local/share/shotwell/data/photo.db"),
                  host=None, port=None, pool_size=5):
         super(ShotwellDB, self).__init__(
             base=Base, drivername=drivername, username=username,

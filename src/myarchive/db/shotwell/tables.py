@@ -48,7 +48,7 @@ class PhotoTable(Base):
     orientation = Column(Integer)
     original_orientation = Column(Integer)
     import_id = Column(Integer)
-    event_id = Column(Integer, index=True)
+    event_id = Column(Integer)
     transformations = Column(Text)
     md5 = Column(Text)
     thumbnail_md5 = Column(Text)
