@@ -125,7 +125,7 @@ def main():
         # Parse the tweets and download associated media.
         TwitterAPI.parse_tweets(database=tag_db)
         TwitterAPI.download_media(
-            database=tag_db, storage_folder=media_storage_path)
+            database=tag_db, media_storage_path=media_storage_path)
 
     """
     LiveJournal Section

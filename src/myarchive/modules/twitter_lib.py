@@ -400,16 +400,14 @@ class TwitterAPI(twitter.Api):
         database.session.commit()
 
     @staticmethod
-    def download_media(database, storage_folder):
-        media_path = os.path.join(storage_folder, "media/")
-        os.makedirs(media_path, exist_ok=True)
+    def download_media(database, media_storage_path):
         raw_tweets = database.session.query(RawTweet).all()
         raw_tweets_by_id = {
             raw_tweet.id: raw_tweet for raw_tweet in raw_tweets}
         for tweet in database.session.query(Tweet):
             tweet.download_media(
-                db_session=database.session, media_path=media_path,
+                db_session=database.session, media_path=media_storage_path,
                 raw_tweets_by_id=raw_tweets_by_id)
         for user in database.session.query(TwitterUser):
             user.download_media(
-                db_session=database.session, media_path=media_path)
+                db_session=database.session, media_path=media_storage_path)
