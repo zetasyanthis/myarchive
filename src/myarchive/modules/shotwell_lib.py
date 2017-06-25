@@ -29,12 +29,15 @@ def import_from_shotwell_db(
     #     original_storage_path = os.path.commonprefix(photo_paths)
     #     del photo_paths
 
+    shotwell_tag = Tag.get_tag(db_session=tag_db.session, tag_name="shotwell")
+    tag_db.session.commit()
+
+    LOGGER.info("Importing images... [Part 1 of 2]")
     # Grab all the photos and add them.
     files_by_id = dict()
     for table in (PhotoTable, VideoTable):
         for photo_row in sw_db.session.query(table):
             media_filepath = str(photo_row.filename)
-            LOGGER.critical(media_filepath)
             # if sw_storage_folder_override:
             #     filepath = original_storage_path.replace(
             #         original_storage_path, sw_storage_folder_override)
@@ -42,10 +45,11 @@ def import_from_shotwell_db(
                 db_session=tag_db.session, media_path=media_path,
                 copy_from_filepath=media_filepath)
             files_by_id[int(photo_row.id)] = tracked_file
-            tracked_file.tags.append(Tag(name="shotwell"))
+            tracked_file.tags.append(shotwell_tag)
             tag_db.session.add(tracked_file)
     tag_db.session.commit()
 
+    LOGGER.info("Attaching tags... [Part 2 of 2]")
     # Grab all the tags and apply them to the photos.
     tags_by_id = defaultdict(list)
     tags_by_tag_name = dict()
