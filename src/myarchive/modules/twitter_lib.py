@@ -357,10 +357,13 @@ class TwitterAPI(twitter.Api):
 
         LOGGER.info("Parsing out %s CSV-only tweets..." % len(csv_only_tweets))
         for csv_only_tweet in csv_only_tweets:
-            user = database.session.query(TwitterUser). \
-                filter_by(screen_name=csv_only_tweet.username).one()
             tweet = Tweet.make_from_csvtweet(csv_only_tweet)
-            user.tweets.append(tweet)
+            try:
+                user = database.session.query(TwitterUser). \
+                    filter_by(screen_name=csv_only_tweet.username).one()
+                user.tweets.append(tweet)
+            except NoResultFound:
+                database.session.add(tweet)
             csv_only_tweet.api_import_complete = True
         database.session.commit()
 
