@@ -44,10 +44,9 @@ def import_from_shotwell_db(
             tracked_file, existing = TrackedFile.add_file(
                 db_session=tag_db.session, media_path=media_path,
                 copy_from_filepath=media_filepath)
-            if not existing:
-                files_by_id[int(photo_row.id)] = tracked_file
-                tracked_file.tags.append(shotwell_tag)
-                tag_db.session.add(tracked_file)
+            files_by_id[int(photo_row.id)] = tracked_file
+            tracked_file.tags.append(shotwell_tag)
+            tag_db.session.add(tracked_file)
     tag_db.session.commit()
 
     LOGGER.info("Reading in tags... [Part 2 of 3]")

@@ -93,7 +93,7 @@ class TrackedFile(Base):
         else:
             raise Exception("Not sure what to do with this???")
 
-        return existing, TrackedFile(original_filename, filepath, md5sum, url)
+        return TrackedFile(original_filename, filepath, md5sum, url), existing
 
     @classmethod
     def download_file(cls, db_session, media_path, url):
