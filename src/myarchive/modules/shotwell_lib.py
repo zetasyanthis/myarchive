@@ -32,7 +32,7 @@ def import_from_shotwell_db(
     shotwell_tag = Tag.get_tag(db_session=tag_db.session, tag_name="shotwell")
     tag_db.session.commit()
 
-    LOGGER.info("Importing images... [Part 1 of 2]")
+    LOGGER.info("Importing images... [Part 1 of 3]")
     # Grab all the photos and add them.
     files_by_id = dict()
     for table in (PhotoTable, VideoTable):
@@ -41,15 +41,16 @@ def import_from_shotwell_db(
             # if sw_storage_folder_override:
             #     filepath = original_storage_path.replace(
             #         original_storage_path, sw_storage_folder_override)
-            tracked_file = TrackedFile.add_file(
+            tracked_file, existing = TrackedFile.add_file(
                 db_session=tag_db.session, media_path=media_path,
                 copy_from_filepath=media_filepath)
-            files_by_id[int(photo_row.id)] = tracked_file
-            tracked_file.tags.append(shotwell_tag)
-            tag_db.session.add(tracked_file)
+            if not existing:
+                files_by_id[int(photo_row.id)] = tracked_file
+                tracked_file.tags.append(shotwell_tag)
+                tag_db.session.add(tracked_file)
     tag_db.session.commit()
 
-    LOGGER.info("Attaching tags... [Part 2 of 2]")
+    LOGGER.info("Reading in tags... [Part 2 of 3]")
     # Grab all the tags and apply them to the photos.
     tags_by_id = defaultdict(list)
     tags_by_tag_name = dict()
@@ -69,6 +70,7 @@ def import_from_shotwell_db(
         tags_by_tag_name[tag_name] = \
             Tag.get_tag(db_session=tag_db.session, tag_name=tag_name)
 
+    LOGGER.info("Attaching tags... [Part 3 of 3]")
     for photo_id, tracked_file in files_by_id.items():
         for tag_name in tags_by_id[photo_id]:
             tag = tags_by_tag_name[tag_name]

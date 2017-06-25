@@ -57,6 +57,7 @@ class TrackedFile(Base):
                  copy_from_filepath=None,
                  original_filename=None,
                  url=None):
+        existing = False
         if file_buffer is not None:
             md5sum = md5(file_buffer).hexdigest()
             # Detect an extension incase the URL doesn't have one.
@@ -71,6 +72,7 @@ class TrackedFile(Base):
                 LOGGER.debug(
                     "Repeated hash: %s [%s, %s]",
                     md5sum, tracked_file[0].filepath, filepath)
+                existing = True
             else:
                 with open(filepath, "wb") as fptr:
                     fptr.write(file_buffer)
@@ -82,6 +84,7 @@ class TrackedFile(Base):
             filepath = os.path.join(media_path, md5sum + extension)
             tracked_file = db_session.query(cls).filter_by(md5sum=md5sum).all()
             if tracked_file:
+                existing = True
                 LOGGER.debug(
                     "Repeated hash: %s [%s, %s]",
                     md5sum, tracked_file[0].filepath, filepath)
@@ -90,7 +93,7 @@ class TrackedFile(Base):
         else:
             raise Exception("Not sure what to do with this???")
 
-        return TrackedFile(original_filename, filepath, md5sum, url)
+        return existing, TrackedFile(original_filename, filepath, md5sum, url)
 
     @classmethod
     def download_file(cls, db_session, media_path, url):
