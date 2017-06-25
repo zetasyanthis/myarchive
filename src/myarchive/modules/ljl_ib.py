@@ -8,7 +8,8 @@ from lj.backup import (
     datetime_from_string)
 from sqlalchemy.orm.exc import NoResultFound
 
-from myarchive.db.tag_db.tables.ljtables import LJComment, LJEntry, LJHost, LJUser
+from myarchive.db.tag_db.tables.ljtables import (
+    LJComment, LJEntry, LJHost, LJUser)
 
 
 class LJAPIConnection(object):

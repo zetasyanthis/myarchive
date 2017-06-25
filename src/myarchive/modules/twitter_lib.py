@@ -5,17 +5,17 @@
 
 import csv
 import logging
-import os
 import sys
 import time
-from time import sleep
-
 import twitter
+
+from collections import namedtuple
 from sqlalchemy.orm.exc import NoResultFound
+from time import sleep
 from twitter.error import TwitterError
 
 from myarchive.db.tag_db.tables.twittertables import (
-    CSVTweet, RawTweet, Tweet, TwitterUser)
+    RawTweet, Tweet, TwitterUser)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -50,6 +50,21 @@ KEYS = [
     # u'retweeted',
     # u'retweet_count',
 ]
+
+
+CSVTweet = namedtuple(
+    'CSVTweet',
+    ["id",
+     "username",
+     "in_reply_to_status_id",
+     "in_reply_to_user_id",
+     "timestamp",
+     "text",
+     "retweeted_status_id",
+     "retweeted_status_user_id",
+     "retweeted_status_timestamp",
+     "expanded_urls"]
+)
 
 
 class TwitterAPI(twitter.Api):
@@ -247,15 +262,13 @@ class TwitterAPI(twitter.Api):
     def import_from_csv(self, database, csv_filepath, username):
         existing_tweet_ids = database.get_existing_tweet_ids()
 
-        LOGGER.info("Importing into CSVTweets...")
-        csv_tweets_by_id = dict(
-            (csv_tweet.id, csv_tweet)
-            for csv_tweet in database.session.query(CSVTweet).all())
+        csv_tweets_by_id = dict()
+        LOGGER.debug("Scanning CSV for new tweets...")
         with open(csv_filepath) as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 tweet_id = int(row['tweet_id'])
-                if tweet_id not in csv_tweets_by_id:
+                if tweet_id not in existing_tweet_ids:
                     csv_tweet = CSVTweet(
                         id=tweet_id,
                         username=username,
@@ -268,22 +281,10 @@ class TwitterAPI(twitter.Api):
                         row["retweeted_status_user_id"],
                         retweeted_status_timestamp=
                         row["retweeted_status_timestamp"],
-                        expanded_urls=row["expanded_urls"])
-                    database.session.add(csv_tweet)
+                        expanded_urls=row["expanded_urls"]
+                    )
                     csv_tweets_by_id[tweet_id] = csv_tweet
-                database.session.commit()
-
-        LOGGER.info("Scanning for existing Tweets...")
-        ids_to_remove = []
-        for tweet_id, csv_tweet in csv_tweets_by_id.items():
-            # If any aren't set as imported and should be, clean that up.
-            if tweet_id in existing_tweet_ids:
-                ids_to_remove.append(tweet_id)
-                if not csv_tweet.api_import_complete:
-                    csv_tweet.api_import_complete = True
         database.session.commit()
-        for id_to_remove in ids_to_remove:
-            csv_tweets_by_id.pop(id_to_remove)
 
         csv_ids = list(csv_tweets_by_id.keys())
         num_imports = len(csv_ids)
@@ -334,7 +335,6 @@ class TwitterAPI(twitter.Api):
                     database.session.add(raw_tweet)
                     # Mark CSVTweet appropriately.
                     csv_tweet = csv_tweets_by_id[int(status_dict["id"])]
-                    csv_tweet.api_import_complete = True
                     # Append to new list.
                     new_api_tweets.append(raw_tweet)
                 database.session.commit()
@@ -352,20 +352,16 @@ class TwitterAPI(twitter.Api):
             tweet_index += 100
             sliced_ids = csv_ids[tweet_index:100 + tweet_index]
 
-        csv_only_tweets = database.session.query(CSVTweet).\
-            filter_by(api_import_complete=False).all()
-
-        LOGGER.info("Parsing out %s CSV-only tweets..." % len(csv_only_tweets))
-        for csv_only_tweet in csv_only_tweets:
-            tweet = Tweet.make_from_csvtweet(csv_only_tweet)
-            try:
-                user = database.session.query(TwitterUser). \
-                    filter_by(screen_name=csv_only_tweet.username).one()
-                user.tweets.append(tweet)
-            except NoResultFound:
-                database.session.add(tweet)
-            csv_only_tweet.api_import_complete = True
-        database.session.commit()
+        # LOGGER.info("Parsing out %s CSV-only tweets...")
+        # for tweet_id, csv_only_tweet in csv_tweets_by_id:
+        #     tweet = Tweet.make_from_csvtweet(csv_only_tweet)
+        #     try:
+        #         user = database.session.query(TwitterUser). \
+        #             filter_by(screen_name=csv_only_tweet.username).one()
+        #         user.tweets.append(tweet)
+        #     except NoResultFound:
+        #         database.session.add(tweet)
+        # database.session.commit()
 
     @staticmethod
     def parse_tweets(database):
