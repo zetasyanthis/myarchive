@@ -1,8 +1,6 @@
 General
     Deduplicate TrackedFiles.
-    Add config file in ./myarchive/.
-        Move account info here.
-        Optionally save a compressed copy of the imported tweet CSV (with timestamp).
+        Save a compressed copy of the imported tweet CSV (with timestamp).
     Add multithreaded support for background updates.
         http://stackoverflow.com/questions/6297404/multi-threaded-use-of-sqlalchemy
         http://stackoverflow.com/questions/9619789/sqlalchemy-proper-session-handling-in-multi-thread-applications

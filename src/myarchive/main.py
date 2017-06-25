@@ -107,7 +107,8 @@ def main():
     """
 
     if args.import_tweets_from_api:
-        TwitterAPI.import_tweets_from_api(database=tag_db)
+        TwitterAPI.import_tweets_from_api(
+            database=tag_db, config=config)
     if args.import_tweets_from_csv:
         username = None
         while username is None:
@@ -124,7 +125,7 @@ def main():
         # Parse the tweets and download associated media.
         TwitterAPI.parse_tweets(database=tag_db)
         TwitterAPI.download_media(
-            database=tag_db, storage_folder=args.storage_folder)
+            database=tag_db, storage_folder=media_storage_path)
 
     """
     LiveJournal Section

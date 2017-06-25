@@ -99,18 +99,24 @@ class TwitterAPI(twitter.Api):
         return [twitter.Status.NewFromJsonDict(x) for x in data]
 
     @classmethod
-    def import_tweets_from_api(cls, database):
-        for twitter_api_account in TWITTER_API_ACCOUNTS.values():
-            api = cls(
-                consumer_key=twitter_api_account.consumer_key,
-                consumer_secret=twitter_api_account.consumer_secret,
-                access_token_key=twitter_api_account.access_key,
-                access_token_secret=twitter_api_account.access_secret,
-            )
-            api.archive_tweets(
-                database=database,
-                username=twitter_api_account.username,
-            )
+    def import_tweets_from_api(cls, database, config):
+        for config_section in config.sections():
+            if config_section.startswith("Twitter_"):
+                api = cls(
+                    consumer_key=config.get(
+                        section=config_section, option="consumer_key"),
+                    consumer_secret=config.get(
+                        section=config_section, option="consumer_secret"),
+                    access_token_key=config.get(
+                        section=config_section, option="access_key"),
+                    access_token_secret=config.get(
+                        section=config_section, option="access_secret"),
+                )
+                api.archive_tweets(
+                    database=database,
+                    username=config.get(
+                        section=config_section, option="username"),
+                )
 
     def archive_tweets(self, database, username):
         """
