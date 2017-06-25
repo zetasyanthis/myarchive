@@ -352,16 +352,16 @@ class TwitterAPI(twitter.Api):
             tweet_index += 100
             sliced_ids = csv_ids[tweet_index:100 + tweet_index]
 
-        # LOGGER.info("Parsing out %s CSV-only tweets...")
-        # for tweet_id, csv_only_tweet in csv_tweets_by_id:
-        #     tweet = Tweet.make_from_csvtweet(csv_only_tweet)
-        #     try:
-        #         user = database.session.query(TwitterUser). \
-        #             filter_by(screen_name=csv_only_tweet.username).one()
-        #         user.tweets.append(tweet)
-        #     except NoResultFound:
-        #         database.session.add(tweet)
-        # database.session.commit()
+        LOGGER.info("Parsing out CSV-only tweets...")
+        for csv_only_tweet in csv_tweets_by_id.values():
+            tweet = Tweet.make_from_csvtweet(csv_only_tweet)
+            try:
+                user = database.session.query(TwitterUser). \
+                    filter_by(screen_name=csv_only_tweet.username).one()
+                user.tweets.append(tweet)
+            except NoResultFound:
+                database.session.add(tweet)
+        database.session.commit()
 
     @staticmethod
     def parse_tweets(database):

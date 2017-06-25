@@ -14,7 +14,7 @@ from sqlalchemy.orm import backref, relationship
 from myarchive.db.tag_db.tables.file import TrackedFile
 
 
-HASHTAG_REGEX = r"'#[\\d\\w]+'"
+HASHTAG_REGEX = r'#([\d\w]+)'
 
 
 class RawTweet(Base):
@@ -47,51 +47,6 @@ class RawTweet(Base):
             self.favorited_by_str = type_
 
 
-class CSVTweet(Base):
-    """
-    Class representing a tweet taken from a CSV file, which may or may not have
-    been cross-imported from the Twitter API.
-    """
-
-    __tablename__ = 'csvtweets'
-
-    id = Column(Integer, index=True, primary_key=True)
-    username = Column(String)
-    in_reply_to_status_id = Column(Integer)
-    in_reply_to_user_id = Column(Integer)
-    timestamp = Column(String)
-    text = Column(String)
-    retweeted_status_id = Column(Integer)
-    retweeted_status_user_id = Column(Integer)
-    retweeted_status_timestamp = Column(String)
-    expanded_urls = Column(String)
-    favorited_by_str = Column(String, default="")
-    api_import_complete = Column(Boolean, default=False)
-
-    def __init__(self, id, username, in_reply_to_status_id, in_reply_to_user_id,
-                 timestamp, text, retweeted_status_id, retweeted_status_user_id,
-                 retweeted_status_timestamp, expanded_urls):
-        self.id = int(id)
-        self.username = username
-        if in_reply_to_status_id:
-            self.in_reply_to_status_id = int(in_reply_to_status_id)
-        if in_reply_to_user_id:
-            self.in_reply_to_user_id = int(in_reply_to_user_id)
-        self.timestamp = timestamp
-        self.text = text
-        if retweeted_status_id:
-            self.retweeted_status_id = int(retweeted_status_id)
-        if retweeted_status_user_id:
-            self.retweeted_status_user_id = int(retweeted_status_user_id)
-        self.retweeted_status_timestamp = retweeted_status_timestamp
-        self.expanded_urls = expanded_urls
-
-    def __repr__(self):
-        return (
-            "<Tweet(id='%s', api_import_complete='%s')>" % (
-                self.id, self.api_import_complete))
-
-
 class Tweet(Base):
     """Class representing a file tweet by the database."""
 
@@ -100,7 +55,7 @@ class Tweet(Base):
     id = Column(Integer, index=True, primary_key=True)
     text = Column(String)
     in_reply_to_screen_name = Column(String)
-    in_reply_to_status_id = Column(Integer)
+    in_reply_to_status_id = Column(Integer, nullable=True)
     user_id = Column(Integer, ForeignKey("twitter_users.id"), nullable=True)
     files_downloaded = Column(Boolean, default=False)
 
@@ -125,12 +80,11 @@ class Tweet(Base):
                  hashtags_list):
         self.id = int(id)
         self.text = text
-        if in_reply_to_status_id is not None:
+        if in_reply_to_status_id not in ("", None):
             self.in_reply_to_status_id = int(in_reply_to_status_id)
         self.created_at = created_at
         if hashtags_list:
-            self.hashtags = ",".join(
-                [hashtag_dict[u"text"] for hashtag_dict in hashtags_list])
+            self.hashtags = ",".join(hashtags_list)
         self.files_downloaded = False
 
     def __repr__(self):
@@ -151,6 +105,15 @@ class Tweet(Base):
 
     @classmethod
     def make_from_csvtweet(cls, csv_tweet):
+        print(
+            [
+                csv_tweet.id,
+                csv_tweet.text,
+                csv_tweet.in_reply_to_status_id,
+                csv_tweet.timestamp,
+                re.findall(HASHTAG_REGEX, str(csv_tweet.text))
+            ]
+        )
         return cls(
             id=csv_tweet.id,
             text=csv_tweet.text,
