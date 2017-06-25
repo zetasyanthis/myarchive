@@ -113,11 +113,9 @@ def main():
         username = None
         while username is None:
             username = input("Enter username for CSV import: ")
-        if not args.username:
-            logger.error("Username is required for CSV imports!")
-            sys.exit(1)
         TwitterAPI.import_tweets_from_csv(
             database=tag_db,
+            config=config,
             username=username,
             csv_filepath=args.import_tweets_from_csv,
         )

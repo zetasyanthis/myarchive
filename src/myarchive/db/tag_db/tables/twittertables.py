@@ -166,7 +166,7 @@ class Tweet(Base):
             if "media" in raw_tweet.raw_status_dict:
                 for media_item in raw_tweet.raw_status_dict["media"]:
                     media_url = media_item["media_url_https"]
-                    tracked_file = TrackedFile.download_file(
+                    tracked_file, existing = TrackedFile.download_file(
                         db_session, media_path, media_url)
                     if (tracked_file is not None and
                             tracked_file not in self.files):
@@ -244,7 +244,7 @@ class TwitterUser(Base):
                 continue
 
             # Add file to DB (runs a sha1sum).
-            tracked_file = TrackedFile.download_file(
+            tracked_file, existing = TrackedFile.download_file(
                 db_session=db_session, media_path=media_path, url=media_url)
             if tracked_file is not None:
                 self.files.append(tracked_file)

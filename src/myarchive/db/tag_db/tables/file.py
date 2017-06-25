@@ -99,7 +99,7 @@ class TrackedFile(Base):
     def download_file(cls, db_session, media_path, url):
         tracked_files = db_session.query(cls).filter_by(url=url).all()
         if tracked_files:
-            return tracked_files[0]
+            return tracked_files[0], True
 
         # Download the file.
         filename = os.path.basename(urlparse(url).path)
@@ -107,13 +107,13 @@ class TrackedFile(Base):
         media_request = requests.get(url)
 
         # Add file to DB (runs a md5sum).
-        tracked_file = TrackedFile.add_file(
+        tracked_file, existing = TrackedFile.add_file(
             db_session=db_session,
             media_path=media_path,
             file_buffer=media_request.content,
             original_filename=filename,
             url=url)
-        return tracked_file
+        return tracked_file, existing
 
     @staticmethod
     def get_file_md5sum(fptr, block_size=2 ** 20):

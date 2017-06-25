@@ -6,6 +6,7 @@
 import csv
 import logging
 import os
+import sys
 import time
 from time import sleep
 
@@ -220,23 +221,27 @@ class TwitterAPI(twitter.Api):
         return new_tweets
 
     @classmethod
-    def import_tweets_from_csv(cls, database, username, csv_filepath):
-        try:
-            twitter_api_account = TWITTER_API_ACCOUNTS[username]
-        except KeyError:
-            raise KeyError(
-                "Unable to find matching TwitterAPIAccount for CSV import: "
-                "%s" % username)
+    def import_tweets_from_csv(cls, database, config, username, csv_filepath):
+        for config_section in config.sections():
+            if config_section.startswith("Twitter_%s" % username):
+                break
+        else:
+            LOGGER.error("Username not found.")
+            sys.exit(1)
         api = cls(
-            consumer_key=twitter_api_account.consumer_key,
-            consumer_secret=twitter_api_account.consumer_secret,
-            access_token_key=twitter_api_account.access_key,
-            access_token_secret=twitter_api_account.access_secret,
+            consumer_key=config.get(
+                section=config_section, option="consumer_key"),
+            consumer_secret=config.get(
+                section=config_section, option="consumer_secret"),
+            access_token_key=config.get(
+                section=config_section, option="access_key"),
+            access_token_secret=config.get(
+                section=config_section, option="access_secret"),
         )
         api.import_from_csv(
             database=database,
             csv_filepath=csv_filepath,
-            username=twitter_api_account.username,
+            username=username,
         )
 
     def import_from_csv(self, database, csv_filepath, username):
