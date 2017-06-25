@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 
 import argparse
+import configparser
 import os
 import sys
 
-from myarchive.accounts import LJ_API_ACCOUNTS
 from myarchive.db.tag_db.tag_db import TagDB
 from myarchive.modules.ljl_ib import LJAPIConnection
 from myarchive.modules.twitter_lib import TwitterAPI
@@ -26,11 +26,6 @@ def main():
     parser = argparse.ArgumentParser(
         description='Manages tagged files.')
     parser.add_argument(
-        "--storage-folder",
-        action="store",
-        default=os.path.join(os.path.expanduser("~"), ".myarchive/"),
-        help="Storage folder.")
-    parser.add_argument(
         "--import-folder",
         type=str,
         dest="import_folder",
@@ -50,11 +45,6 @@ def main():
         default=False,
         help='Accepts a Shotwell database filepath.')
     parser.add_argument(
-        '--shotwell_storage_folder_override',
-        action="store",
-        default=None,
-        help='Accepts a Shotwell file storage folder path.')
-    parser.add_argument(
         '--import_lj_entries',
         action="store_true",
         default=False,
@@ -69,20 +59,48 @@ def main():
     args = parser.parse_args()
     logger.debug(args)
 
+    # Import config file data.
+    config = configparser.ConfigParser()
+    config.read("/etc/myarchive/myarchive.conf")
+    # config.read("./myarchive/myarchive.conf")
+    database_filepath = config.get(
+        section="General", option="database_filepath")
+    media_storage_path = config.get(
+        section="General", option="media_storage_path")
+
     # Set up objects used everywhere.
     tag_db = TagDB(
         drivername='sqlite',
-        db_name=os.path.join(args.storage_folder, "myarchive.sqlite"))
+        db_name=database_filepath)
     tag_db.session.autocommit = False
-    media_path = os.path.join(args.storage_folder, "media/")
-    if not os.path.exists(media_path):
-        os.makedirs(media_path)
+    if not os.path.exists(media_storage_path):
+        os.makedirs(media_storage_path)
+
+    """
+    Raw folder import section
+    """
 
     if args.import_folder:
         if not os.path.exists(args.import_folder):
             raise Exception("Import folder path does not exist!")
         if not os.path.isdir(args.import_folder):
             raise Exception("Import folder path is not a folder!")
+
+    """
+    Shotwell Section
+    """
+
+    if args.import_from_shotwell_db:
+        sw_db_path = config.get(
+            section="Shotwell", option="db_filepath")
+        sw_media_path = config.get(
+            section="Shotwell", option="storage_filepath")
+        import_from_shotwell_db(
+            tag_db=tag_db,
+            media_path=media_storage_path,
+            sw_database_path=sw_db_path,
+            sw_storage_folder_override=sw_media_path,
+        )
 
     """
     Twitter Section
@@ -109,19 +127,7 @@ def main():
             database=tag_db, storage_folder=args.storage_folder)
 
     """
-    Shotwell Section
-    """
-
-    if args.import_from_shotwell_db:
-        import_from_shotwell_db(
-            tag_db=tag_db,
-            media_path=media_path,
-            sw_database_path=args.import_from_shotwell_db,
-            sw_storage_folder_override=args.shotwell_storage_folder_override,
-        )
-
-    """
-    Livejournal Section
+    LiveJournal Section
     """
 
     if args.import_lj_entries:
