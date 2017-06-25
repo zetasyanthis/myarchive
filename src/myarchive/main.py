@@ -36,17 +36,12 @@ def main():
         dest="import_folder",
         help="Folder to organize.")
     parser.add_argument(
-        '--username',
-        action="store",
-        default=None,
-        help='Accepts a service username.')
-    parser.add_argument(
         '--import_tweets_from_api',
         action="store_true",
         default=False,
         help='Downloads user tweets and favorites..')
     parser.add_argument(
-        '--import_tweets_from_archive-csv',
+        '--import_tweets_from_csv',
         action="store",
         help='Accepts a CSV filepath..')
     parser.add_argument(
@@ -91,17 +86,17 @@ def main():
     """
 
     if args.import_tweets_from_api:
-        TwitterAPI.import_tweets_from_api(
-            database=tag_db,
-            username=args.username,
-        )
-    if args.import_tweets_from_archive_csv:
+        TwitterAPI.import_tweets_from_api(database=tag_db)
+    if args.import_tweets_from_csv:
+        username = None
+        while username is None:
+            username = input("Enter username for CSV import: ")
         if not args.username:
             logger.error("Username is required for CSV imports!")
             sys.exit(1)
         TwitterAPI.import_tweets_from_csv(
             database=tag_db,
-            username=args.username,
+            username=username,
             csv_filepath=args.import_tweets_from_archive_csv,
         )
     if args.import_tweets_from_api or args.import_tweets_from_archive_csv:

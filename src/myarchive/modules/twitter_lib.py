@@ -100,7 +100,7 @@ class TwitterAPI(twitter.Api):
         return [twitter.Status.NewFromJsonDict(x) for x in data]
 
     @classmethod
-    def import_tweets_from_api(cls, database, username=None):
+    def import_tweets_from_api(cls, database):
         for twitter_api_account in TWITTER_API_ACCOUNTS.values():
             api = cls(
                 consumer_key=twitter_api_account.consumer_key,
