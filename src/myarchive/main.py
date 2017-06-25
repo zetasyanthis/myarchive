@@ -46,7 +46,8 @@ def main():
         help='Accepts a CSV filepath..')
     parser.add_argument(
         '--import_from_shotwell_db',
-        action="store",
+        action="store_true",
+        default=False,
         help='Accepts a Shotwell database filepath.')
     parser.add_argument(
         '--shotwell_storage_folder_override',
@@ -97,9 +98,9 @@ def main():
         TwitterAPI.import_tweets_from_csv(
             database=tag_db,
             username=username,
-            csv_filepath=args.import_tweets_from_archive_csv,
+            csv_filepath=args.import_tweets_from_csv,
         )
-    if args.import_tweets_from_api or args.import_tweets_from_archive_csv:
+    if args.import_tweets_from_api or args.import_tweets_from_csv:
         # Parse the tweets and download associated media.
         TwitterAPI.parse_tweets(database=tag_db)
         TwitterAPI.download_media(
