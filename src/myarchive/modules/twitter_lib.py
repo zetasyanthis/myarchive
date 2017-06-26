@@ -235,13 +235,13 @@ class TwitterAPI(twitter.Api):
                 status_id = int(status_dict["id"])
                 if status_id not in existing_tweet_ids:
                     hashtags_list = list()
-                    if status_dict["hashtags"]:
+                    if status_dict.get("hashtags"):
                         hashtags_list = [
                             hashtag_dict["text"]
                             for hashtag_dict in status_dict["hashtags"]
                         ]
                     media_urls_list = list()
-                    if "media" in status_dict:
+                    if status_dict.get("media"):
                         media_urls_list = [
                             media_dict["media_url_https"]
                             for media_dict in status_dict["media"]

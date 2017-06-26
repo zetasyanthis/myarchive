@@ -2,6 +2,7 @@
 Module containing class definitions for files to be tagged.
 """
 
+import logging
 import re
 
 from myarchive.db.tag_db.tables.association_tables import (
@@ -12,6 +13,9 @@ from sqlalchemy import (
 from sqlalchemy.orm import backref, relationship
 
 from myarchive.db.tag_db.tables.file import TrackedFile
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 HASHTAG_REGEX = r'#([\d\w]+)'
@@ -98,11 +102,12 @@ class Tweet(Base):
     def download_media(self, db_session, media_path):
         # Retrieve media files.
         for media_url in self.media_urls:
-            tracked_file, existing = TrackedFile.download_file(
-                db_session, media_path, media_url)
-            if (tracked_file is not None and
-                    tracked_file not in self.files):
-                self.files.append(tracked_file)
+            if media_url != "":
+                tracked_file, existing = TrackedFile.download_file(
+                    db_session, media_path, media_url)
+                if (tracked_file is not None and
+                        tracked_file not in self.files):
+                    self.files.append(tracked_file)
 
 
 class TwitterUser(Base):
