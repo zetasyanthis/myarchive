@@ -96,6 +96,7 @@ class Tweet(Base):
             text=csv_tweet.text,
             in_reply_to_status_id=csv_tweet.in_reply_to_status_id,
             created_at=csv_tweet.timestamp,
+            media_urls_list=list(),
             hashtags_list=re.findall(HASHTAG_REGEX, str(csv_tweet.text)),
         )
 
@@ -108,6 +109,7 @@ class Tweet(Base):
                 if (tracked_file is not None and
                         tracked_file not in self.files):
                     self.files.append(tracked_file)
+        self.files_downloaded = True
 
 
 class TwitterUser(Base):
