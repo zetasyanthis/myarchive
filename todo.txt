@@ -1,6 +1,21 @@
+- MyArchive
+  - Save a compressed copy of the imported tweet CSV (with timestamp).
+  - Make rawtweets into namedtuples and dump them to a folder.
+  - Directly import csvtweets into Tweets.
+  - Fix handling of csv-only-tweets.
+  - File import (Use xattrs, and exif data as tags if present)
+  - Export files to directories based on tags.
+  - Secure credential storage.
+
+
+
+
+
+
+
+
 General
     Deduplicate TrackedFiles.
-        Save a compressed copy of the imported tweet CSV (with timestamp).
     Add multithreaded support for background updates.
         http://stackoverflow.com/questions/6297404/multi-threaded-use-of-sqlalchemy
         http://stackoverflow.com/questions/9619789/sqlalchemy-proper-session-handling-in-multi-thread-applications
