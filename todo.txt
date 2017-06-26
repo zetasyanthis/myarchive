@@ -1,10 +1,9 @@
 - CSVTweets
-  - Kill actual namedtuple. No reason we need that datastructure at all.
+  - Kill actual namedtuple. No reason we need that data-structure at all.
   - JSON export
-  - Save a compressed copy of the imported tweet CSV (with timestamp).
+  - Save a compressed copy of the imported tweet CSV (with timestamp and username).
 
 
-  
 
   - File import (Use xattrs, and exif data as tags if present)
   - Export files to directories based on tags.
