@@ -7,7 +7,7 @@ from myarchive.db.db import DB
 from sqlalchemy.exc import IntegrityError
 
 from myarchive.db.tag_db.tables import (
-    Base, TrackedFile, Tag, RawTweet, Tweet)
+    Base, TrackedFile, Tag, Tweet)
 
 # Get the module logger.
 logger = logging.getLogger(__name__)
@@ -31,12 +31,7 @@ class TagDB(DB):
             returned_tuple[0]
             for returned_tuple in
             self.session.query(Tweet.id).all()]
-        rawtweet_ids = [
-            returned_tuple[0]
-            for returned_tuple in
-            self.session.query(RawTweet.id).all()]
         tweet_id_set = set(tweet_ids)
-        tweet_id_set.update(rawtweet_ids)
         return tweet_id_set
 
     def import_files(self, path):

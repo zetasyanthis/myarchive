@@ -67,14 +67,16 @@ def main():
         section="General", option="database_filepath")
     media_storage_path = config.get(
         section="General", option="media_storage_path")
+    tweet_storage_path = config.get(
+        section="General", option="tweet_storage_path")
 
     # Set up objects used everywhere.
     tag_db = TagDB(
         drivername='sqlite',
         db_name=database_filepath)
     tag_db.session.autocommit = False
-    if not os.path.exists(media_storage_path):
-        os.makedirs(media_storage_path)
+    os.makedirs(media_storage_path, exist_ok=True)
+    os.makedirs(tweet_storage_path, exist_ok=True)
 
     """
     Raw folder import section
@@ -108,7 +110,8 @@ def main():
 
     if args.import_tweets_from_api:
         TwitterAPI.import_tweets_from_api(
-            database=tag_db, config=config)
+            database=tag_db, config=config,
+            tweet_storage_path=tweet_storage_path)
     if args.import_tweets_from_csv:
         username = None
         while username is None:
@@ -116,12 +119,12 @@ def main():
         TwitterAPI.import_tweets_from_csv(
             database=tag_db,
             config=config,
+            tweet_storage_path=tweet_storage_path,
             username=username,
             csv_filepath=args.import_tweets_from_csv,
         )
     if args.import_tweets_from_api or args.import_tweets_from_csv:
         # Parse the tweets and download associated media.
-        TwitterAPI.parse_tweets(database=tag_db)
         TwitterAPI.download_media(
             database=tag_db, media_storage_path=media_storage_path)
 

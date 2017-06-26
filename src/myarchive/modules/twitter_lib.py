@@ -5,6 +5,8 @@
 
 import csv
 import logging
+import json
+import os
 import sys
 import time
 import twitter
@@ -14,8 +16,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from time import sleep
 from twitter.error import TwitterError
 
-from myarchive.db.tag_db.tables.twittertables import (
-    RawTweet, Tweet, TwitterUser)
+from myarchive.db.tag_db.tables.twittertables import Tweet, TwitterUser
 
 LOGGER = logging.getLogger(__name__)
 
@@ -115,7 +116,7 @@ class TwitterAPI(twitter.Api):
         return [twitter.Status.NewFromJsonDict(x) for x in data]
 
     @classmethod
-    def import_tweets_from_api(cls, database, config):
+    def import_tweets_from_api(cls, database, config, tweet_storage_path):
         for config_section in config.sections():
             if config_section.startswith("Twitter_"):
                 api = cls(
@@ -132,9 +133,10 @@ class TwitterAPI(twitter.Api):
                     database=database,
                     username=config.get(
                         section=config_section, option="username"),
+                    tweet_storage_path=tweet_storage_path,
                 )
 
-    def archive_tweets(self, database, username):
+    def archive_tweets(self, database, username, tweet_storage_path):
         """
         Archives several types of new tweets along with their associated
         content.
@@ -210,7 +212,14 @@ class TwitterAPI(twitter.Api):
                     if since_id is not None and status_id >= since_id:
                         early_termination = True
                         break
-                    # Only append if we don't breach since_id.
+
+                    # Dump the tweet as a JSON file in case something goes
+                    # wrong. Do none of this if we've passed the since_id
+                    # threhold.
+                    tweet_filepath = os.path.join(
+                        tweet_storage_path, "%s.json" % status_id)
+                    with open(tweet_filepath, 'w') as fptr:
+                        json.dump(loop_status.AsDict(), fptr)
                     statuses.append(loop_status)
                     # Capture new max_id
                     if max_id is None or status_id < max_id:
@@ -218,19 +227,38 @@ class TwitterAPI(twitter.Api):
 
             # Format things the way we want and handle max_id changes.
             LOGGER.info("Adding %s tweets to DB...", len(statuses))
-            existing_rawtweet_ids = [
+            existing_tweet_ids = [
                 returned_tuple[0]
-                for returned_tuple in database.session.query(RawTweet.id).all()]
+                for returned_tuple in database.session.query(Tweet.id).all()]
             for status in statuses:
                 status_dict = status.AsDict()
                 status_id = int(status_dict["id"])
-                if status_id in existing_rawtweet_ids:
-                    continue
-                raw_tweet = RawTweet(status_dict=status_dict)
-                new_tweets.append(raw_tweet)
-                database.session.add(raw_tweet)
-                if type_ == FAVORITES:
-                    raw_tweet.add_user_favorite(username)
+                if status_id not in existing_tweet_ids:
+                    hashtags_list = list()
+                    if status_dict["hashtags"]:
+                        hashtags_list = [
+                            hashtag_dict["text"]
+                            for hashtag_dict in status_dict["hashtags"]
+                        ]
+                    media_urls_list = list()
+                    if "media" in status_dict:
+                        media_urls_list = [
+                            media_dict["media_url_https"]
+                            for media_dict in status_dict["media"]
+                        ]
+                    tweet = Tweet(
+                        id=status_id,
+                        text=status_dict["text"],
+                        in_reply_to_status_id=
+                        status_dict.get("in_reply_to_status_id"),
+                        created_at=status_dict["created_at"],
+                        media_urls_list=media_urls_list,
+                        hashtags_list=hashtags_list,
+                    )
+                    new_tweets.append(tweet)
+                    database.session.add(tweet)
+                    if type_ == FAVORITES:
+                        tweet.add_user_favorite(username)
             database.session.commit()
 
         return new_tweets
@@ -364,54 +392,10 @@ class TwitterAPI(twitter.Api):
         database.session.commit()
 
     @staticmethod
-    def parse_tweets(database):
-        """Converts RawTweets to Tweets."""
-        existing_tweet_ids = database.get_existing_tweet_ids()
-        raw_tweets = database.session.query(RawTweet)
-
-        # Filter out existing tweets, making sure to compare with a a tuple
-        # since SQLAlchemy will return a list of tuples.
-        raw_tweets_to_parse = [
-            raw_tweet for raw_tweet in raw_tweets
-            if raw_tweet.id not in existing_tweet_ids]
-        LOGGER.info("Found %s tweets to parse.", len(raw_tweets_to_parse))
-
-        user = None
-        for index, raw_tweet in enumerate(raw_tweets_to_parse):
-            if index % 100 == 0:
-                LOGGER.info(
-                    "Parsing tweet %s to %s of %s...",
-                    index,
-                    min(index + 100, len(raw_tweets_to_parse)),
-                    len(raw_tweets_to_parse))
-
-            # Generate User objects. Only really query if we absolutely have to.
-            user_dict = raw_tweet.raw_status_dict["user"]
-            user_id = int(user_dict["id"])
-            if user and user.id == user_id:
-                pass
-            else:
-                try:
-                    user = database.session.query(TwitterUser).\
-                        filter_by(id=user_id).one()
-                except NoResultFound:
-                    user = TwitterUser(user_dict)
-                    database.session.add(user)
-
-            # Generate Tweet objects.
-            tweet = Tweet.make_from_raw(raw_tweet)
-            user.tweets.append(tweet)
-        database.session.commit()
-
-    @staticmethod
     def download_media(database, media_storage_path):
-        raw_tweets = database.session.query(RawTweet).all()
-        raw_tweets_by_id = {
-            raw_tweet.id: raw_tweet for raw_tweet in raw_tweets}
         for tweet in database.session.query(Tweet):
             tweet.download_media(
-                db_session=database.session, media_path=media_storage_path,
-                raw_tweets_by_id=raw_tweets_by_id)
+                db_session=database.session, media_path=media_storage_path)
         for user in database.session.query(TwitterUser):
             user.download_media(
                 db_session=database.session, media_path=media_storage_path)

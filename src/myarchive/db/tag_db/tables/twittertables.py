@@ -8,43 +8,13 @@ from myarchive.db.tag_db.tables.association_tables import (
     at_tweet_tag, at_tweet_file, at_twuser_file)
 from myarchive.db.tag_db.tables.base import Base
 from sqlalchemy import (
-    Boolean, Column, Integer, String, PickleType, ForeignKey)
+    Boolean, Column, Integer, String, Text, ForeignKey)
 from sqlalchemy.orm import backref, relationship
 
 from myarchive.db.tag_db.tables.file import TrackedFile
 
 
 HASHTAG_REGEX = r'#([\d\w]+)'
-
-
-class RawTweet(Base):
-    """Class representing a raw tweet."""
-
-    __tablename__ = 'rawtweets'
-
-    id = Column(Integer, index=True, primary_key=True)
-    favorited_by_str = Column(String, default="")
-    raw_status_dict = Column(PickleType)
-
-    @property
-    def favorited_by(self):
-        return self.favorited_by_str.split(",")
-
-    def __init__(self, status_dict):
-        self.id = int(status_dict["id"])
-        self.raw_status_dict = status_dict
-
-    def __repr__(self):
-        return (
-            "<Tweet(id='%s', raw_data='%s')>" % (self.id, self.raw_status_dict))
-
-    def add_user_favorite(self, type_):
-        if self.favorited_by_str:
-            if type_ not in self.favorited_by_str:
-                self.favorited_by_str = (
-                    ",".join(self.favorited_by_str.split(',') + [type_]))
-        else:
-            self.favorited_by_str = type_
 
 
 class Tweet(Base):
@@ -58,6 +28,9 @@ class Tweet(Base):
     in_reply_to_status_id = Column(Integer, nullable=True)
     user_id = Column(Integer, ForeignKey("twitter_users.id"), nullable=True)
     files_downloaded = Column(Boolean, default=False)
+    media_urls_str = Column(Text, default="")
+    hashtags_str = Column(Text, default="")
+    favorited_by_str = Column(Text, default="")
 
     files = relationship(
         "TrackedFile",
@@ -76,44 +49,44 @@ class Tweet(Base):
         secondary=at_tweet_tag
     )
 
+    @property
+    def favorited_by(self):
+        return self.favorited_by_str.split(",")
+
+    @property
+    def media_urls(self):
+        return self.media_urls_str.split(",")
+
+    @property
+    def hashtags(self):
+        return self.hashtags_str.split(",")
+
     def __init__(self, id, text, in_reply_to_status_id, created_at,
-                 hashtags_list):
+                 media_urls_list, hashtags_list):
         self.id = int(id)
         self.text = text
         if in_reply_to_status_id not in ("", None):
             self.in_reply_to_status_id = int(in_reply_to_status_id)
         self.created_at = created_at
+        if media_urls_list:
+            self.media_urls_str = ",".join(media_urls_list)
         if hashtags_list:
-            self.hashtags = ",".join(hashtags_list)
+            self.hashtags_str = ",".join(hashtags_list)
         self.files_downloaded = False
 
     def __repr__(self):
         return "<Tweet(id='%s', text='%s')>" % (self.id, self.text)
 
-    @classmethod
-    def make_from_raw(cls, raw_tweet):
-
-        tweet = cls(
-            id=raw_tweet.raw_status_dict["id"],
-            text=raw_tweet.raw_status_dict["text"],
-            in_reply_to_status_id=raw_tweet.raw_status_dict.get(
-                "in_reply_to_status_id"),
-            created_at=raw_tweet.raw_status_dict["created_at"],
-            hashtags_list=raw_tweet.raw_status_dict.get("hashtags"),
-            )
-        return tweet
+    def add_user_favorite(self, user_id):
+        if self.favorited_by_str:
+            if user_id not in self.favorited_by_str:
+                self.favorited_by_str = (
+                    ",".join(self.favorited_by_str.split(',') + [user_id]))
+        else:
+            self.favorited_by_str = user_id
 
     @classmethod
     def make_from_csvtweet(cls, csv_tweet):
-        print(
-            [
-                csv_tweet.id,
-                csv_tweet.text,
-                csv_tweet.in_reply_to_status_id,
-                csv_tweet.timestamp,
-                re.findall(HASHTAG_REGEX, str(csv_tweet.text))
-            ]
-        )
         return cls(
             id=csv_tweet.id,
             text=csv_tweet.text,
@@ -122,19 +95,14 @@ class Tweet(Base):
             hashtags_list=re.findall(HASHTAG_REGEX, str(csv_tweet.text)),
         )
 
-    def download_media(self, db_session, media_path, raw_tweets_by_id):
+    def download_media(self, db_session, media_path):
         # Retrieve media files.
-        raw_tweet = raw_tweets_by_id.get(self.id)
-        if raw_tweet is not None:
-            if "media" in raw_tweet.raw_status_dict:
-                for media_item in raw_tweet.raw_status_dict["media"]:
-                    media_url = media_item["media_url_https"]
-                    tracked_file, existing = TrackedFile.download_file(
-                        db_session, media_path, media_url)
-                    if (tracked_file is not None and
-                            tracked_file not in self.files):
-                        self.files.append(tracked_file)
-            db_session.delete(raw_tweet)
+        for media_url in self.media_urls:
+            tracked_file, existing = TrackedFile.download_file(
+                db_session, media_path, media_url)
+            if (tracked_file is not None and
+                    tracked_file not in self.files):
+                self.files.append(tracked_file)
 
 
 class TwitterUser(Base):
