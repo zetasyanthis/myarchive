@@ -1,7 +1,11 @@
-- MyArchive
-  - Get rid of rawtweets
+- CSVTweets
+  - Kill actual namedtuple. No reason we need that datastructure at all.
+  - JSON export
   - Save a compressed copy of the imported tweet CSV (with timestamp).
-  - Fix handling of csv-only-tweets.
+
+
+  
+
   - File import (Use xattrs, and exif data as tags if present)
   - Export files to directories based on tags.
   - Secure credential storage.

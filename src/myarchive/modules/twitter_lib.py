@@ -141,8 +141,6 @@ class TwitterAPI(twitter.Api):
         Archives several types of new tweets along with their associated
         content.
         """
-        new_tweets = []
-
         for type_ in (USER, FAVORITES):
             # Always start with None to pick up max number of new tweets.
             since_id = None
@@ -255,16 +253,14 @@ class TwitterAPI(twitter.Api):
                         media_urls_list=media_urls_list,
                         hashtags_list=hashtags_list,
                     )
-                    new_tweets.append(tweet)
                     database.session.add(tweet)
                     if type_ == FAVORITES:
                         tweet.add_user_favorite(username)
             database.session.commit()
 
-        return new_tweets
-
     @classmethod
-    def import_tweets_from_csv(cls, database, config, username, csv_filepath):
+    def import_tweets_from_csv(cls, database, config, tweet_storage_path,
+                               username, csv_filepath):
         for config_section in config.sections():
             if config_section.startswith("Twitter_%s" % username):
                 break
@@ -283,11 +279,13 @@ class TwitterAPI(twitter.Api):
         )
         api.import_from_csv(
             database=database,
+            tweet_storage_path=tweet_storage_path,
             csv_filepath=csv_filepath,
             username=username,
         )
 
-    def import_from_csv(self, database, csv_filepath, username):
+    def import_from_csv(self, database, tweet_storage_path, csv_filepath,
+                        username):
         existing_tweet_ids = database.get_existing_tweet_ids()
 
         csv_tweets_by_id = dict()
@@ -328,7 +326,6 @@ class TwitterAPI(twitter.Api):
         tweet_index = 0
         request_index = 0
         start_time = -1
-        new_api_tweets = []
         sliced_ids = csv_ids[:100]
         while sliced_ids:
 
@@ -358,13 +355,29 @@ class TwitterAPI(twitter.Api):
                     include_entities=True)
                 for status in statuses:
                     status_dict = status.AsDict()
-                    # Create the RawTweet
-                    raw_tweet = RawTweet(status_dict=status_dict)
-                    database.session.add(raw_tweet)
-                    # Mark CSVTweet appropriately.
-                    csv_tweet = csv_tweets_by_id[int(status_dict["id"])]
-                    # Append to new list.
-                    new_api_tweets.append(raw_tweet)
+                    status_id = int(status_dict["id"])
+                    hashtags_list = list()
+                    if status_dict.get("hashtags"):
+                        hashtags_list = [
+                            hashtag_dict["text"]
+                            for hashtag_dict in status_dict["hashtags"]
+                            ]
+                    media_urls_list = list()
+                    if status_dict.get("media"):
+                        media_urls_list = [
+                            media_dict["media_url_https"]
+                            for media_dict in status_dict["media"]
+                            ]
+                    tweet = Tweet(
+                        id=status_id,
+                        text=status_dict["text"],
+                        in_reply_to_status_id=
+                        status_dict.get("in_reply_to_status_id"),
+                        created_at=status_dict["created_at"],
+                        media_urls_list=media_urls_list,
+                        hashtags_list=hashtags_list,
+                    )
+                    database.session.add(tweet)
                 database.session.commit()
 
             except TwitterError as e:

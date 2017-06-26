@@ -100,7 +100,7 @@ class Tweet(Base):
         )
 
     def download_media(self, db_session, media_path):
-        # Retrieve media files.
+        """Retrieve media files."""
         for media_url in self.media_urls:
             if media_url != "":
                 tracked_file, existing = TrackedFile.download_file(
