@@ -365,12 +365,6 @@ class TwitterAPI(twitter.Api):
                 for status in statuses:
                     status_dict = status.AsDict()
                     status_id = int(status_dict["id"])
-                    hashtags_list = list()
-                    if status_dict.get("hashtags"):
-                        hashtags_list = [
-                            hashtag_dict["text"]
-                            for hashtag_dict in status_dict["hashtags"]
-                            ]
                     media_urls_list = list()
                     if status_dict.get("media"):
                         media_urls_list = [

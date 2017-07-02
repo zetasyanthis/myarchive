@@ -95,7 +95,6 @@ class Tweet(Base):
             in_reply_to_status_id=csv_tweet.in_reply_to_status_id,
             created_at=csv_tweet.timestamp,
             media_urls_list=list(),
-            hashtags_list=re.findall(HASHTAG_REGEX, str(csv_tweet.text)),
         )
 
     def download_media(self, db_session, media_path):
