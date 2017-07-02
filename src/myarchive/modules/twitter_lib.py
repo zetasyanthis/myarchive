@@ -322,12 +322,13 @@ class TwitterAPI(twitter.Api):
         sleep_time = 15
         requests_before_sleeps = 60 - 1
 
-        subsequent_api_calls = num_imports / 100 - requests_before_sleeps
+        api_calls = num_imports / 100
+        subsequent_api_calls = api_calls - requests_before_sleeps
         if subsequent_api_calls <= 0:
             # Rough estimate, but we basically won't hit the API limit.
-            time_to_complete = 30
+            time_to_complete = api_calls * 2
         else:
-            time_to_complete = 30 + subsequent_api_calls * sleep_time
+            time_to_complete = api_calls * 2 + subsequent_api_calls * sleep_time
         LOGGER.info(
             "Estimated time to complete import: %s seconds.", time_to_complete)
 
@@ -416,9 +417,16 @@ class TwitterAPI(twitter.Api):
 
     @staticmethod
     def download_media(database, media_storage_path):
-        for tweet in database.session.query(Tweet):
+        for index, tweet in enumerate(
+                database.session.query(Tweet).
+                filter(Tweet.files_downloaded.is_(False))):
             tweet.download_media(
                 db_session=database.session, media_path=media_storage_path)
-        for user in database.session.query(TwitterUser):
+            if index % 100 == 0:
+                database.session.commit()
+        for index, user in enumerate(database.session.query(TwitterUser)):
             user.download_media(
                 db_session=database.session, media_path=media_storage_path)
+            if index % 100 == 0:
+                database.session.commit()
+        database.session.commit()

@@ -99,13 +99,17 @@ class Tweet(Base):
 
     def download_media(self, db_session, media_path):
         """Retrieve media files."""
-        for media_url in self.media_urls:
-            if media_url != "":
-                tracked_file, existing = TrackedFile.download_file(
-                    db_session, media_path, media_url)
-                if (tracked_file is not None and
-                        tracked_file not in self.files):
-                    self.files.append(tracked_file)
+        if self.files_downloaded is False:
+            for media_url in self.media_urls:
+                if media_url != "":
+                    tracked_file, existing = TrackedFile.download_file(
+                        db_session, media_path, media_url)
+                    if (tracked_file is not None and
+                            tracked_file not in self.files):
+                        self.files.append(tracked_file)
+                        for tag in self.tags:
+                            if tag not in tracked_file.tags:
+                                tracked_file.tags.append(tag)
         self.files_downloaded = True
 
 

@@ -125,6 +125,7 @@ def main():
         )
     if args.import_tweets_from_api or args.import_tweets_from_csv:
         # Parse the tweets and download associated media.
+        LOGGER.info("Downloading media files...")
         TwitterAPI.download_media(
             database=tag_db, media_storage_path=media_storage_path)
 
