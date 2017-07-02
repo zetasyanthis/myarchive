@@ -232,12 +232,6 @@ class TwitterAPI(twitter.Api):
                 status_dict = status.AsDict()
                 status_id = int(status_dict["id"])
                 if status_id not in existing_tweet_ids:
-                    hashtags_list = list()
-                    if status_dict.get("hashtags"):
-                        hashtags_list = [
-                            hashtag_dict["text"]
-                            for hashtag_dict in status_dict["hashtags"]
-                        ]
                     media_urls_list = list()
                     if status_dict.get("media"):
                         media_urls_list = [
@@ -251,9 +245,16 @@ class TwitterAPI(twitter.Api):
                         status_dict.get("in_reply_to_status_id"),
                         created_at=status_dict["created_at"],
                         media_urls_list=media_urls_list,
-                        hashtags_list=hashtags_list,
                     )
                     database.session.add(tweet)
+
+                    # Add the tags
+                    if "hashtags" in status_dict:
+                        for hashtag_dict in status_dict["hashtags"]:
+                            tweet.add_tag(
+                                db_session=database.session,
+                                tag_name=hashtag_dict["text"])
+
                     if type_ == FAVORITES:
                         tweet.add_user_favorite(username)
             database.session.commit()
@@ -310,7 +311,6 @@ class TwitterAPI(twitter.Api):
                         expanded_urls=row["expanded_urls"]
                     )
                     csv_tweets_by_id[tweet_id] = csv_tweet
-        database.session.commit()
 
         csv_ids = list(csv_tweets_by_id.keys())
         num_imports = len(csv_ids)
@@ -321,6 +321,15 @@ class TwitterAPI(twitter.Api):
         # API allows 60 requests per 15 minutes.
         sleep_time = 15
         requests_before_sleeps = 60 - 1
+
+        subsequent_api_calls = num_imports / 100 - requests_before_sleeps
+        if subsequent_api_calls <= 0:
+            # Rough estimate, but we basically won't hit the API limit.
+            time_to_complete = 30
+        else:
+            time_to_complete = 30 + subsequent_api_calls * sleep_time
+        LOGGER.info(
+            "Estimated time to complete import: %s seconds.", time_to_complete)
 
         # Set loop starting values
         tweet_index = 0
@@ -337,8 +346,8 @@ class TwitterAPI(twitter.Api):
                 if duration < sleep_time:
                     sleep_duration = sleep_time - duration
                     LOGGER.info(
-                        "Sleeping for %s seconds to ease up on rate limit...",
-                        sleep_duration)
+                        "Sleeping for %s seconds to avoid hitting Twitter's "
+                        "API rate limit...", sleep_duration)
                     sleep(sleep_duration)
             request_index += 1
             start_time = time.time()
@@ -375,9 +384,16 @@ class TwitterAPI(twitter.Api):
                         status_dict.get("in_reply_to_status_id"),
                         created_at=status_dict["created_at"],
                         media_urls_list=media_urls_list,
-                        hashtags_list=hashtags_list,
                     )
                     database.session.add(tweet)
+
+                    # Add the tags
+                    if "hashtags" in status_dict:
+                        for hashtag_dict in status_dict["hashtags"]:
+                            tweet.add_tag(
+                                db_session=database.session,
+                                tag_name=hashtag_dict["text"])
+
                 database.session.commit()
 
             except TwitterError as e:

@@ -5,14 +5,15 @@ Module containing class definitions for files to be tagged.
 import logging
 import re
 
-from myarchive.db.tag_db.tables.association_tables import (
-    at_tweet_tag, at_tweet_file, at_twuser_file)
-from myarchive.db.tag_db.tables.base import Base
 from sqlalchemy import (
     Boolean, Column, Integer, String, Text, ForeignKey)
 from sqlalchemy.orm import backref, relationship
 
+from myarchive.db.tag_db.tables.association_tables import (
+    at_tweet_tag, at_tweet_file, at_twuser_file)
+from myarchive.db.tag_db.tables.base import Base
 from myarchive.db.tag_db.tables.file import TrackedFile
+from myarchive.db.tag_db.tables.tag import Tag
 
 
 LOGGER = logging.getLogger(__name__)
@@ -33,7 +34,6 @@ class Tweet(Base):
     user_id = Column(Integer, ForeignKey("twitter_users.id"), nullable=True)
     files_downloaded = Column(Boolean, default=False)
     media_urls_str = Column(Text, default="")
-    hashtags_str = Column(Text, default="")
     favorited_by_str = Column(Text, default="")
 
     files = relationship(
@@ -61,12 +61,8 @@ class Tweet(Base):
     def media_urls(self):
         return self.media_urls_str.split(",")
 
-    @property
-    def hashtags(self):
-        return self.hashtags_str.split(",")
-
     def __init__(self, id, text, in_reply_to_status_id, created_at,
-                 media_urls_list, hashtags_list):
+                 media_urls_list):
         self.id = int(id)
         self.text = text
         if in_reply_to_status_id not in ("", None):
@@ -74,12 +70,14 @@ class Tweet(Base):
         self.created_at = created_at
         if media_urls_list:
             self.media_urls_str = ",".join(media_urls_list)
-        if hashtags_list:
-            self.hashtags_str = ",".join(hashtags_list)
         self.files_downloaded = False
 
     def __repr__(self):
         return "<Tweet(id='%s', text='%s')>" % (self.id, self.text)
+
+    def add_tag(self, db_session, tag_name):
+        tag = Tag.get_tag(db_session=db_session, tag_name=tag_name)
+        self.tags.append(tag)
 
     def add_user_favorite(self, user_id):
         if self.favorited_by_str:
