@@ -365,6 +365,15 @@ class TwitterAPI(twitter.Api):
                     include_entities=True)
                 for status in statuses:
                     status_dict = status.AsDict()
+
+                    # Dump the tweet as a JSON file in case something goes
+                    # wrong. Do none of this if we've passed the since_id
+                    # threhold.
+                    tweet_filepath = os.path.join(
+                        tweet_storage_path, "%s.json" % int(status_dict["id"]))
+                    with open(tweet_filepath, 'w') as fptr:
+                        json.dump(status_dict, fptr)
+
                     status_id = int(status_dict["id"])
                     media_urls_list = list()
                     if status_dict.get("media"):
