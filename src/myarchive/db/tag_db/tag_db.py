@@ -10,7 +10,7 @@ from myarchive.db.tag_db.tables import (
     Base, TrackedFile, Tag, Tweet)
 
 # Get the module logger.
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class TagDB(DB):
@@ -34,32 +34,34 @@ class TagDB(DB):
         tweet_id_set = set(tweet_ids)
         return tweet_id_set
 
-    def import_files(self, path):
-        if os.path.isdir(path):
-            for root, dirnames, filenames in os.walk(path):
-                logger.debug("Importing from %s...", root)
+    def import_files(self, import_path, media_path):
+        if os.path.isdir(import_path):
+            for root, dirnames, filenames in os.walk(import_path):
                 for filename in sorted(filenames):
-                    logger.debug("Importing %s...", filename)
-                    db_file = TrackedFile(root, filename)
-                    try:
+                    full_filepath = os.path.join(root, filename)
+                    LOGGER.debug("Importing %s...", full_filepath)
+                    db_file, existing = TrackedFile.add_file(
+                        db_session=self.session,
+                        media_path=media_path,
+                        copy_from_filepath=full_filepath,
+                        original_filename=filename)
+                    if existing is False:
                         self.session.add(db_file)
-                        self.session.commit()
-                    except IntegrityError:
-                        self.session.rollback()
-                        logger.warning(
-                            "Ignoring previously imported file: %s" % filename)
-        if os.path.isfile(path):
-            logger.debug("Importing %s...", path)
-            directory, filename = os.path.split(path)
-            db_file = TrackedFile(directory, filename)
-            try:
-                self.session.add(db_file)
                 self.session.commit()
-            except IntegrityError:
-                self.session.rollback()
-                logger.warning(
-                    "Ignoring previously imported file: %s" % filename)
-        logger.debug("Import Complete!")
+        elif os.path.isfile(import_path):
+            LOGGER.debug("Importing %s...", import_path)
+            directory, filename = os.path.split(import_path)
+            db_file, existing = TrackedFile.add_file(
+                db_session=self.session,
+                media_path=media_path,
+                copy_from_filepath=import_path,
+                original_filename=filename)
+            if existing is False:
+                self.session.add(db_file)
+        else:
+            LOGGER.error("Path does not exist: %s", import_path)
+        self.session.commit()
+        LOGGER.debug("Import Complete!")
 
     def clean_db_and_close(self):
         # Run VACUUM.
