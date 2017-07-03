@@ -228,10 +228,26 @@ class TwitterAPI(twitter.Api):
             existing_tweet_ids = [
                 returned_tuple[0]
                 for returned_tuple in database.session.query(Tweet.id).all()]
+            user = None
             for status in statuses:
                 status_dict = status.AsDict()
                 status_id = int(status_dict["id"])
                 if status_id not in existing_tweet_ids:
+                    # Add the user to the DB if needed.
+                    # Only really query if we absolutely have to.
+                    user_dict = status_dict["user"]
+                    user_id = int(user_dict["id"])
+                    if user and user.id == user_id:
+                        pass
+                    else:
+                        try:
+                            user = database.session.query(TwitterUser). \
+                                filter_by(id=user_id).one()
+                        except NoResultFound:
+                            user = TwitterUser(user_dict)
+                            database.session.add(user)
+
+                    # Add the tweet to the DB.
                     media_urls_list = list()
                     if status_dict.get("media"):
                         media_urls_list = [
@@ -363,6 +379,7 @@ class TwitterAPI(twitter.Api):
                     status_ids=[str(sliced_id) for sliced_id in sliced_ids],
                     trim_user=False,
                     include_entities=True)
+                user = None
                 for status in statuses:
                     status_dict = status.AsDict()
 
@@ -373,6 +390,20 @@ class TwitterAPI(twitter.Api):
                         tweet_storage_path, "%s.json" % int(status_dict["id"]))
                     with open(tweet_filepath, 'w') as fptr:
                         json.dump(status_dict, fptr)
+
+                    # Add the user to the DB if needed.
+                    # Only really query if we absolutely have to.
+                    user_dict = status_dict["user"]
+                    user_id = int(user_dict["id"])
+                    if user and user.id == user_id:
+                        pass
+                    else:
+                        try:
+                            user = database.session.query(TwitterUser). \
+                                filter_by(id=user_id).one()
+                        except NoResultFound:
+                            user = TwitterUser(user_dict)
+                            database.session.add(user)
 
                     status_id = int(status_dict["id"])
                     media_urls_list = list()
