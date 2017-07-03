@@ -45,6 +45,12 @@ def main():
         default=False,
         help='Accepts a Shotwell database filepath.')
     parser.add_argument(
+        "--import_from_deviantart",
+        action="store_true",
+        default=False,
+        help='Displays duplicates in TrackedFiles.'
+    )
+    parser.add_argument(
         '--import_lj_entries',
         action="store_true",
         default=False,
@@ -136,7 +142,7 @@ def main():
     """
 
     if args.import_from_deviantart:
-        deviantart_lib.download_favorites(
+        deviantart_lib.download_user_data(
             database=tag_db,
             config=config,
             media_storage_path=media_storage_path,

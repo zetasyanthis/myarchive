@@ -108,15 +108,26 @@ class TrackedFile(Base):
         return TrackedFile(original_filename, filepath, md5sum, url), existing
 
     @classmethod
-    def download_file(cls, db_session, media_path, url):
+    def download_file(cls, db_session, media_path, url, filename_override=None,
+                      saved_url_override=None):
         tracked_files = db_session.query(cls).filter_by(url=url).all()
         if tracked_files:
             return tracked_files[0], True
 
         # Download the file.
-        filename = os.path.basename(urlparse(url).path)
+        if filename_override is not None:
+            extension = os.path.splitext(
+                os.path.basename(urlparse(url).path))[1]
+            filename = filename_override + extension
+        else:
+            filename = os.path.basename(urlparse(url).path)
         LOGGER.info("Downloading %s...", url)
         media_request = requests.get(url)
+
+        if saved_url_override is not None:
+            saved_url = saved_url_override
+        else:
+            saved_url = url
 
         # Add file to DB (runs a md5sum).
         tracked_file, existing = TrackedFile.add_file(
@@ -124,7 +135,7 @@ class TrackedFile(Base):
             media_path=media_path,
             file_buffer=media_request.content,
             original_filename=filename,
-            url=url)
+            url=saved_url)
         return tracked_file, existing
 
     @staticmethod
