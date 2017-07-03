@@ -4,6 +4,10 @@ import argparse
 import configparser
 import os
 
+from logging import getLogger
+
+import myarchive.modules.deviantart_lib as deviantart_lib
+
 from myarchive.db.tag_db.tag_db import TagDB
 from myarchive.modules.ljl_ib import LJAPIConnection
 from myarchive.modules.twitter_lib import TwitterAPI
@@ -11,9 +15,6 @@ from myarchive.modules.shotwell_lib import import_from_shotwell_db
 from myarchive.util.logger import myarchive_LOGGER as logger
 
 # from gui import Gtk, MainWindow
-
-
-from logging import getLogger
 
 
 LOGGER = getLogger("myarchive")
@@ -85,6 +86,9 @@ def main():
             raise Exception("Import folder path does not exist!")
         if not os.path.isdir(args.import_folder):
             raise Exception("Import folder path is not a folder!")
+        LOGGER.debug("Importing folder contents:" + args.import_folder)
+        tag_db.import_files(
+            import_path=args.import_folder, media_path=media_storage_path)
 
     """
     Shotwell Section
@@ -101,15 +105,6 @@ def main():
             sw_database_path=sw_db_path,
             sw_storage_folder_override=sw_media_path,
         )
-
-    """
-    Twitter Section
-    """
-
-    if args.import_folder:
-        LOGGER.debug("Importing folder contents:" + args.import_folder)
-        tag_db.import_files(
-            import_path=args.import_folder, media_path=media_storage_path)
 
     """
     Twitter Section
@@ -135,6 +130,17 @@ def main():
         LOGGER.info("Downloading media files...")
         TwitterAPI.download_media(
             database=tag_db, media_storage_path=media_storage_path)
+
+    """
+    DeviantArt Section
+    """
+
+    if args.import_from_deviantart:
+        deviantart_lib.download_favorites(
+            database=tag_db,
+            config=config,
+            media_storage_path=media_storage_path,
+        )
 
     """
     LiveJournal Section
