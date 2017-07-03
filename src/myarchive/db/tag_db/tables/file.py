@@ -78,7 +78,7 @@ class TrackedFile(Base):
         elif copy_from_filepath is not None:
             original_filename = os.path.basename(copy_from_filepath)
 
-            # Fix up extensions incase they're wrong.
+            # Fix up extensions in case they're wrong.
             if os.path.getsize(copy_from_filepath) < MAX_BUFFER:
                 with open(copy_from_filepath, "rb") as fptr:
                     file_buffer = fptr.read()
