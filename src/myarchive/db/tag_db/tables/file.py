@@ -110,7 +110,15 @@ class TrackedFile(Base):
     @classmethod
     def download_file(cls, db_session, media_path, url, filename_override=None,
                       saved_url_override=None):
-        tracked_files = db_session.query(cls).filter_by(url=url).all()
+
+        # Allow overriding the URL we save with the file. Sometimes we want
+        # the origin page, like on deviantart.
+        if saved_url_override is not None:
+            saved_url = saved_url_override
+        else:
+            saved_url = url
+
+        tracked_files = db_session.query(cls).filter_by(url=saved_url).all()
         if tracked_files:
             return tracked_files[0], True
 
@@ -123,11 +131,6 @@ class TrackedFile(Base):
             filename = os.path.basename(urlparse(url).path)
         LOGGER.info("Downloading %s...", url)
         media_request = requests.get(url)
-
-        if saved_url_override is not None:
-            saved_url = saved_url_override
-        else:
-            saved_url = url
 
         # Add file to DB (runs a md5sum).
         tracked_file, existing = TrackedFile.add_file(
