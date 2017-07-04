@@ -1,13 +1,22 @@
-- CSVTweets
-  - Kill actual namedtuple. No reason we need that data-structure at all.
-  - JSON export
-  - Save a compressed copy of the imported tweet CSV (with timestamp and username).
+- Export files to directories based on tags.
+- Secure credential storage.
+- DeviantArt
+  - user id, deviation id
+  - rate limits (https://www.deviantart.com/developers/errors#rates)
+  - pdfs?
+- Reddit API
+  - https://praw.readthedocs.io/en/latest/
+- SoFurry API
+- Weasyl API
+- Mastodon API
+  - https://pypi.python.org/pypi/Mastodon.py/1.0.8
+  - https://github.com/halcy/Mastodon.py
+- Improve import/update speeds across the board
+  - Shotwell
+  - Twitter
+  - DeviantArt
+  - Bulk tag handling?
 
-
-
-  - File import (Use xattrs, and exif data as tags if present)
-  - Export files to directories based on tags.
-  - Secure credential storage.
 
 
 
@@ -52,9 +61,3 @@ Goodreads
 LibraryThing
 Github Repository (Auto-pull updates?)
 Internet archive API may be of help.
-
-Requirements
-    python3-lj
-    python3-twitter
-    python3-chardet
-    python3-feedparser

@@ -7,6 +7,16 @@ Tricks
 ++++++
 
 * DA collections are just another tag!
-  - collection_name
-  - da.user.(username).(favorites|gallery)
-  - da.user.(username).(favorites|gallery).(collection_name)
+
+  * collection_name
+  * da.user.(username).(favorites|gallery)
+  * da.user.(username).(favorites|gallery).(collection_name)
+
+Requirements
+++++++++++++
+
+* python3-lj
+* python3-twitter
+* python3-chardet
+* python3-feedparser
+* python3-deviantart-0.1.4
