@@ -63,5 +63,4 @@ class Tag(Base):
         except NoResultFound:
             tag = cls(name=tag_name)
             db_session.add(tag)
-            db_session.commit()
             return tag

@@ -50,3 +50,11 @@ at_twuser_file = Table(
     Column("file_id", Integer,
            ForeignKey("files.id"), primary_key=True),
     info="Association table for mapping users to files and vice versa.")
+
+at_deviation_tag = Table(
+    'at_deviation_tag', Base.metadata,
+    Column("deviation_id", Integer,
+           ForeignKey("deviations.id"), primary_key=True),
+    Column(
+        "tag_id", Integer, ForeignKey("tags.tag_id"), primary_key=True),
+    info="Association table for mapping deviations to tags and vice versa.")

@@ -3,8 +3,10 @@
 import deviantart
 import logging
 
-from myarchive.db.tag_db.tables.file import TrackedFile
-from myarchive.db.tag_db.tables.tag import Tag
+from sqlalchemy.orm.exc import NoResultFound
+
+from myarchive.db.tag_db.tables import (
+    DeviantArtUser, Deviation, Tag, TrackedFile)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -35,13 +37,24 @@ def download_user_data(database, config, media_storage_path):
             LOGGER.info("Pulling data for user: %s", user.username)
 
             # Grab user data.
-            # user.userid
-            # user.profile
-            # user.stats
-            # user.details
-            # user.usericon
-
-            LOGGER.critical(user.__dict__)
+            try:
+                dauser = database.session.query(DeviantArtUser).\
+                    filter_by(name=user.username).one()
+            except NoResultFound:
+                da_user = DeviantArtUser(
+                    user_id=user.userid,
+                    name=user.username,
+                    profile=str(user.profile),
+                    stats=str(user.stats),
+                    details=str(user.details)
+                )
+                icon_file, existing = TrackedFile.download_file(
+                    db_session=database.session,
+                    media_path=media_storage_path,
+                    url=user.usericon)
+                da_user.icon = icon_file
+                database.session.add(da_user)
+                database.session.commit()
 
             for sync_type in ("gallery", "favorites"):
                 LOGGER.info("Pulling deviations from %s", sync_type)
@@ -65,9 +78,9 @@ def __download_user_deviations(
         raise Exception("Type of sync not supported: %s" % sync_type)
 
     for collection in collections["results"]:
+        collection_name = collection["name"]
         LOGGER.info(
-            "Pulling deviations from collection: %s..." %
-            collection["name"])
+            "Pulling deviations from collection: %s...", collection_name)
         folderid = collection["folderid"]
 
         deviations = []
@@ -102,6 +115,7 @@ def __download_user_deviations(
                 str(deviation.title) + str(deviation.author)). \
                 replace(" ", "_")
             deviation_url = deviation.url
+
             # Text based deviations need another API call to grab them.
             if deviation.content is None:
                 try:
@@ -127,9 +141,59 @@ def __download_user_deviations(
                     saved_url_override=deviation_url,
                 )
 
+            # Grab metadata for the deviation.
+            deviation_metadata = da_api.get_deviation_metadata(
+                deviationids=[deviation.deviationid],
+                ext_submission=True, ext_camera=True)[0]
+
+            # Create the Deviation DB entry.
+            db_deviation = Deviation(
+                title=deviation.title,
+                description=deviation_metadata["description"])
+            db_deviation.file = tracked_file
+
+            # Handle collection tags.
+            collection_tags = (
+                "da.user." + sync_type,
+                "da.user." + sync_type + "." + collection_name,
+                collection_name,
+            )
+            for tag_name in collection_tags:
+                tag = Tag.get_tag(
+                    db_session=database.session,
+                    tag_name=tag_name)
+                tracked_file.tags.append(tag)
+                db_deviation.tags.append(tag)
+
+            # Handle author tag.
+            author_tag = Tag.get_tag(
+                db_session=database.session,
+                tag_name="da.author." + str(deviation.author.username))
+            tracked_file.tags.append(author_tag)
+            db_deviation.tags.append(author_tag)
+
+            # Handle possible nsfw tag.
+            if deviation_metadata["is_mature"]:
+                nsfw_tag = Tag.get_tag(
+                    db_session=database.session,
+                    tag_name="nsfw")
+                tracked_file.tags.append(nsfw_tag)
+                db_deviation.tags.append(nsfw_tag)
+
+            # Handle actual tags.
+            for tag_dict in deviation_metadata["tags"]:
+                tag = Tag.get_tag(
+                    db_session=database.session,
+                    tag_name=tag_dict["tag_name"])
+                tracked_file.tags.append(tag)
+                db_deviation.tags.append(tag)
+
+            # Handle category tags.
             for category in str(deviation.category_path).split("/"):
                 tag = Tag.get_tag(
-                    db_session=database.session, tag_name=category)
+                    db_session=database.session,
+                    tag_name=category)
                 if tag not in tracked_file.tags:
                     tracked_file.tags.append(tag)
+                    db_deviation.tags.append(tag)
             database.session.commit()
