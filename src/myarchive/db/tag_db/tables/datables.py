@@ -6,6 +6,7 @@ import logging
 
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import backref, relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from myarchive.db.tag_db.tables.association_tables import at_deviation_tag
 from myarchive.db.tag_db.tables.base import Base
@@ -70,6 +71,10 @@ class Deviation(Base):
         doc="Tags that have been applied to this deviation.",
         secondary=at_deviation_tag,
     )
+
+    @hybrid_property
+    def tag_names(self):
+        return [tag.name for tag in self.tags]
 
     def __init__(self, title, description):
         self.title = title

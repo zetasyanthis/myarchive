@@ -146,54 +146,38 @@ def __download_user_deviations(
                 deviationids=[deviation.deviationid],
                 ext_submission=True, ext_camera=True)[0]
 
-            # Create the Deviation DB entry.
-            db_deviation = Deviation(
-                title=deviation.title,
-                description=deviation_metadata["description"])
-            db_deviation.file = tracked_file
+            # Create the Deviation DB entry. If we already have it, skip all
+            # this madness.
+            try:
+                db_deviation = database.session.query(Deviation).\
+                    filter_by(title=deviation.title).one()
+                continue
+            except NoResultFound:
+                db_deviation = Deviation(
+                    title=deviation.title,
+                    description=deviation_metadata["description"])
+                db_deviation.file = tracked_file
 
-            # Handle collection tags.
-            collection_tags = (
-                "da.user." + sync_type,
-                "da.user." + sync_type + "." + collection_name,
-                collection_name,
+            # Handle tags, category, and author tags.
+            tags_names = [
+                "da.user.%s.%s" % (username, sync_type),
+                "da.user.%s.%s.%s" % (username, sync_type, collection_name),
+                "da.author." + str(deviation.author.username),
+            ]
+            tags_names.extend(str(deviation.category_path).split("/"))
+            tags_names.extend(
+                [tag_dict["tag_name"]
+                 for tag_dict in deviation_metadata["tags"]]
             )
-            for tag_name in collection_tags:
+            if deviation_metadata["is_mature"]:
+                tags_names.append("nsfw")
+            for tag_name in tags_names:
                 tag = Tag.get_tag(
                     db_session=database.session,
                     tag_name=tag_name)
-                tracked_file.tags.append(tag)
-                db_deviation.tags.append(tag)
-
-            # Handle author tag.
-            author_tag = Tag.get_tag(
-                db_session=database.session,
-                tag_name="da.author." + str(deviation.author.username))
-            tracked_file.tags.append(author_tag)
-            db_deviation.tags.append(author_tag)
-
-            # Handle possible nsfw tag.
-            if deviation_metadata["is_mature"]:
-                nsfw_tag = Tag.get_tag(
-                    db_session=database.session,
-                    tag_name="nsfw")
-                tracked_file.tags.append(nsfw_tag)
-                db_deviation.tags.append(nsfw_tag)
-
-            # Handle actual tags.
-            for tag_dict in deviation_metadata["tags"]:
-                tag = Tag.get_tag(
-                    db_session=database.session,
-                    tag_name=tag_dict["tag_name"])
-                tracked_file.tags.append(tag)
-                db_deviation.tags.append(tag)
-
-            # Handle category tags.
-            for category in str(deviation.category_path).split("/"):
-                tag = Tag.get_tag(
-                    db_session=database.session,
-                    tag_name=category)
-                if tag not in tracked_file.tags:
+                if tag_name not in tracked_file.tag_names:
                     tracked_file.tags.append(tag)
+                if tag_name not in db_deviation.tag_names:
                     db_deviation.tags.append(tag)
+
             database.session.commit()

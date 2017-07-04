@@ -13,6 +13,7 @@ from hashlib import md5
 from urllib.parse import urlparse
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import backref, relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from myarchive.db.tag_db.tables.association_tables import at_file_tag
 from myarchive.db.tag_db.tables.base import Base
@@ -41,6 +42,10 @@ class TrackedFile(Base):
         doc="Tags that have been applied to this file.",
         secondary=at_file_tag
     )
+
+    @hybrid_property
+    def tag_names(self):
+        return [tag.name for tag in self.tags]
 
     def __init__(self, original_filename, filepath, md5sum, url=None):
         self.original_filename = original_filename

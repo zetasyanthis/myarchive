@@ -7,3 +7,6 @@ Tricks
 ++++++
 
 * DA collections are just another tag!
+  - collection_name
+  - da.user.(username).(favorites|gallery)
+  - da.user.(username).(favorites|gallery).(collection_name)
