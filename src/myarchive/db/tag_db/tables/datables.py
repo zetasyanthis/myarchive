@@ -37,8 +37,8 @@ class DeviantArtUser(Base):
         uselist=False,
     )
 
-    def __init__(self, user_id, name, profile, stats, details):
-        self.user_id = user_id
+    def __init__(self, userid, name, profile, stats, details):
+        self.userid = userid
         self.name = name
         self.profile = str(profile)
         self.stats = str(stats)
@@ -56,6 +56,7 @@ class Deviation(Base):
     id = Column(Integer, index=True, primary_key=True)
     title = Column(String)
     description = Column(String)
+    deviationid = Column(String)
     file_id = Column(Integer, ForeignKey("files.id"))
 
     file = relationship(
@@ -76,6 +77,7 @@ class Deviation(Base):
     def tag_names(self):
         return [tag.name for tag in self.tags]
 
-    def __init__(self, title, description):
+    def __init__(self, title, description, deviationid):
         self.title = title
         self.description = description
+        self.deviationid = deviationid

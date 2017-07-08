@@ -34,7 +34,7 @@ def download_user_data(database, config, media_storage_path):
 
             # Grab the User object of the authorized user
             user = da_api.get_user(username=username)
-            LOGGER.info("Pulling data for user: %s", user.username)
+            LOGGER.info("Pulling data for user: %s...", user.username)
 
             # Grab user data.
             try:
@@ -42,7 +42,7 @@ def download_user_data(database, config, media_storage_path):
                     filter_by(name=user.username).one()
             except NoResultFound:
                 da_user = DeviantArtUser(
-                    user_id=user.userid,
+                    userid=user.userid,
                     name=user.username,
                     profile=str(user.profile),
                     stats=str(user.stats),
@@ -57,7 +57,7 @@ def download_user_data(database, config, media_storage_path):
                 database.session.commit()
 
             for sync_type in ("gallery", "favorites"):
-                LOGGER.info("Pulling deviations from %s", sync_type)
+                LOGGER.info("Querying API for %s deviations...", sync_type)
                 __download_user_deviations(
                     database=database,
                     da_api=da_api,
@@ -79,8 +79,7 @@ def __download_user_deviations(
 
     for collection in collections["results"]:
         collection_name = collection["name"]
-        LOGGER.info(
-            "Pulling deviations from collection: %s...", collection_name)
+        LOGGER.info("Scanning collection %s for deviations...", collection_name)
         folderid = collection["folderid"]
 
         deviations = []
@@ -99,29 +98,40 @@ def __download_user_deviations(
                 deviations.extend(fetched_deviations['results'])
                 # Update offset
                 offset = fetched_deviations['next_offset']
+
                 # Check if there are any deviations left that we can
                 # fetch (if yes => repeat)
                 has_more = fetched_deviations['has_more']
 
+                # WARNING: Do not halt if we've reached an existing deviationid.
+                # We may need to complete a partial pull.
+
             except deviantart.api.DeviantartError as error:
                 # catch and print API exception and stop loop
-                LOGGER.error("Error pulling DA collection: %s" % error)
+                LOGGER.error("Error querying DA API for collection: %s" % error)
                 has_more = False
 
+        query_results = database.session.query(Deviation.deviationid).all()
+        existing_deviationids = [item for (item,) in query_results]
+        new_deviations = []
+        for deviation in deviations:
+            if deviation.deviationid not in existing_deviationids:
+                new_deviations.append(deviation)
+        LOGGER.info("%s new deviations found.", len(new_deviations))
 
-        # Only pull all tags ahead of time if things have gotten really nuts.
+        # Only pull all tags ahead of time if we have a lot of new files.
         existing_tags_by_name = dict()
-        if len(deviations) > 50:
+        if len(new_deviations) > 50:
             existing_tags = database.session.query(Tag).all()
             existing_tags_by_name = {
                 tag.name: tag for tag in existing_tags
             }
 
         # Loop through and save deviations.
-        for deviation in deviations:
+        for deviation in new_deviations:
             # If there's no content (if it's a story), skip for now.
             deviation_name = (
-                str(deviation.title) + str(deviation.author)). \
+                str(deviation.title) + "." + str(deviation.author)). \
                 replace(" ", "_")
             deviation_url = deviation.url
 
@@ -131,8 +141,7 @@ def __download_user_deviations(
                     text_buffer = da_api.get_deviation_content(
                         deviationid=deviation.deviationid)["html"]
                 except deviantart.api.DeviantartError:
-                    LOGGER.error(
-                        "Unable to download %s", deviation_name)
+                    LOGGER.error("Unable to download %s", deviation_name)
                     continue
                 tracked_file, existing = TrackedFile.add_file(
                     db_session=database.session,
@@ -158,14 +167,17 @@ def __download_user_deviations(
             # Create the Deviation DB entry. If we already have it, skip all
             # this madness.
             try:
-                db_deviation = database.session.query(Deviation).\
-                    filter_by(title=deviation.title).one()
+                database.session.query(Deviation).\
+                    filter_by(deviationid=str(deviation.deviationid)).one()
                 continue
             except NoResultFound:
                 db_deviation = Deviation(
                     title=deviation.title,
-                    description=deviation_metadata["description"])
+                    description=deviation_metadata["description"],
+                    deviationid=deviation.deviationid,
+                )
                 db_deviation.file = tracked_file
+                database.session.add(db_deviation)
 
             # Handle tags, category, and author tags.
             tags_names = [
