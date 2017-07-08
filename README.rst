@@ -12,6 +12,9 @@ Tricks
   * da.user.(username).(favorites|gallery)
   * da.user.(username).(favorites|gallery).(collection_name)
 
+
+* The Twitter API does not permit downloading of GIFs/videos. (No path returned in the API call.) We can only pull thumbnails.
+
 Requirements
 ++++++++++++
 
