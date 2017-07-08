@@ -141,6 +141,8 @@ class TwitterAPI(twitter.Api):
         Archives several types of new tweets along with their associated
         content.
         """
+        existing_tweet_ids = database.get_existing_tweet_ids()
+
         for type_ in (USER, FAVORITES):
             # Always start with None to pick up max number of new tweets.
             since_id = None
@@ -204,16 +206,19 @@ class TwitterAPI(twitter.Api):
                 # condition.
                 if not loop_statuses:
                     break
-                # Check for early termination condition.
+                # Check for early termination condition. We'll kick out if we
+                # pass since_id, or if we're pulling user tweets and we've hit
+                # this ID previously.
                 for loop_status in loop_statuses:
                     status_id = int(loop_status.AsDict()["id"])
-                    if since_id is not None and status_id >= since_id:
+                    if ((since_id is not None and status_id >= since_id) or
+                            (type_ == "USER" and
+                             status_id in existing_tweet_ids)):
                         early_termination = True
                         break
 
                     # Dump the tweet as a JSON file in case something goes
-                    # wrong. Do none of this if we've passed the since_id
-                    # threhold.
+                    # wrong. 
                     tweet_filepath = os.path.join(
                         tweet_storage_path, "%s.json" % status_id)
                     with open(tweet_filepath, 'w') as fptr:

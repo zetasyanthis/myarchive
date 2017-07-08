@@ -1,5 +1,4 @@
 - Export files to directories based on tags.
-- Secure credential storage.
 - DeviantArt
   - rate limits (https://www.deviantart.com/developers/errors#rates)
   - pdfs?
@@ -10,10 +9,13 @@
 - Mastodon API
   - https://pypi.python.org/pypi/Mastodon.py/1.0.8
   - https://github.com/halcy/Mastodon.py
-- Improve import/update speeds across the board
-  - Shotwell
-  - Twitter
-  - Bulk tag handling?
+
+
+
+
+
+
+
 
 
 
@@ -31,6 +33,7 @@
 
 
 General
+    Secure credential storage.
     Deduplicate TrackedFiles.
     Add multithreaded support for background updates.
         http://stackoverflow.com/questions/6297404/multi-threaded-use-of-sqlalchemy
