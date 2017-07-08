@@ -218,7 +218,7 @@ class TwitterAPI(twitter.Api):
                         break
 
                     # Dump the tweet as a JSON file in case something goes
-                    # wrong. 
+                    # wrong.
                     tweet_filepath = os.path.join(
                         tweet_storage_path, "%s.json" % status_id)
                     with open(tweet_filepath, 'w') as fptr:
