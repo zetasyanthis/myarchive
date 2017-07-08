@@ -443,16 +443,20 @@ class TwitterAPI(twitter.Api):
                 raise
             tweet_index += 100
             sliced_ids = csv_ids[tweet_index:100 + tweet_index]
+        database.session.commit()
 
         LOGGER.info("Parsing out CSV-only tweets...")
-        for csv_only_tweet in csv_tweets_by_id.values():
-            tweet = Tweet.make_from_csvtweet(csv_only_tweet)
-            try:
-                user = database.session.query(TwitterUser). \
-                    filter_by(screen_name=csv_only_tweet.username).one()
-                user.tweets.append(tweet)
-            except NoResultFound:
-                database.session.add(tweet)
+        # Refresh existing tweet ID list.
+        existing_tweet_ids = database.get_existing_tweet_ids()
+        for tweet_id, csv_only_tweet in csv_tweets_by_id.items():
+            if tweet_id not in existing_tweet_ids:
+                tweet = Tweet.make_from_csvtweet(csv_only_tweet)
+                try:
+                    user = database.session.query(TwitterUser). \
+                        filter_by(screen_name=csv_only_tweet.username).one()
+                    user.tweets.append(tweet)
+                except NoResultFound:
+                    database.session.add(tweet)
         database.session.commit()
 
     @staticmethod

@@ -147,7 +147,8 @@ class TrackedFile(Base):
         return tracked_file, existing
 
     @staticmethod
-    def get_file_md5sum(fptr, block_size=2 ** 20):
+    def get_file_md5sum(fptr, block_size=2**20):
+        """Processes a file md5sum 1MB at a time."""
         md5 = hashlib.md5()
         while True:
             data = fptr.read(block_size)
