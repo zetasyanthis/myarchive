@@ -82,6 +82,14 @@ class TrackedFile(Base):
                     fptr.write(file_buffer)
         elif copy_from_filepath is not None:
             original_filename = os.path.basename(copy_from_filepath)
+            tracked_file = db_session.query(cls).filter_by(
+                original_filename=original_filename).all()
+            if tracked_file:
+                LOGGER.debug(
+                    "Ignoring file with duplicated origin filename: %s",
+                    original_filename
+                )
+                return tracked_file[0], True
 
             # Fix up extensions in case they're wrong.
             if os.path.getsize(copy_from_filepath) < MAX_BUFFER:
