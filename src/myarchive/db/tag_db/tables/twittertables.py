@@ -185,6 +185,5 @@ class TwitterUser(Base):
             # Add file to DB (runs a sha1sum).
             tracked_file, existing = TrackedFile.download_file(
                 db_session=db_session, media_path=media_path, url=media_url)
-            if tracked_file is not None:
-                self.files.append(tracked_file)
+            self.files.append(tracked_file)
         db_session.commit()

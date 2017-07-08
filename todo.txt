@@ -1,7 +1,6 @@
 - Export files to directories based on tags.
 - Secure credential storage.
 - DeviantArt
-  - user id, deviation id
   - rate limits (https://www.deviantart.com/developers/errors#rates)
   - pdfs?
 - Reddit API
@@ -15,6 +14,13 @@
   - Shotwell
   - Twitter
   - Bulk tag handling?
+
+
+
+
+
+
+
 
 
 
@@ -60,3 +66,5 @@ Goodreads
 LibraryThing
 Github Repository (Auto-pull updates?)
 Internet archive API may be of help.
+Twitter
+    Import as a background process once GUI works since the API takes a while.
