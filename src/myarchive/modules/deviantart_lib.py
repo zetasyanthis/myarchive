@@ -57,7 +57,6 @@ def download_user_data(database, config, media_storage_path):
                 database.session.commit()
 
             for sync_type in ("gallery", "favorites"):
-                LOGGER.info("Querying API for %s deviations...", sync_type)
                 __download_user_deviations(
                     database=database,
                     da_api=da_api,
@@ -79,7 +78,8 @@ def __download_user_deviations(
 
     for collection in collections["results"]:
         collection_name = collection["name"]
-        LOGGER.info("Scanning collection %s for deviations...", collection_name)
+        LOGGER.info("Scanning %s (%s) for deviations...",
+                    sync_type, collection_name)
         folderid = collection["folderid"]
 
         deviations = []
@@ -136,21 +136,31 @@ def __download_user_deviations(
             deviation_url = deviation.url
 
             # Text based deviations need another API call to grab them.
+            file_url = None
             if deviation.content is None:
-                try:
-                    text_buffer = da_api.get_deviation_content(
-                        deviationid=deviation.deviationid)["html"]
-                except deviantart.api.DeviantartError:
-                    LOGGER.error("Unable to download %s", deviation_name)
-                    continue
-                tracked_file, existing = TrackedFile.add_file(
-                    db_session=database.session,
-                    media_path=media_storage_path,
-                    file_buffer=text_buffer.encode('utf-8'),
-                    original_filename=(deviation_name + ".html")
-                )
+                # Flash files get handled specially.
+                if deviation.__dict__.get("flash"):
+                    file_url = deviation.__dict__.get("flash")["src"]
+                # Otherwise it's probably a text file. We'll catch (and report)
+                # the error if something blows up.
+                else:
+                    try:
+                        text_buffer = da_api.get_deviation_content(
+                            deviationid=deviation.deviationid)["html"]
+                    except deviantart.api.DeviantartError:
+                        LOGGER.error("Unable to download %s", deviation_name)
+                        LOGGER.critical(deviation.__dict__)
+                        continue
+                    tracked_file, existing = TrackedFile.add_file(
+                        db_session=database.session,
+                        media_path=media_storage_path,
+                        file_buffer=text_buffer.encode('utf-8'),
+                        original_filename=(deviation_name + ".html")
+                    )
             else:
                 file_url = deviation.content["src"]
+
+            if file_url is not None:
                 tracked_file, existing = TrackedFile.download_file(
                     db_session=database.session,
                     media_path=media_storage_path,
