@@ -108,6 +108,15 @@ def __download_user_deviations(
                 LOGGER.error("Error pulling DA collection: %s" % error)
                 has_more = False
 
+
+        # Only pull all tags ahead of time if things have gotten really nuts.
+        existing_tags_by_name = dict()
+        if len(deviations) > 50:
+            existing_tags = database.session.query(Tag).all()
+            existing_tags_by_name = {
+                tag.name: tag for tag in existing_tags
+            }
+
         # Loop through and save deviations.
         for deviation in deviations:
             # If there's no content (if it's a story), skip for now.
@@ -172,9 +181,13 @@ def __download_user_deviations(
             if deviation_metadata["is_mature"]:
                 tags_names.append("nsfw")
             for tag_name in tags_names:
-                tag = Tag.get_tag(
-                    db_session=database.session,
-                    tag_name=tag_name)
+                if tag_name in existing_tags_by_name:
+                    tag = existing_tags_by_name[tag_name]
+                else:
+                    tag = Tag.get_tag(
+                        db_session=database.session,
+                        tag_name=tag_name)
+                    existing_tags_by_name[tag_name] = tag
                 if tag_name not in tracked_file.tag_names:
                     tracked_file.tags.append(tag)
                 if tag_name not in db_deviation.tag_names:
