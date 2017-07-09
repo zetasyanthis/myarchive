@@ -130,16 +130,18 @@ class TwitterAPI(twitter.Api):
                     access_token_secret=config.get(
                         section=config_section, option="access_secret"),
                 )
-                api.archive_tweets(
-                    database=database,
-                    username=config.get(
-                        section=config_section, option="username"),
-                    tweet_storage_path=tweet_storage_path,
-                    media_storage_path=media_storage_path,
-                )
+                for tweet_type in (USER, FAVORITES):
+                    api.archive_tweets(
+                        database=database,
+                        username=config.get(
+                            section=config_section, option="username"),
+                        tweet_storage_path=tweet_storage_path,
+                        media_storage_path=media_storage_path,
+                        tweet_type=tweet_type
+                    )
 
     def archive_tweets(self, database, username, tweet_storage_path,
-                       media_storage_path):
+                       media_storage_path, tweet_type):
         """
         Archives several types of new tweets along with their associated
         content.
@@ -147,98 +149,97 @@ class TwitterAPI(twitter.Api):
         existing_tweet_ids = database.get_existing_tweet_ids()
 
         new_tweets = []
-        for type_ in (USER, FAVORITES):
-            # Always start with None to pick up max number of new tweets.
-            since_id = None
-            start_time = -1
-            sleep_time = 0
-            max_id = None
-            early_termination = False
-            request_index = 0
-            requests_before_sleeps = 1
-            statuses = []
-            while not early_termination:
-                # Twitter rate-limits us. Space this out a bit to avoid a
-                # super-long sleep at the end doesn't kill the connection.
-                if request_index >= requests_before_sleeps:
-                    # If we hit the rate limit, download media while we wait.
+        # Always start with None to pick up max number of new tweets.
+        since_id = None
+        start_time = -1
+        sleep_time = 0
+        max_id = None
+        early_termination = False
+        request_index = 0
+        requests_before_sleeps = 1
+        statuses = []
+        while not early_termination:
+            # Twitter rate-limits us. Space this out a bit to avoid a
+            # super-long sleep at the end doesn't kill the connection.
+            if request_index >= requests_before_sleeps:
+                # If we hit the rate limit, download media while we wait.
+                duration = time.time() - start_time
+                if duration < sleep_time:
+                    for new_tweet in new_tweets:
+                        new_tweet.download_media(
+                            db_session=database.session,
+                            media_path=media_storage_path)
+                    # If we're still too fast, wait however long we need to.
                     duration = time.time() - start_time
                     if duration < sleep_time:
-                        for new_tweet in new_tweets:
-                            new_tweet.download_media(
-                                db_session=database.session,
-                                media_path=media_storage_path)
-                        # If we're still too fast, wait however long we need to.
-                        duration = time.time() - start_time
-                        if duration < sleep_time:
-                            sleep_duration = sleep_time - duration
-                            LOGGER.info(
-                                "Sleeping for %s seconds to ease up on rate "
-                                "limit...", sleep_duration)
-                            sleep(sleep_duration)
-                start_time = time.time()
-                request_index += 1
+                        sleep_duration = sleep_time - duration
+                        LOGGER.info(
+                            "Sleeping for %s seconds to ease up on rate "
+                            "limit...", sleep_duration)
+                        sleep(sleep_duration)
+            start_time = time.time()
+            request_index += 1
 
-                LOGGER.info(
-                    "Pulling 200 tweets from API starting with ID %s and "
-                    "ending with ID %s...", since_id, max_id)
-                try:
-                    if type_ == FAVORITES:
-                        loop_statuses = self.GetFavorites(
-                            screen_name=username,
-                            count=200,
-                            since_id=since_id,
-                            max_id=max_id,
-                            include_entities=True)
-                        # 15 requests per 15 minutes.
-                        requests_before_sleeps = 15 - 1
-                        sleep_time = 60
-                    elif type_ == USER:
-                        loop_statuses = self.GetUserTimeline(
-                            screen_name=username,
-                            count=200,
-                            since_id=since_id,
-                            max_id=max_id)
-                        # 300 requests per 15 minutes.
-                        sleep_time = 3
-                        requests_before_sleeps = 300 - 1
-                except twitter.error.TwitterError as e:
-                    # If we overran the rate limit, try again.
-                    if e.message[0][u'code'] == 88:
-                        LOGGER.warning(
-                            "Overran rate limit. Sleeping %s seconds in an "
-                            "attempt to recover...", sleep_time)
-                        request_index = requests_before_sleeps
-                        sleep(sleep_time)
-                        continue
-                    raise
-                LOGGER.info(
-                    "Found %s tweets this iteration...", len(loop_statuses))
-                # Check for "We ran out of tweets via this API" termination
-                # condition.
-                if not loop_statuses:
+            LOGGER.info(
+                "Pulling 200 tweets from API starting with ID %s and "
+                "ending with ID %s...", since_id, max_id)
+            try:
+                if tweet_type == FAVORITES:
+                    loop_statuses = self.GetFavorites(
+                        screen_name=username,
+                        count=200,
+                        since_id=since_id,
+                        max_id=max_id,
+                        include_entities=True)
+                    # 15 requests per 15 minutes.
+                    requests_before_sleeps = 15 - 1
+                    sleep_time = 60
+                elif tweet_type == USER:
+                    loop_statuses = self.GetUserTimeline(
+                        screen_name=username,
+                        count=200,
+                        since_id=since_id,
+                        max_id=max_id)
+                    # 300 requests per 15 minutes.
+                    sleep_time = 3
+                    requests_before_sleeps = 300 - 1
+            except twitter.error.TwitterError as e:
+                # If we overran the rate limit, try again.
+                if e.message[0][u'code'] == 88:
+                    LOGGER.warning(
+                        "Overran rate limit. Sleeping %s seconds in an "
+                        "attempt to recover...", sleep_time)
+                    request_index = requests_before_sleeps
+                    sleep(sleep_time)
+                    continue
+                raise
+            LOGGER.info(
+                "Found %s tweets this iteration...", len(loop_statuses))
+            # Check for "We ran out of tweets via this API" termination
+            # condition.
+            if not loop_statuses:
+                break
+            # Check for early termination condition. We'll kick out if we
+            # pass since_id, or if we're pulling user tweets and we've hit
+            # this ID previously.
+            for loop_status in loop_statuses:
+                status_id = int(loop_status.AsDict()["id"])
+                if ((since_id is not None and status_id >= since_id) or
+                        (tweet_type == "USER" and
+                         status_id in existing_tweet_ids)):
+                    early_termination = True
                     break
-                # Check for early termination condition. We'll kick out if we
-                # pass since_id, or if we're pulling user tweets and we've hit
-                # this ID previously.
-                for loop_status in loop_statuses:
-                    status_id = int(loop_status.AsDict()["id"])
-                    if ((since_id is not None and status_id >= since_id) or
-                            (type_ == "USER" and
-                             status_id in existing_tweet_ids)):
-                        early_termination = True
-                        break
 
-                    # Dump the tweet as a JSON file in case something goes
-                    # wrong.
-                    tweet_filepath = os.path.join(
-                        tweet_storage_path, "%s.json" % status_id)
-                    with open(tweet_filepath, 'w') as fptr:
-                        json.dump(loop_status.AsDict(), fptr)
-                    statuses.append(loop_status)
-                    # Capture new max_id
-                    if max_id is None or status_id < max_id:
-                        max_id = status_id - 1
+                # Dump the tweet as a JSON file in case something goes
+                # wrong.
+                tweet_filepath = os.path.join(
+                    tweet_storage_path, "%s.json" % status_id)
+                with open(tweet_filepath, 'w') as fptr:
+                    json.dump(loop_status.AsDict(), fptr)
+                statuses.append(loop_status)
+                # Capture new max_id
+                if max_id is None or status_id < max_id:
+                    max_id = status_id - 1
 
             # Format things the way we want and handle max_id changes.
             LOGGER.info("Adding %s tweets to DB...", len(statuses))
@@ -289,7 +290,7 @@ class TwitterAPI(twitter.Api):
                                 db_session=database.session,
                                 tag_name=hashtag_dict["text"])
 
-                    if type_ == FAVORITES:
+                    if tweet_type == FAVORITES:
                         tweet.add_user_favorite(username)
             database.session.commit()
 
@@ -381,19 +382,22 @@ class TwitterAPI(twitter.Api):
             if request_index >= requests_before_sleeps:
                 duration = time.time() - start_time
                 if duration < sleep_time:
-                    if duration < sleep_time:
-                        for new_tweet in new_tweets:
+                    LOGGER.info("Switching to file download while we wait on "
+                                "the twitter API rate limit...")
+                    for new_tweet in new_tweets:
+                        if new_tweet.files_downloaded is False:
                             new_tweet.download_media(
                                 db_session=database.session,
                                 media_path=media_storage_path)
-                        # If we're still too fast, wait however long we need to.
-                        duration = time.time() - start_time
-                        if duration < sleep_time:
-                            sleep_duration = sleep_time - duration
-                            LOGGER.info(
-                                "Sleeping for %s seconds to avoid hitting "
-                                "Twitter's API rate limit...", sleep_duration)
-                            sleep(sleep_duration)
+                    new_tweets = []
+                    # If we're still too fast, wait however long we need to.
+                    duration = time.time() - start_time
+                    if duration < sleep_time:
+                        sleep_duration = sleep_time - duration
+                        LOGGER.info(
+                            "Sleeping for %s seconds to avoid hitting "
+                            "Twitter's API rate limit...", sleep_duration)
+                        sleep(sleep_duration)
             request_index += 1
             start_time = time.time()
 

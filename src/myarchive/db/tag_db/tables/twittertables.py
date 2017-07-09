@@ -99,17 +99,18 @@ class Tweet(Base):
 
     def download_media(self, db_session, media_path):
         """Retrieve media files."""
-        for media_url in self.media_urls:
-            if media_url != "":
-                tracked_file, existing = TrackedFile.download_file(
-                    db_session, media_path, media_url)
-                if (tracked_file is not None and
-                        tracked_file not in self.files):
-                    self.files.append(tracked_file)
-                    for tag in self.tags:
-                        if tag not in tracked_file.tags:
-                            tracked_file.tags.append(tag)
-        self.files_downloaded = True
+        if self.files_downloaded is False:
+            for media_url in self.media_urls:
+                if media_url != "":
+                    tracked_file, existing = TrackedFile.download_file(
+                        db_session, media_path, media_url)
+                    if (tracked_file is not None and
+                            tracked_file not in self.files):
+                        self.files.append(tracked_file)
+                        for tag in self.tags:
+                            if tag not in tracked_file.tags:
+                                tracked_file.tags.append(tag)
+            self.files_downloaded = True
 
 
 class TwitterUser(Base):
@@ -175,16 +176,17 @@ class TwitterUser(Base):
             (self.id, self.name, self.screen_name))
 
     def download_media(self, db_session, media_path):
-        for media_url in (
-                self.profile_image_url,
-                self.profile_background_image_url,
-                self.profile_banner_url):
-            if media_url is None:
-                continue
+        if self.files_downloaded is False:
+            for media_url in (
+                    self.profile_image_url,
+                    self.profile_background_image_url,
+                    self.profile_banner_url):
+                if media_url is None:
+                    continue
 
-            # Add file to DB (runs a sha1sum).
-            tracked_file, existing = TrackedFile.download_file(
-                db_session=db_session, media_path=media_path, url=media_url)
-            self.files.append(tracked_file)
-        self.files_downloaded = True
-        db_session.commit()
+                # Add file to DB (runs a sha1sum).
+                tracked_file, existing = TrackedFile.download_file(
+                    db_session=db_session, media_path=media_path, url=media_url)
+                self.files.append(tracked_file)
+            db_session.commit()
+            self.files_downloaded = True
