@@ -75,3 +75,4 @@ Twitter
 
 Deviantart
  - Handle rate limits (https://www.deviantart.com/developers/errors#rates)
+ - PDFs deviations not returned by API?

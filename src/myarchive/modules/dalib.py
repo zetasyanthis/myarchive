@@ -5,8 +5,8 @@ import logging
 
 from sqlalchemy.orm.exc import NoResultFound
 
-from myarchive.db.tag_db.tables import (
-    DeviantArtUser, Deviation, Tag, TrackedFile)
+from myarchive.db.tag_db.tables import Deviation, Tag, TrackedFile
+from myarchive.db.tag_db.tables.datables import get_da_user
 
 LOGGER = logging.getLogger(__name__)
 
@@ -36,29 +36,12 @@ def download_user_data(database, config, media_storage_path):
             if not da_api.access_token:
                 raise Exception("Access token not acquired!")
 
-            # Grab the User object of the authorized user
-            user = da_api.get_user(username=username)
-            LOGGER.info("Pulling data for user: %s...", user.username)
-
             # Grab user data.
-            try:
-                dauser = database.session.query(DeviantArtUser).\
-                    filter_by(name=user.username).one()
-            except NoResultFound:
-                da_user = DeviantArtUser(
-                    userid=user.userid,
-                    name=user.username,
-                    profile=str(user.profile),
-                    stats=str(user.stats),
-                    details=str(user.details)
-                )
-                icon_file, existing = TrackedFile.download_file(
-                    db_session=database.session,
-                    media_path=media_storage_path,
-                    url=user.usericon)
-                da_user.icon = icon_file
-                database.session.add(da_user)
-                database.session.commit()
+            get_da_user(
+                db_session=database.session,
+                da_api=da_api,
+                username=username,
+                media_storage_path=media_storage_path)
 
             for sync_type in (GALLERY, FAVORITES):
                 __download_user_deviations(
@@ -137,6 +120,15 @@ def __download_user_deviations(
                 tag.name: tag for tag in existing_tags
             }
 
+        # Loop through deviations and save author data.
+        for deviation in new_deviations:
+            # Grab user data.
+            get_da_user(
+                db_session=database.session,
+                da_api=da_api,
+                username=deviation.author.username,
+                media_storage_path=media_storage_path)
+
         # Loop through and save deviations.
         for deviation in new_deviations:
             # If there's no content (if it's a story), skip for now.
@@ -203,7 +195,8 @@ def __download_user_deviations(
             tags_names = [
                 "da.user.%s.%s" % (username, sync_type),
                 "da.user.%s.%s.%s" % (username, sync_type, collection_name),
-                "da.author." + str(deviation.author.username),
+                "da.author." + str(deviation.author),
+                collection_name,
             ]
             tags_names.extend(str(deviation.category_path).split("/"))
             tags_names.extend(
