@@ -67,7 +67,8 @@ def download_user_data(database, config, media_storage_path):
 
 
 def __download_user_deviations(
-        database, media_storage_path, da_api, username, sync_type):
+        database, media_storage_path, da_api, username, sync_type,
+        force_full_scan=False):
 
     if sync_type == "gallery":
         collections = da_api.get_gallery_folders(username=username)
@@ -81,6 +82,10 @@ def __download_user_deviations(
         LOGGER.info("Scanning %s (%s) for deviations...",
                     sync_type, collection_name)
         folderid = collection["folderid"]
+
+        # Grab list of existing deviationids.
+        query_results = database.session.query(Deviation.deviationid).all()
+        existing_deviationids = [item for (item,) in query_results]
 
         deviations = []
         offset = 0
@@ -103,16 +108,17 @@ def __download_user_deviations(
                 # fetch (if yes => repeat)
                 has_more = fetched_deviations['has_more']
 
-                # WARNING: Do not halt if we've reached an existing deviationid.
-                # We may need to complete a partial pull.
+                # Normally, we only check
+                if force_full_scan is False:
+                    for deviation in fetched_deviations:
+                        if deviation.deviationid in existing_deviationids:
+                            break
 
             except deviantart.api.DeviantartError as error:
                 # catch and print API exception and stop loop
                 LOGGER.error("Error querying DA API for collection: %s" % error)
                 has_more = False
 
-        query_results = database.session.query(Deviation.deviationid).all()
-        existing_deviationids = [item for (item,) in query_results]
         new_deviations = []
         for deviation in deviations:
             if deviation.deviationid not in existing_deviationids:
