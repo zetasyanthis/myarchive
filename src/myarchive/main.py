@@ -6,12 +6,12 @@ import os
 
 from logging import getLogger
 
-import myarchive.modules.deviantart_lib as deviantart_lib
+import myarchive.modules.dalib as deviantart_lib
 
 from myarchive.db.tag_db.tag_db import TagDB
-from myarchive.modules.ljl_ib import LJAPIConnection
-from myarchive.modules.twitter_lib import TwitterAPI
-from myarchive.modules.shotwell_lib import import_from_shotwell_db
+from myarchive.modules.ljlib import LJAPIConnection
+from myarchive.modules.twitterlib import TwitterAPI
+from myarchive.modules.shotwelllib import import_from_shotwell_db
 from myarchive.util.logger import myarchive_LOGGER as logger
 
 # from gui import Gtk, MainWindow

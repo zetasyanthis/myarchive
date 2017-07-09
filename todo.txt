@@ -71,3 +71,7 @@ Github Repository (Auto-pull updates?)
 Internet archive API may be of help.
 Twitter
     Import as a background process once GUI works since the API takes a while.
+
+
+Deviantart
+ - Handle rate limits (https://www.deviantart.com/developers/errors#rates)
