@@ -116,7 +116,8 @@ class TwitterAPI(twitter.Api):
         return [twitter.Status.NewFromJsonDict(x) for x in data]
 
     @classmethod
-    def import_tweets_from_api(cls, database, config, tweet_storage_path):
+    def import_tweets_from_api(cls, database, config, tweet_storage_path,
+                               media_storage_path):
         for config_section in config.sections():
             if config_section.startswith("Twitter_"):
                 api = cls(
@@ -134,15 +135,18 @@ class TwitterAPI(twitter.Api):
                     username=config.get(
                         section=config_section, option="username"),
                     tweet_storage_path=tweet_storage_path,
+                    media_storage_path=media_storage_path,
                 )
 
-    def archive_tweets(self, database, username, tweet_storage_path):
+    def archive_tweets(self, database, username, tweet_storage_path,
+                       media_storage_path):
         """
         Archives several types of new tweets along with their associated
         content.
         """
         existing_tweet_ids = database.get_existing_tweet_ids()
 
+        new_tweets = []
         for type_ in (USER, FAVORITES):
             # Always start with None to pick up max number of new tweets.
             since_id = None
@@ -157,13 +161,21 @@ class TwitterAPI(twitter.Api):
                 # Twitter rate-limits us. Space this out a bit to avoid a
                 # super-long sleep at the end doesn't kill the connection.
                 if request_index >= requests_before_sleeps:
+                    # If we hit the rate limit, download media while we wait.
                     duration = time.time() - start_time
                     if duration < sleep_time:
-                        sleep_duration = sleep_time - duration
-                        LOGGER.info(
-                            "Sleeping for %s seconds to ease up on rate "
-                            "limit...", sleep_duration)
-                        sleep(sleep_duration)
+                        for new_tweet in new_tweets:
+                            new_tweet.download_media(
+                                db_session=database.session,
+                                media_path=media_storage_path)
+                        # If we're still too fast, wait however long we need to.
+                        duration = time.time() - start_time
+                        if duration < sleep_time:
+                            sleep_duration = sleep_time - duration
+                            LOGGER.info(
+                                "Sleeping for %s seconds to ease up on rate "
+                                "limit...", sleep_duration)
+                            sleep(sleep_duration)
                 start_time = time.time()
                 request_index += 1
 
@@ -267,6 +279,7 @@ class TwitterAPI(twitter.Api):
                         created_at=status_dict["created_at"],
                         media_urls_list=media_urls_list,
                     )
+                    new_tweets.append(tweet)
                     database.session.add(tweet)
 
                     # Add the tags
@@ -282,7 +295,7 @@ class TwitterAPI(twitter.Api):
 
     @classmethod
     def import_tweets_from_csv(cls, database, config, tweet_storage_path,
-                               username, csv_filepath):
+                               username, csv_filepath, media_storage_path):
         for config_section in config.sections():
             if config_section.startswith("Twitter_%s" % username):
                 break
@@ -304,10 +317,11 @@ class TwitterAPI(twitter.Api):
             tweet_storage_path=tweet_storage_path,
             csv_filepath=csv_filepath,
             username=username,
+            media_storage_path=media_storage_path,
         )
 
     def import_from_csv(self, database, tweet_storage_path, csv_filepath,
-                        username):
+                        username, media_storage_path):
         existing_tweet_ids = database.get_existing_tweet_ids()
 
         csv_tweets_by_id = dict()
@@ -354,6 +368,7 @@ class TwitterAPI(twitter.Api):
             "Estimated time to complete import: %s seconds.", time_to_complete)
 
         # Set loop starting values
+        new_tweets = []
         tweet_index = 0
         request_index = 0
         start_time = -1
@@ -366,11 +381,19 @@ class TwitterAPI(twitter.Api):
             if request_index >= requests_before_sleeps:
                 duration = time.time() - start_time
                 if duration < sleep_time:
-                    sleep_duration = sleep_time - duration
-                    LOGGER.info(
-                        "Sleeping for %s seconds to avoid hitting Twitter's "
-                        "API rate limit...", sleep_duration)
-                    sleep(sleep_duration)
+                    if duration < sleep_time:
+                        for new_tweet in new_tweets:
+                            new_tweet.download_media(
+                                db_session=database.session,
+                                media_path=media_storage_path)
+                        # If we're still too fast, wait however long we need to.
+                        duration = time.time() - start_time
+                        if duration < sleep_time:
+                            sleep_duration = sleep_time - duration
+                            LOGGER.info(
+                                "Sleeping for %s seconds to avoid hitting "
+                                "Twitter's API rate limit...", sleep_duration)
+                            sleep(sleep_duration)
             request_index += 1
             start_time = time.time()
 
@@ -425,6 +448,7 @@ class TwitterAPI(twitter.Api):
                         created_at=status_dict["created_at"],
                         media_urls_list=media_urls_list,
                     )
+                    new_tweets.append(tweet)
                     database.session.add(tweet)
 
                     # Add the tags
@@ -473,7 +497,9 @@ class TwitterAPI(twitter.Api):
                 db_session=database.session, media_path=media_storage_path)
             if index % 100 == 0:
                 database.session.commit()
-        for index, user in enumerate(database.session.query(TwitterUser)):
+        for index, user in enumerate(
+                database.session.query(TwitterUser).
+                filter(TwitterUser.files_downloaded.is_(False))):
             user.download_media(
                 db_session=database.session, media_path=media_storage_path)
             if index % 100 == 0:

@@ -119,7 +119,8 @@ def main():
     if args.import_tweets_from_api:
         TwitterAPI.import_tweets_from_api(
             database=tag_db, config=config,
-            tweet_storage_path=tweet_storage_path)
+            tweet_storage_path=tweet_storage_path,
+            media_storage_path=media_storage_path)
     if args.import_tweets_from_csv:
         username = None
         while username is None:
@@ -130,6 +131,7 @@ def main():
             tweet_storage_path=tweet_storage_path,
             username=username,
             csv_filepath=args.import_tweets_from_csv,
+            media_storage_path=media_storage_path,
         )
     if args.import_tweets_from_api or args.import_tweets_from_csv:
         # Parse the tweets and download associated media.

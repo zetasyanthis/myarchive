@@ -99,17 +99,16 @@ class Tweet(Base):
 
     def download_media(self, db_session, media_path):
         """Retrieve media files."""
-        if self.files_downloaded is False:
-            for media_url in self.media_urls:
-                if media_url != "":
-                    tracked_file, existing = TrackedFile.download_file(
-                        db_session, media_path, media_url)
-                    if (tracked_file is not None and
-                            tracked_file not in self.files):
-                        self.files.append(tracked_file)
-                        for tag in self.tags:
-                            if tag not in tracked_file.tags:
-                                tracked_file.tags.append(tag)
+        for media_url in self.media_urls:
+            if media_url != "":
+                tracked_file, existing = TrackedFile.download_file(
+                    db_session, media_path, media_url)
+                if (tracked_file is not None and
+                        tracked_file not in self.files):
+                    self.files.append(tracked_file)
+                    for tag in self.tags:
+                        if tag not in tracked_file.tags:
+                            tracked_file.tags.append(tag)
         self.files_downloaded = True
 
 
@@ -126,6 +125,7 @@ class TwitterUser(Base):
     location = Column(String)
     time_zone = Column(String)
     created_at = Column(String)
+    files_downloaded = Column(Boolean, default=False)
 
     profile_sidebar_fill_color = Column(String)
     profile_text_color = Column(String)
@@ -186,4 +186,5 @@ class TwitterUser(Base):
             tracked_file, existing = TrackedFile.download_file(
                 db_session=db_session, media_path=media_path, url=media_url)
             self.files.append(tracked_file)
+        self.files_downloaded = True
         db_session.commit()
