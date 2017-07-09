@@ -69,8 +69,9 @@ class TrackedFile(Base):
         if file_buffer is not None:
             md5sum = md5(file_buffer).hexdigest()
             # Fix up extensions the URL doesn't have one.
-            extension = get_file_extension(
+            fixed_filepath = fix_file_extension(
                 file_buffer=file_buffer, original_filename=original_filename)
+            extension = os.path.splitext(fixed_filepath)[1]
             filepath = os.path.join(media_path, str(md5sum)) + extension
             tracked_file = db_session.query(cls).filter_by(md5sum=md5sum).all()
             if tracked_file:
@@ -85,15 +86,7 @@ class TrackedFile(Base):
             original_filename = os.path.basename(copy_from_filepath)
 
             # Fix up extensions in case they're wrong.
-            if os.path.getsize(copy_from_filepath) < MAX_BUFFER:
-                with open(copy_from_filepath, "rb") as fptr:
-                    file_buffer = fptr.read()
-                    extension = get_file_extension(
-                        original_filename=original_filename,
-                        file_buffer=file_buffer)
-            else:
-                extension = get_file_extension(
-                    original_filename=original_filename)
+            extension = fix_file_extension(original_filename=original_filename)
 
             # Reopen just a pointer for md5sum, since we don't want to load
             # massive files into memory.
@@ -153,7 +146,9 @@ class TrackedFile(Base):
 
 def get_md5sum_by_filename(file_id, filepath, block_size=2**20):
     with open(filepath, "rb") as fptr:
-        return file_id, filepath, get_fptr_md5sum(fptr, block_size)
+        md5sum = get_fptr_md5sum(fptr, block_size)
+    filepath = fix_file_extension(filepath)
+    return file_id, filepath, md5sum
 
 
 def get_fptr_md5sum(fptr, block_size=2**20):
@@ -167,22 +162,21 @@ def get_fptr_md5sum(fptr, block_size=2**20):
     return md5.hexdigest()
 
 
-def get_file_extension(original_filename, file_buffer=None):
+def fix_file_extension(original_filename, file_buffer=None):
     """
     Returns a fixed extension for a file buffer. (Many services, especially
     furaffinity and twitter, sometimes return files with the wrong extension or
     without extensions at all!)
     """
     filename, extension = os.path.splitext(original_filename)
-    if file_buffer is not None:
-        try:
-            imghdr_extension = "." + imghdr.what("", file_buffer)
-            if imghdr_extension == ".jpeg":
-                imghdr_extension = ".jpg"
-        except:
-            imghdr_extension = None
-        if imghdr_extension and imghdr_extension != extension:
-            LOGGER.warning("Fixing extension on '%s'. ('%s' -> '%s')",
-                           original_filename, extension, imghdr_extension)
-            return imghdr_extension
-    return extension
+    try:
+        imghdr_extension = "." + imghdr.what(original_filename, h=file_buffer)
+        if imghdr_extension == ".jpeg":
+            imghdr_extension = ".jpg"
+    except:
+        imghdr_extension = None
+    if imghdr_extension and imghdr_extension != extension:
+        # LOGGER.warning("Fixing extension on '%s'. ('%s' -> '%s')",
+        #                original_filename, extension, imghdr_extension)
+        return filename + imghdr_extension
+    return original_filename

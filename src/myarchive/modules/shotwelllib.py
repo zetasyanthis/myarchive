@@ -43,7 +43,7 @@ def import_from_shotwell_db(
         #         original_storage_path, sw_storage_folder_override)
 
         # Calculate md5sums ahead of time and in parallel to speed this all up
-        # dramatically.
+        # dramatically. (Also fix file extensions here.)
         row_tuples = [
             (photo_row[0], photo_row[1]) for photo_row in
             sw_db.session.query(table.id, table.filename).all()]
