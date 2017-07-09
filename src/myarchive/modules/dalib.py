@@ -14,6 +14,10 @@ FAVORITES_RSS = "http://backend.deviantart.com/rss.xml?q=favby%%3A%(username)s"
 GALLERY_RSS = "http://backend.deviantart.com/rss.xml?q=gallery%%3A%(username)s"
 
 
+GALLERY = "GALLERY"
+FAVORITES = "FAVORITES"
+
+
 def download_user_data(database, config, media_storage_path):
     """Grabs user galleries and favorites."""
     for config_section in config.sections():
@@ -56,7 +60,7 @@ def download_user_data(database, config, media_storage_path):
                 database.session.add(da_user)
                 database.session.commit()
 
-            for sync_type in ("gallery", "favorites"):
+            for sync_type in (GALLERY, FAVORITES):
                 __download_user_deviations(
                     database=database,
                     da_api=da_api,
@@ -70,9 +74,9 @@ def __download_user_deviations(
         database, media_storage_path, da_api, username, sync_type,
         force_full_scan=False):
 
-    if sync_type == "gallery":
+    if sync_type == GALLERY:
         collections = da_api.get_gallery_folders(username=username)
-    elif sync_type == "favorites":
+    elif sync_type == FAVORITES:
         collections = da_api.get_collections(username=username)
     else:
         raise Exception("Type of sync not supported: %s" % sync_type)
