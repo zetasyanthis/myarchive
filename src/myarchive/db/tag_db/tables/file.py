@@ -63,7 +63,8 @@ class TrackedFile(Base):
                  file_buffer=None,
                  copy_from_filepath=None,
                  original_filename=None,
-                 url=None):
+                 url=None,
+                 md5sum_override=None):
         existing = False
         if file_buffer is not None:
             md5sum = md5(file_buffer).hexdigest()
@@ -96,8 +97,11 @@ class TrackedFile(Base):
 
             # Reopen just a pointer for md5sum, since we don't want to load
             # massive files into memory.
-            with open(copy_from_filepath, 'rb') as fptr:
-                md5sum = cls.get_file_md5sum(fptr=fptr)
+            if md5sum_override is not None:
+                md5sum = md5sum_override
+            else:
+                with open(copy_from_filepath, 'rb') as fptr:
+                    md5sum = get_fptr_md5sum(fptr=fptr)
             filepath = os.path.join(media_path, md5sum + extension)
             tracked_file = db_session.query(cls).filter_by(md5sum=md5sum).all()
             if tracked_file:
@@ -146,16 +150,21 @@ class TrackedFile(Base):
             url=saved_url)
         return tracked_file, existing
 
-    @staticmethod
-    def get_file_md5sum(fptr, block_size=2**20):
-        """Processes a file md5sum 1MB at a time."""
-        md5 = hashlib.md5()
-        while True:
-            data = fptr.read(block_size)
-            if not data:
-                break
-            md5.update(data)
-        return md5.hexdigest()
+
+def get_md5sum_by_filename(file_id, filepath, block_size=2**20):
+    with open(filepath, "rb") as fptr:
+        return file_id, filepath, get_fptr_md5sum(fptr, block_size)
+
+
+def get_fptr_md5sum(fptr, block_size=2**20):
+    """Processes a file md5sum 1MB at a time."""
+    md5 = hashlib.md5()
+    while True:
+        data = fptr.read(block_size)
+        if not data:
+            break
+        md5.update(data)
+    return md5.hexdigest()
 
 
 def get_file_extension(original_filename, file_buffer=None):

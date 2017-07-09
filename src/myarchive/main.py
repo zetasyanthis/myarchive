@@ -6,12 +6,11 @@ import os
 
 from logging import getLogger
 
-import myarchive.modules.dalib as deviantart_lib
+from myarchive.modules import dalib, shotwelllib
 
 from myarchive.db.tag_db.tag_db import TagDB
 from myarchive.modules.ljlib import LJAPIConnection
 from myarchive.modules.twitterlib import TwitterAPI
-from myarchive.modules.shotwelllib import import_from_shotwell_db
 from myarchive.util.logger import myarchive_LOGGER as logger
 
 # from gui import Gtk, MainWindow
@@ -101,15 +100,15 @@ def main():
     """
 
     if args.import_from_shotwell_db:
-        sw_db_path = config.get(
-            section="Shotwell", option="db_filepath")
-        sw_media_path = config.get(
-            section="Shotwell", option="storage_filepath")
-        import_from_shotwell_db(
+        sw_db_path = os.path.expanduser(
+            config.get(section="Shotwell", option="db_filepath"))
+        sw_media_path = os.path.expanduser(
+            config.get(section="Shotwell", option="storage_filepath"))
+        shotwelllib.import_from_shotwell_db(
             tag_db=tag_db,
-            media_path=media_storage_path,
+            media_storage_path=media_storage_path,
             sw_database_path=sw_db_path,
-            sw_storage_folder_override=sw_media_path,
+            sw_media_path=sw_media_path,
         )
 
     """
@@ -144,7 +143,7 @@ def main():
     """
 
     if args.import_from_deviantart:
-        deviantart_lib.download_user_data(
+        dalib.download_user_data(
             database=tag_db,
             config=config,
             media_storage_path=media_storage_path,

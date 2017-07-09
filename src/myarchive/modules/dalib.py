@@ -163,6 +163,7 @@ def __download_user_deviations(
             else:
                 file_url = deviation.content["src"]
 
+            # Grab the file if we were handed a URL.
             if file_url is not None:
                 tracked_file, existing = TrackedFile.download_file(
                     db_session=database.session,

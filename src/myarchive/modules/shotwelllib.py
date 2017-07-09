@@ -1,11 +1,13 @@
 """Handles imports from shotwell databases."""
 
-import os
+from multiprocessing import Pool
 
 from collections import defaultdict
 from logging import getLogger
+from os.path import expanduser
 
 from myarchive.db.tag_db.tables import TrackedFile, Tag
+from myarchive.db.tag_db.tables.file import get_md5sum_by_filename
 from myarchive.db.shotwell.shotwell_db import ShotwellDB
 from myarchive.db.shotwell.tables import PhotoTable, VideoTable, TagTable
 
@@ -13,21 +15,18 @@ from myarchive.db.shotwell.tables import PhotoTable, VideoTable, TagTable
 LOGGER = getLogger("myarchive")
 
 
+DEFAULT_STORAGE_FILEPATH = expanduser("~/.local/share/shotwell/images/")
+
+
 def import_from_shotwell_db(
-        tag_db, media_path, sw_database_path=None,
-        sw_storage_folder_override=None):
+        tag_db, media_storage_path, sw_database_path, sw_media_path):
     """Imports images from the shotwell DB into ours."""
     sw_db = ShotwellDB(
-        drivername='sqlite',
-        # db_name=sw_database_path,
+        db_name=sw_database_path,
     )
 
-    # if sw_storage_folder_override:
-    #     photo_paths = []
-    #     for photo_path, in sw_db.session.query(PhotoTable.filename):
-    #         photo_paths.append(photo_path)
-    #     original_storage_path = os.path.commonprefix(photo_paths)
-    #     del photo_paths
+    # if sw_media_path != DEFAULT_STORAGE_FILEPATH:
+    #     pass
 
     shotwell_tag = Tag.get_tag(db_session=tag_db.session, tag_name="shotwell")
     tag_db.session.commit()
@@ -36,15 +35,30 @@ def import_from_shotwell_db(
     # Grab all the photos and add them.
     files_by_id = dict()
     for table in (PhotoTable, VideoTable):
-        for photo_row in sw_db.session.query(table):
-            media_filepath = str(photo_row.filename)
-            # if sw_storage_folder_override:
-            #     filepath = original_storage_path.replace(
-            #         original_storage_path, sw_storage_folder_override)
+
+        # if sw_media_path != DEFAULT_STORAGE_FILEPATH:
+        #     pass
+        # if sw_storage_folder_override:
+        #     filepath = original_storage_path.replace(
+        #         original_storage_path, sw_storage_folder_override)
+
+        # Calculate md5sums ahead of time and in parallel to speed this all up
+        # dramatically.
+        row_tuples = [
+            (photo_row[0], photo_row[1]) for photo_row in
+            sw_db.session.query(table.id, table.filename).all()]
+        md5sum_pool = Pool()
+        media_tuples = md5sum_pool.starmap(get_md5sum_by_filename, row_tuples)
+
+        for media_tuple in media_tuples:
+            media_id, media_path, media_md5sum = media_tuple
             tracked_file, existing = TrackedFile.add_file(
-                db_session=tag_db.session, media_path=media_path,
-                copy_from_filepath=media_filepath)
-            files_by_id[int(photo_row.id)] = tracked_file
+                db_session=tag_db.session,
+                media_path=media_storage_path,
+                copy_from_filepath=media_path,
+                md5sum_override=media_md5sum,
+            )
+            files_by_id[media_id] = tracked_file
             tracked_file.tags.append(shotwell_tag)
             tag_db.session.add(tracked_file)
     tag_db.session.commit()
