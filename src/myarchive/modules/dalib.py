@@ -37,6 +37,7 @@ def download_user_data(database, config, media_storage_path):
                 raise Exception("Access token not acquired!")
 
             # Grab user data.
+            LOGGER.info("Pulling data for user: %s...", username)
             get_da_user(
                 db_session=database.session,
                 da_api=da_api,
@@ -97,7 +98,7 @@ def __download_user_deviations(
 
                 # Normally, we only check
                 if force_full_scan is False:
-                    for deviation in fetched_deviations:
+                    for deviation in fetched_deviations["results"]:
                         if deviation.deviationid in existing_deviationids:
                             break
 

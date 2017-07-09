@@ -92,9 +92,8 @@ def get_da_user(db_session, da_api, username, media_storage_path):
     """
     # Grab the User object from the API.
     user = da_api.get_user(username=username)
-    LOGGER.info("Pulling data for user: %s...", user.username)
     try:
-        da_user = db_session.session.query(DeviantArtUser).\
+        da_user = db_session.query(DeviantArtUser).\
             filter_by(name=user.username).one()
     except NoResultFound:
         da_user = DeviantArtUser(
