@@ -6,23 +6,24 @@ MyArchive is a tool for interacting with a multitude of social networks and site
 Supported Data Import Sources
 +++++++++++++++++++++++++++++
 
-* Shotwell databases/files
-* Raw folders and files on your filesystem
-* Deviantart
-* Twitter
-* Planned, or in work.
-  * Dreamwidth
-  * LiveJournal
-  * Github Gist (and probably repo mirroring)
-  * Goodreads
-  * LibraryThing
-  * Mastodon
-  * Medium
-  * Reddit
-  * SoFurry
-  * Weasyl
-  * Youtube playlists
-  * Generic RSS feeds
+ * Shotwell databases/files
+ * Raw folders and files on your filesystem
+ * Deviantart
+ * Twitter
+ * Planned, or in work.
+
+   * Dreamwidth
+   * LiveJournal
+   * Github Gist (and probably repo mirroring)
+   * Goodreads
+   * LibraryThing
+   * Mastodon
+   * Medium
+   * Reddit
+   * SoFurry
+   * Weasyl
+   * Youtube playlists
+   * Generic RSS feeds
 
 
 Deviantart
