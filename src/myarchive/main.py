@@ -87,13 +87,18 @@ def main():
     """
 
     if args.import_folder:
+        folder_import_glob_ignores = config.get(
+            section="General", option="folder_import_glob_ignores"
+        ).split("|")
         if not os.path.exists(args.import_folder):
             raise Exception("Import folder path does not exist!")
         if not os.path.isdir(args.import_folder):
             raise Exception("Import folder path is not a folder!")
         LOGGER.debug("Importing folder contents:" + args.import_folder)
         tag_db.import_files(
-            import_path=args.import_folder, media_path=media_storage_path)
+            import_path=args.import_folder,
+            media_path=media_storage_path,
+            glob_ignores=folder_import_glob_ignores)
 
     """
     Shotwell Section
