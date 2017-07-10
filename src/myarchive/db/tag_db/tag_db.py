@@ -37,13 +37,10 @@ class TagDB(DB):
         if os.path.isdir(import_path):
             for root, dirnames, filenames in os.walk(import_path):
                 for filename in sorted(filenames):
-                    glob_match = False
-                    for glob_ignore in glob_ignores:
-                        if fnmatch.fnmatch(name=filename, pat=glob_ignore):
-                            glob_match = True
-                    if glob_match:
-                        continue
                     full_filepath = os.path.join(root, filename)
+                    if any(fnmatch.fnmatch(full_filepath, pattern)
+                           for pattern in glob_ignores):
+                        continue
                     LOGGER.debug("Importing %s...", full_filepath)
                     db_file, existing = TrackedFile.add_file(
                         db_session=self.session,
