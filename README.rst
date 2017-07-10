@@ -13,14 +13,17 @@ Supported Data Import Sources
  * Planned, or in work.
 
    * Dreamwidth
-   * LiveJournal
+   * Flickr
    * Github Gist (and probably repo mirroring)
    * Goodreads
+   * Instagram
    * LibraryThing
+   * LiveJournal
    * Mastodon
    * Medium
    * Reddit
    * SoFurry
+   * Tumblr
    * Weasyl
    * Youtube playlists
    * Generic RSS feeds
