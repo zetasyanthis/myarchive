@@ -1,40 +1,8 @@
-- Export files to directories based on tags.
-- DeviantArt
-  - rate limits (https://www.deviantart.com/developers/errors#rates)
-  - pdfs?
-- Reddit API
-  - https://praw.readthedocs.io/en/latest/
-- SoFurry API
-- Weasyl API
-- Mastodon API
-  - https://pypi.python.org/pypi/Mastodon.py/1.0.8
-  - https://github.com/halcy/Mastodon.py
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 General
+    Export files to directories based on tags. Use original_filename, and either don't make, or symlink, duplicates.
+    File renaming support? Should be sufficient to adjust original_filename.
     Secure credential storage.
-    Deduplicate TrackedFiles.
     Add multithreaded support for background updates.
         http://stackoverflow.com/questions/6297404/multi-threaded-use-of-sqlalchemy
         http://stackoverflow.com/questions/9619789/sqlalchemy-proper-session-handling-in-multi-thread-applications
@@ -67,8 +35,15 @@ SoFurry
 Weasyl
 Goodreads
 LibraryThing
+Mastodon
+  - https://pypi.python.org/pypi/Mastodon.py/1.0.8
+  - https://github.com/halcy/Mastodon.py
+Reddit
+  - https://praw.readthedocs.io/en/latest/
 Github Repository (Auto-pull updates?)
 Internet archive API may be of help.
+
+
 
 
 

@@ -30,14 +30,14 @@ def main():
         dest="import_folder",
         help="Folder to organize.")
     parser.add_argument(
-        '--import_tweets_from_api',
-        action="store_true",
-        default=False,
-        help='Downloads user tweets and favorites..')
-    parser.add_argument(
-        '--import_tweets_from_csv',
+        '--import_from_twitter',
+        nargs="?",
         action="store",
-        help='Accepts a CSV filepath..')
+        default=list(),
+        help='Downloads user tweets and favorites.. Any number of CSV files '
+             'from twitter exports can follow this argument. Regardless of '
+             'whether any are provided, the API is polled for new tweets '
+             'afterwards.')
     parser.add_argument(
         '--import_from_shotwell_db',
         action="store_true",
@@ -83,7 +83,7 @@ def main():
     os.makedirs(tweet_storage_path, exist_ok=True)
 
     """
-    Raw folder import section
+    Raw Folder Import Section
     """
 
     if args.import_folder:
@@ -112,33 +112,6 @@ def main():
         )
 
     """
-    Twitter Section
-    """
-
-    if args.import_tweets_from_api:
-        TwitterAPI.import_tweets_from_api(
-            database=tag_db, config=config,
-            tweet_storage_path=tweet_storage_path,
-            media_storage_path=media_storage_path)
-    if args.import_tweets_from_csv:
-        username = None
-        while username is None:
-            username = input("Enter username for CSV import: ")
-        TwitterAPI.import_tweets_from_csv(
-            database=tag_db,
-            config=config,
-            tweet_storage_path=tweet_storage_path,
-            username=username,
-            csv_filepath=args.import_tweets_from_csv,
-            media_storage_path=media_storage_path,
-        )
-    if args.import_tweets_from_api or args.import_tweets_from_csv:
-        # Parse the tweets and download associated media.
-        LOGGER.info("Downloading media files...")
-        TwitterAPI.download_media(
-            database=tag_db, media_storage_path=media_storage_path)
-
-    """
     DeviantArt Section
     """
 
@@ -148,6 +121,28 @@ def main():
             config=config,
             media_storage_path=media_storage_path,
         )
+
+    """
+    Twitter Section
+    """
+
+    if args.import_from_twitter is not None:
+        for csv_filepath in args.import_from_twitter:
+            username = None
+            while username is None:
+                username = input("Enter username for CSV import: ")
+            TwitterAPI.import_tweets_from_csv(
+                database=tag_db,
+                config=config,
+                tweet_storage_path=tweet_storage_path,
+                username=username,
+                csv_filepath=csv_filepath,
+                media_storage_path=media_storage_path,
+            )
+        TwitterAPI.import_tweets_from_api(
+            database=tag_db, config=config,
+            tweet_storage_path=tweet_storage_path,
+            media_storage_path=media_storage_path)
 
     """
     LiveJournal Section

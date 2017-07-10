@@ -492,20 +492,23 @@ class TwitterAPI(twitter.Api):
                     database.session.add(tweet)
         database.session.commit()
 
-    @staticmethod
-    def download_media(database, media_storage_path):
-        for index, tweet in enumerate(
-                database.session.query(Tweet).
-                filter(Tweet.files_downloaded.is_(False))):
-            tweet.download_media(
-                db_session=database.session, media_path=media_storage_path)
-            if index % 100 == 0:
-                database.session.commit()
-        for index, user in enumerate(
-                database.session.query(TwitterUser).
-                filter(TwitterUser.files_downloaded.is_(False))):
-            user.download_media(
-                db_session=database.session, media_path=media_storage_path)
-            if index % 100 == 0:
-                database.session.commit()
-        database.session.commit()
+        download_media(
+            db_session=database.session, media_storage_path=media_storage_path)
+
+
+def download_media(db_session, media_storage_path):
+    for index, tweet in enumerate(
+            db_session.query(Tweet).
+            filter(Tweet.files_downloaded.is_(False))):
+        tweet.download_media(
+            db_session=db_session, media_path=media_storage_path)
+        if index % 100 == 0:
+            db_session.commit()
+    for index, user in enumerate(
+            db_session.query(TwitterUser).
+            filter(TwitterUser.files_downloaded.is_(False))):
+        user.download_media(
+            db_session=db_session, media_path=media_storage_path)
+        if index % 100 == 0:
+            db_session.commit()
+    db_session.commit()
