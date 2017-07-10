@@ -17,6 +17,7 @@ from time import sleep
 from twitter.error import TwitterError
 
 from myarchive.db.tag_db.tables.twittertables import Tweet, TwitterUser
+from myarchive.db.tag_db.tables.tag import Tag
 
 LOGGER = logging.getLogger(__name__)
 
@@ -286,9 +287,11 @@ class TwitterAPI(twitter.Api):
                     # Add the tags
                     if "hashtags" in status_dict:
                         for hashtag_dict in status_dict["hashtags"]:
-                            tweet.add_tag(
-                                db_session=database.session,
-                                tag_name=hashtag_dict["text"])
+                            tweet.tags.append(
+                                Tag.get_tag(
+                                    db_session=database.session,
+                                    tag_name=hashtag_dict["text"])
+                            )
 
                     if tweet_type == FAVORITES:
                         tweet.add_user_favorite(username)
@@ -458,9 +461,11 @@ class TwitterAPI(twitter.Api):
                     # Add the tags
                     if "hashtags" in status_dict:
                         for hashtag_dict in status_dict["hashtags"]:
-                            tweet.add_tag(
-                                db_session=database.session,
-                                tag_name=hashtag_dict["text"])
+                            tweet.tags.append(
+                                Tag.get_tag(
+                                    db_session=database.session,
+                                    tag_name=hashtag_dict["text"])
+                            )
 
                 database.session.commit()
 
@@ -483,7 +488,13 @@ class TwitterAPI(twitter.Api):
         existing_tweet_ids = database.get_existing_tweet_ids()
         for tweet_id, csv_only_tweet in csv_tweets_by_id.items():
             if tweet_id not in existing_tweet_ids:
-                tweet = Tweet.make_from_csvtweet(csv_only_tweet)
+                tweet = Tweet(
+                    id=csv_tweet.id,
+                    text=csv_tweet.text,
+                    in_reply_to_status_id=csv_tweet.in_reply_to_status_id,
+                    created_at=csv_tweet.timestamp,
+                    media_urls_list=list(),
+                )
                 try:
                     user = database.session.query(TwitterUser). \
                         filter_by(screen_name=csv_only_tweet.username).one()

@@ -194,9 +194,14 @@ def __download_user_deviations(
                 database.session.add(db_deviation)
 
             # Handle tags, category, and author tags.
+            if sync_type == GALLERY:
+                sync_type_tag_name = "gallery"
+            else:
+                sync_type_tag_name = "favorite"
             tags_names = [
-                "da.user.%s.%s" % (username, sync_type),
-                "da.user.%s.%s.%s" % (username, sync_type, collection_name),
+                "da.user.%s.%s" % (username, sync_type_tag_name),
+                "da.user.%s.%s.%s" % (
+                    username, sync_type_tag_name, collection_name),
                 "da.author." + str(deviation.author),
                 collection_name,
             ]

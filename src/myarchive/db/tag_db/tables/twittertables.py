@@ -54,10 +54,6 @@ class Tweet(Base):
     )
 
     @property
-    def favorited_by(self):
-        return self.favorited_by_str.split(",")
-
-    @property
     def media_urls(self):
         return self.media_urls_str.split(",")
 
@@ -74,28 +70,6 @@ class Tweet(Base):
 
     def __repr__(self):
         return "<Tweet(id='%s', text='%s')>" % (self.id, self.text)
-
-    def add_tag(self, db_session, tag_name):
-        tag = Tag.get_tag(db_session=db_session, tag_name=tag_name)
-        self.tags.append(tag)
-
-    def add_user_favorite(self, user_id):
-        if self.favorited_by_str:
-            if user_id not in self.favorited_by_str:
-                self.favorited_by_str = (
-                    ",".join(self.favorited_by_str.split(',') + [user_id]))
-        else:
-            self.favorited_by_str = user_id
-
-    @classmethod
-    def make_from_csvtweet(cls, csv_tweet):
-        return cls(
-            id=csv_tweet.id,
-            text=csv_tweet.text,
-            in_reply_to_status_id=csv_tweet.in_reply_to_status_id,
-            created_at=csv_tweet.timestamp,
-            media_urls_list=list(),
-        )
 
     def download_media(self, db_session, media_path):
         """Retrieve media files."""

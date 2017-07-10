@@ -9,11 +9,20 @@ Tricks
 * DA collections are handled as just another set of tags! In this case, we make four tags to cover all possible bases.
 
   * collection_name
-  * da.user.(username).(favorites|gallery)
-  * da.user.(username).(favorites|gallery).(collection_name)
+  * da.user.(username).(favorite|gallery)
+  * da.user.(username).(favorite|gallery).(collection_name)
   * da.author.(author_username)
 
+Twitter
+=======
+
 * The Twitter API does not permit downloading of GIFs/videos. (No path returned in the API call.) We can only pull thumbnails.
+
+* Tweets (and their files) are tagged in the following manner.
+
+  * twitter.(username).tweet
+  * twitter.(username).favorite [If the tweet is favorited by the user data is being imported for.]
+  * Any hashtags on the tweet.
 
 Requirements
 ++++++++++++
