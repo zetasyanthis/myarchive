@@ -1,13 +1,12 @@
 """Main database used by myarchive."""
 
 import logging
+import fnmatch
 import os
 
 from myarchive.db.db import DB
-from sqlalchemy.exc import IntegrityError
 
-from myarchive.db.tag_db.tables import (
-    Base, TrackedFile, Tag, Tweet)
+from myarchive.db.tag_db.tables import Base, TrackedFile, Tweet
 
 # Get the module logger.
 LOGGER = logging.getLogger(__name__)
@@ -34,10 +33,16 @@ class TagDB(DB):
         tweet_id_set = set(tweet_ids)
         return tweet_id_set
 
-    def import_files(self, import_path, media_path):
+    def import_files(self, import_path, media_path, glob_ignores):
         if os.path.isdir(import_path):
             for root, dirnames, filenames in os.walk(import_path):
                 for filename in sorted(filenames):
+                    glob_match = False
+                    for glob_ignore in glob_ignores:
+                        if fnmatch.fnmatch(name=filename, pat=glob_ignore):
+                            glob_match = True
+                    if glob_match:
+                        continue
                     full_filepath = os.path.join(root, filename)
                     LOGGER.debug("Importing %s...", full_filepath)
                     db_file, existing = TrackedFile.add_file(
