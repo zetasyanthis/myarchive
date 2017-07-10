@@ -3,8 +3,30 @@ MyArchive
 
 MyArchive is a tool for interacting with a multitude of social networks and sites online via established APIs. It downloads and archives posts, images, favorites, etc, allowing you to maintain a central repository of your online activity on your own machine.
 
-Tricks
-++++++
+Supported Data Import Sources
++++++++++++++++++++++++++++++
+
+* Shotwell databases/files
+* Raw folders and files on your filesystem
+* Deviantart
+* Twitter
+* Planned, or in work.
+  * Dreamwidth
+  * LiveJournal
+  * Github Gist (and probably repo mirroring)
+  * Goodreads
+  * LibraryThing
+  * Mastodon
+  * Medium
+  * Reddit
+  * SoFurry
+  * Weasyl
+  * Youtube playlists
+  * Generic RSS feeds
+
+
+Deviantart
+==========
 
 * DA collections are handled as just another set of tags! In this case, we make four tags to cover all possible bases.
 
