@@ -56,11 +56,6 @@ def main():
         default=False,
         help='Imports LJ entries.'
     )
-    parser.add_argument(
-        "--import_folder",
-        action="store",
-        help='Displays duplicates in TrackedFiles.'
-    )
     args = parser.parse_args()
     logger.debug(args)
 
