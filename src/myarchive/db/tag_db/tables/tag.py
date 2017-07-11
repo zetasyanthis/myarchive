@@ -9,6 +9,9 @@ from sqlalchemy.orm.exc import NoResultFound
 from myarchive.db.tag_db.tables.base import Base
 
 
+RECENT_TAG_CACHE = dict()
+
+
 class CircularDependencyError(Exception):
     """
     Specific exception for attempting to create a self-referential
@@ -58,9 +61,15 @@ class Tag(Base):
 
     @classmethod
     def get_tag(cls, db_session, tag_name):
+        global RECENT_TAG_CACHE
+        if tag_name in RECENT_TAG_CACHE:
+            return RECENT_TAG_CACHE[tag_name]
         try:
-            return db_session.query(cls).filter_by(name=tag_name).one()
+            tag = db_session.query(cls).filter_by(name=tag_name).one()
+            RECENT_TAG_CACHE[tag_name] = tag
+            return tag
         except NoResultFound:
             tag = cls(name=tag_name)
+            RECENT_TAG_CACHE[tag_name] = tag
             db_session.add(tag)
             return tag
