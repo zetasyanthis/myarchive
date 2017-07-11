@@ -53,8 +53,11 @@ Twitter
 Requirements
 ++++++++++++
 
-* python3-lj
-* python3-twitter
-* python3-chardet
-* python3-feedparser
-* python3-deviantart-0.1.4
+ * Python packages from pip3.
+
+  * lj
+  * twitter
+  * chardet
+  * feedparser
+  * deviantart-0.1.4
+  * youtube-dl

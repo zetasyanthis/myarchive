@@ -6,7 +6,7 @@ import os
 
 from logging import getLogger
 
-from myarchive.modules import dalib, shotwelllib
+from myarchive.modules import dalib, shotwelllib, youtubelib
 
 from myarchive.db.tag_db.tag_db import TagDB
 from myarchive.modules.ljlib import LJAPIConnection
@@ -34,7 +34,7 @@ def main():
         '--import_from_twitter',
         nargs='*',
         action="store",
-        default=list(),
+        default=None,
         help='Downloads user tweets and favorites.. Any number of CSV files '
              'from twitter exports can follow this argument. Regardless of '
              'whether any are provided, the API is polled for new tweets '
@@ -48,7 +48,13 @@ def main():
         "--import_from_deviantart",
         action="store_true",
         default=False,
-        help='Displays duplicates in TrackedFiles.'
+        help='Imports files via the deviantart API.'
+    )
+    parser.add_argument(
+        "--import_from_youtube",
+        action="store_true",
+        default=False,
+        help='Imports files from Youtube.'
     )
     parser.add_argument(
         '--import_lj_entries',
@@ -145,6 +151,13 @@ def main():
             database=tag_db, config=config,
             tweet_storage_path=tweet_storage_path,
             media_storage_path=media_storage_path)
+
+    if args.import_from_youtube:
+        LOGGER.critical("asdf")
+        youtube_playlist_urls = config.get(
+            section="Youtube", option="youtube_playlist_urls").split(",")
+        youtubelib.download_youtube_playlists(
+            tag_db.session, media_storage_path, youtube_playlist_urls)
 
     """
     LiveJournal Section

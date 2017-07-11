@@ -24,9 +24,6 @@ RSS Feeds
     https://pypi.python.org/pypi/feedparser
     http://www.pythonforbeginners.com/feedparser/using-feedparser-in-python
     Podcasts
-Youtube videos
-    youtube-dl for video downloads
-    API for uploads only: https://github.com/youtube/api-samples/tree/master/python
 Medium
     https://medium.com/developers/welcome-to-the-medium-api-3418f956552#.9aey342sp
     https://github.com/Medium/medium-sdk-python
@@ -56,3 +53,8 @@ Twitter
  - Use sw_media_path.
  - Import as a background process once GUI works since the API takes a while.
  - Zip imports with timestamp, and including origin csv if it exists.
+Youtube
+ - TONS more stuff
+ - https://github.com/youtube/api-samples/tree/master/python
+ - https://github.com/mps-youtube/pafy
+ - https://developers.google.com/api-client-library/python/

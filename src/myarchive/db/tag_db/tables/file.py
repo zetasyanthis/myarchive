@@ -64,7 +64,8 @@ class TrackedFile(Base):
                  copy_from_filepath=None,
                  original_filename=None,
                  url=None,
-                 md5sum_override=None):
+                 md5sum_override=None,
+                 move_original_file=False):
         existing = False
         if file_buffer is not None:
             md5sum = md5(file_buffer).hexdigest()
@@ -103,7 +104,10 @@ class TrackedFile(Base):
                     "Repeated hash: %s [%s, %s]",
                     md5sum, tracked_file[0].filepath, filepath)
             else:
-                shutil.copy2(src=copy_from_filepath, dst=filepath)
+                if move_original_file is True:
+                    shutil.move(src=copy_from_filepath, dst=filepath)
+                else:
+                    shutil.copy2(src=copy_from_filepath, dst=filepath)
         else:
             raise Exception("Not sure what to do with this???")
 
@@ -147,7 +151,8 @@ class TrackedFile(Base):
 def get_md5sum_by_filename(file_id, filepath, block_size=2**20):
     with open(filepath, "rb") as fptr:
         md5sum = get_fptr_md5sum(fptr, block_size)
-    filepath = fix_file_extension(filepath)
+    # Can't do this here.
+    # extension = fix_file_extension(filepath)
     return file_id, filepath, md5sum
 
 
@@ -178,5 +183,5 @@ def fix_file_extension(original_filename, file_buffer=None):
     if imghdr_extension and imghdr_extension != extension:
         # LOGGER.warning("Fixing extension on '%s'. ('%s' -> '%s')",
         #                original_filename, extension, imghdr_extension)
-        return filename + imghdr_extension
-    return original_filename
+        return imghdr_extension
+    return extension
