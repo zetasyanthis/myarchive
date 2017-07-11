@@ -432,11 +432,12 @@ class TwitterAPI(twitter.Api):
         existing_tweet_ids = database.get_existing_tweet_ids()
         for tweet_id, csv_only_tweet in csv_tweets_by_id.items():
             if tweet_id not in existing_tweet_ids:
+                existing_tweet_ids.add(tweet_id)
                 tweet = Tweet(
-                    id=csv_tweet.id,
-                    text=csv_tweet.text,
-                    in_reply_to_status_id=csv_tweet.in_reply_to_status_id,
-                    created_at=csv_tweet.timestamp,
+                    id=csv_only_tweet.id,
+                    text=csv_only_tweet.text,
+                    in_reply_to_status_id=csv_only_tweet.in_reply_to_status_id,
+                    created_at=csv_only_tweet.timestamp,
                     media_urls_list=list(),
                 )
                 apply_tags_to_tweet(
@@ -507,14 +508,14 @@ def import_tweets_from_csv(database, config, tweet_storage_path,
 def apply_tags_to_tweet(
         db_session, tweet, tweet_type, status_dict, username, author_username):
     """Applies appropriate tags to the tweet."""
-    tag_names = [
+    tag_names = set(
         "twitter.%s.tweet" % author_username,
-    ]
+    )
     if status_dict is not None and "hashtags" in status_dict:
         for hashtag_dict in status_dict["hashtags"]:
-            tag_names.append(hashtag_dict["text"])
+            tag_names.add(hashtag_dict["text"])
     if tweet_type == FAVORITES:
-        tag_names.append("twitter.%s.favorite" % username)
+        tag_names.add("twitter.%s.favorite" % username)
     for tag_name in tag_names:
         tweet.tags.append(
             Tag.get_tag(

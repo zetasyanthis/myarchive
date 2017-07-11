@@ -72,4 +72,5 @@ class Tag(Base):
             tag = cls(name=tag_name)
             RECENT_TAG_CACHE[tag_name] = tag
             db_session.add(tag)
+            db_session.commit()
             return tag

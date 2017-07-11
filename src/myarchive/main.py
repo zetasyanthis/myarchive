@@ -32,7 +32,7 @@ def main():
         help="Folder to organize.")
     parser.add_argument(
         '--import_from_twitter',
-        nargs="?",
+        nargs='*',
         action="store",
         default=list(),
         help='Downloads user tweets and favorites.. Any number of CSV files '
@@ -136,7 +136,8 @@ def main():
         for csv_filepath in args.import_from_twitter:
             username = None
             while username is None:
-                username = input("Enter username for CSV import: ")
+                username = input(
+                    "Enter username for import of %s: " % csv_filepath)
             import_tweets_from_csv(
                 database=tag_db,
                 config=config,
