@@ -10,7 +10,8 @@ from myarchive.modules import dalib, shotwelllib
 
 from myarchive.db.tag_db.tag_db import TagDB
 from myarchive.modules.ljlib import LJAPIConnection
-from myarchive.modules.twitterlib import TwitterAPI
+from myarchive.modules.twitterlib import (
+    import_tweets_from_api, import_tweets_from_csv)
 from myarchive.util.logger import myarchive_LOGGER as logger
 
 # from gui import Gtk, MainWindow
@@ -136,7 +137,7 @@ def main():
             username = None
             while username is None:
                 username = input("Enter username for CSV import: ")
-            TwitterAPI.import_tweets_from_csv(
+            import_tweets_from_csv(
                 database=tag_db,
                 config=config,
                 tweet_storage_path=tweet_storage_path,
@@ -144,7 +145,7 @@ def main():
                 csv_filepath=csv_filepath,
                 media_storage_path=media_storage_path,
             )
-        TwitterAPI.import_tweets_from_api(
+        import_tweets_from_api(
             database=tag_db, config=config,
             tweet_storage_path=tweet_storage_path,
             media_storage_path=media_storage_path)

@@ -31,10 +31,8 @@ class Tweet(Base):
     text = Column(String)
     in_reply_to_screen_name = Column(String)
     in_reply_to_status_id = Column(Integer, nullable=True)
-    user_id = Column(Integer, ForeignKey("twitter_users.id"), nullable=True)
     files_downloaded = Column(Boolean, default=False)
     media_urls_str = Column(Text, default="")
-    favorited_by_str = Column(Text, default="")
 
     files = relationship(
         "TrackedFile",
@@ -114,10 +112,6 @@ class TwitterUser(Base):
         "TrackedFile",
         doc="Files associated with this user.",
         secondary=at_twuser_file
-    )
-    tweets = relationship(
-        "Tweet",
-        doc="Tweets tweeted by this user.",
     )
 
     def __init__(self, user_dict):

@@ -116,33 +116,9 @@ class TwitterAPI(twitter.Api):
 
         return [twitter.Status.NewFromJsonDict(x) for x in data]
 
-    @classmethod
-    def import_tweets_from_api(cls, database, config, tweet_storage_path,
-                               media_storage_path):
-        for config_section in config.sections():
-            if config_section.startswith("Twitter_"):
-                api = cls(
-                    consumer_key=config.get(
-                        section=config_section, option="consumer_key"),
-                    consumer_secret=config.get(
-                        section=config_section, option="consumer_secret"),
-                    access_token_key=config.get(
-                        section=config_section, option="access_key"),
-                    access_token_secret=config.get(
-                        section=config_section, option="access_secret"),
-                )
-                for tweet_type in (USER, FAVORITES):
-                    api.archive_tweets(
-                        database=database,
-                        username=config.get(
-                            section=config_section, option="username"),
-                        tweet_storage_path=tweet_storage_path,
-                        media_storage_path=media_storage_path,
-                        tweet_type=tweet_type
-                    )
-
-    def archive_tweets(self, database, username, tweet_storage_path,
-                       media_storage_path, tweet_type):
+    def import_tweets(
+            self, database, username, tweet_storage_path,
+            media_storage_path, tweet_type):
         """
         Archives several types of new tweets along with their associated
         content.
@@ -284,45 +260,14 @@ class TwitterAPI(twitter.Api):
                     new_tweets.append(tweet)
                     database.session.add(tweet)
 
-                    # Add the tags
-                    if "hashtags" in status_dict:
-                        for hashtag_dict in status_dict["hashtags"]:
-                            tweet.tags.append(
-                                Tag.get_tag(
-                                    db_session=database.session,
-                                    tag_name=hashtag_dict["text"])
-                            )
-
-                    if tweet_type == FAVORITES:
-                        tweet.add_user_favorite(username)
+                    apply_tags_to_tweet(
+                        db_session=database.session,
+                        tweet=tweet,
+                        tweet_type=tweet_type,
+                        status_dict=status_dict,
+                        username=username,
+                        author_username=user.name)
             database.session.commit()
-
-    @classmethod
-    def import_tweets_from_csv(cls, database, config, tweet_storage_path,
-                               username, csv_filepath, media_storage_path):
-        for config_section in config.sections():
-            if config_section.startswith("Twitter_%s" % username):
-                break
-        else:
-            LOGGER.error("Username not found.")
-            sys.exit(1)
-        api = cls(
-            consumer_key=config.get(
-                section=config_section, option="consumer_key"),
-            consumer_secret=config.get(
-                section=config_section, option="consumer_secret"),
-            access_token_key=config.get(
-                section=config_section, option="access_key"),
-            access_token_secret=config.get(
-                section=config_section, option="access_secret"),
-        )
-        api.import_from_csv(
-            database=database,
-            tweet_storage_path=tweet_storage_path,
-            csv_filepath=csv_filepath,
-            username=username,
-            media_storage_path=media_storage_path,
-        )
 
     def import_from_csv(self, database, tweet_storage_path, csv_filepath,
                         username, media_storage_path):
@@ -458,14 +403,13 @@ class TwitterAPI(twitter.Api):
                     new_tweets.append(tweet)
                     database.session.add(tweet)
 
-                    # Add the tags
-                    if "hashtags" in status_dict:
-                        for hashtag_dict in status_dict["hashtags"]:
-                            tweet.tags.append(
-                                Tag.get_tag(
-                                    db_session=database.session,
-                                    tag_name=hashtag_dict["text"])
-                            )
+                    apply_tags_to_tweet(
+                        db_session=database.session,
+                        tweet=tweet,
+                        tweet_type=USER,
+                        status_dict=status_dict,
+                        username=username,
+                        author_username=username)
 
                 database.session.commit()
 
@@ -495,16 +439,88 @@ class TwitterAPI(twitter.Api):
                     created_at=csv_tweet.timestamp,
                     media_urls_list=list(),
                 )
-                try:
-                    user = database.session.query(TwitterUser). \
-                        filter_by(screen_name=csv_only_tweet.username).one()
-                    user.tweets.append(tweet)
-                except NoResultFound:
-                    database.session.add(tweet)
+                apply_tags_to_tweet(
+                    db_session=database.session,
+                    tweet=tweet,
+                    tweet_type=USER,
+                    status_dict=None,
+                    username=username,
+                    author_username=username)
         database.session.commit()
 
         download_media(
             db_session=database.session, media_storage_path=media_storage_path)
+
+
+def import_tweets_from_api(
+        database, config, tweet_storage_path, media_storage_path):
+    for config_section in config.sections():
+        if config_section.startswith("Twitter_"):
+            api = TwitterAPI(
+                consumer_key=config.get(
+                    section=config_section, option="consumer_key"),
+                consumer_secret=config.get(
+                    section=config_section, option="consumer_secret"),
+                access_token_key=config.get(
+                    section=config_section, option="access_key"),
+                access_token_secret=config.get(
+                    section=config_section, option="access_secret"),
+            )
+            for tweet_type in (USER, FAVORITES):
+                api.import_tweets(
+                    database=database,
+                    username=config.get(
+                        section=config_section, option="username"),
+                    tweet_storage_path=tweet_storage_path,
+                    media_storage_path=media_storage_path,
+                    tweet_type=tweet_type
+                )
+
+
+def import_tweets_from_csv(database, config, tweet_storage_path,
+                           username, csv_filepath, media_storage_path):
+    for config_section in config.sections():
+        if config_section.startswith("Twitter_%s" % username):
+            break
+    else:
+        LOGGER.error("Username not found.")
+        sys.exit(1)
+    api = TwitterAPI(
+        consumer_key=config.get(
+            section=config_section, option="consumer_key"),
+        consumer_secret=config.get(
+            section=config_section, option="consumer_secret"),
+        access_token_key=config.get(
+            section=config_section, option="access_key"),
+        access_token_secret=config.get(
+            section=config_section, option="access_secret"),
+    )
+    api.import_from_csv(
+        database=database,
+        tweet_storage_path=tweet_storage_path,
+        csv_filepath=csv_filepath,
+        username=username,
+        media_storage_path=media_storage_path,
+    )
+
+
+def apply_tags_to_tweet(
+        db_session, tweet, tweet_type, status_dict, username, author_username):
+    """Applies appropriate tags to the tweet."""
+    tag_names = [
+        "twitter.%s.tweet" % author_username,
+    ]
+    if status_dict is not None and "hashtags" in status_dict:
+        for hashtag_dict in status_dict["hashtags"]:
+            tag_names.append(hashtag_dict["text"])
+    if tweet_type == FAVORITES:
+        tag_names.append("twitter.%s.favorite" % username)
+    for tag_name in tag_names:
+        tweet.tags.append(
+            Tag.get_tag(
+                db_session=db_session,
+                tag_name=tag_name)
+        )
 
 
 def download_media(db_session, media_storage_path):
