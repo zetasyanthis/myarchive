@@ -153,7 +153,6 @@ def main():
             media_storage_path=media_storage_path)
 
     if args.import_from_youtube:
-        LOGGER.critical("asdf")
         youtube_playlist_urls = config.get(
             section="Youtube", option="youtube_playlist_urls").split(",")
         youtubelib.download_youtube_playlists(

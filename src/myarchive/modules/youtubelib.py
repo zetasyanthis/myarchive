@@ -2,9 +2,13 @@
 import os
 import pafy
 
+from datetime import datetime
 from logging import getLogger
+from sqlalchemy.orm.exc import NoResultFound
 
 from myarchive.db.tag_db.tables.file import TrackedFile
+from myarchive.db.tag_db.tables.tag import Tag
+from myarchive.db.tag_db.tables.yttables import YTPlaylist, YTVideo
 
 LOGGER = getLogger(__name__)
 
@@ -18,10 +22,16 @@ def download_youtube_playlists(db_session, media_storage_path, playlist_urls):
         playlist = pafy.get_playlist2(playlist_url=playlist_url)
         LOGGER.info(
             "Parsing playlist %s [%s]...", playlist.title, playlist.author)
-        # print(
-        #     [playlist.title, playlist.author,
-        #      playlist.description, playlist.plid]
-        # )
+        try:
+            db_playlist = db_session.query(YTPlaylist).\
+                filter_by(plid=playlist.plid).one()
+        except NoResultFound:
+            db_playlist = YTPlaylist(
+                title=playlist.title,
+                author=playlist.author,
+                description=playlist.description,
+                plid=playlist.plid)
+            db_session.add(db_playlist)
 
         total_bytes = 0
         video_stream_tuples = []
@@ -38,14 +48,36 @@ def download_youtube_playlists(db_session, media_storage_path, playlist_urls):
             LOGGER.info("Downloading %s...", stream.title)
             temp_filepath = "/tmp/" + stream.title + "." + stream.extension
             stream.download(filepath=temp_filepath)
-            tracked_file, existing = TrackedFile.add_file(
-                db_session=db_session,
-                media_path=media_storage_path,
-                copy_from_filepath=temp_filepath,
-                move_original_file=True,
-            )
-            if existing is True:
-                os.remove(temp_filepath)
-            else:
-                db_session.add(tracked_file)
+            try:
+                tracked_file, existing = TrackedFile.add_file(
+                    db_session=db_session,
+                    media_path=media_storage_path,
+                    copy_from_filepath=temp_filepath,
+                    move_original_file=True,
+                )
+                if existing is True:
+                    os.remove(temp_filepath)
+                    continue
+                else:
+                    db_session.add(tracked_file)
+
+                ytvideo = YTVideo(
+                    uploader=video.username,
+                    description=video.description,
+                    duration=video.duration,
+                    publish_time=datetime.strptime(
+                        video.published, "%Y-%m-%d %H:%M:%S"    ),
+                    videoid=video.videoid
+                )
+                db_playlist.videos.append(ytvideo)
+                ytvideo.file = tracked_file
+                for keyword in video.keywords:
+                    tag = Tag.get_tag(db_session=db_session, tag_name=keyword)
+                    ytvideo.tags.append(tag)
+                    tracked_file.tags.append(tag)
                 db_session.commit()
+            except:
+                db_session.rollback()
+                raise
+
+    db_session.commit()

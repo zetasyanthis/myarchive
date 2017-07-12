@@ -58,3 +58,11 @@ at_deviation_tag = Table(
     Column(
         "tag_id", Integer, ForeignKey("tags.tag_id"), primary_key=True),
     info="Association table for mapping deviations to tags and vice versa.")
+
+at_ytvideo_tag = Table(
+    "at_ytvideo_tag", Base.metadata,
+    Column("ytvideo_id", Integer,
+           ForeignKey("ytvideos.id"), primary_key=True),
+    Column(
+        "tag_id", Integer, ForeignKey("tags.tag_id"), primary_key=True),
+    info="Association table for mapping youtube videos to tags and vice versa.")
