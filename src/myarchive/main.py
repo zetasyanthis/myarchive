@@ -213,7 +213,7 @@ def check_tf_consistency(db_session, media_storage_path):
     for root, dirnames, filenames in os.walk(media_storage_path):
         for filename in sorted(filenames):
             full_filepath = os.path.join(root, filename)
-            match = re.search(r"^([0-9a-f]{32})\.?[A-Za-z0-9]*$", filename)
+            match = re.search(r"^([0-9a-f]{32})\.?.*$", filename)
             if match:
                 file_md5sums[match.group(1)] = full_filepath
             else:

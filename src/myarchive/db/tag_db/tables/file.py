@@ -13,6 +13,7 @@ from hashlib import md5
 from urllib.parse import urlparse
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import backref, relationship
+from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from myarchive.db.tag_db.tables.association_tables import at_file_tag
@@ -70,6 +71,13 @@ class TrackedFile(Base):
                  url=None,
                  md5sum_override=None,
                  move_original_file=False):
+
+        def set_params(tracked_file, file_source, original_filename, url):
+            tracked_file.original_filename = original_filename
+            tracked_file.url = url
+            tracked_file.file_source = file_source
+            return tracked_file
+
         existing = False
         if file_buffer is not None:
             md5sum = md5(file_buffer).hexdigest()
@@ -77,22 +85,30 @@ class TrackedFile(Base):
             extension = fix_file_extension(
                 file_buffer=file_buffer, original_filename=original_filename)
             filepath = os.path.join(media_path, str(md5sum)) + extension
-            tracked_files = db_session.query(cls).filter_by(md5sum=md5sum).all()
-            if tracked_files:
+            try:
+                tracked_file = \
+                    db_session.query(cls).filter_by(md5sum=md5sum).one()
                 LOGGER.debug(
                     "Repeated hash: %s [%s, %s]",
-                    md5sum, tracked_files[0].filepath, filepath)
+                    md5sum, tracked_file.original_filename, original_filename)
                 existing = True
-
+            except NoResultFound:
+                tracked_file = TrackedFile(
+                    file_source, original_filename, filepath, md5sum, url)
+            except MultipleResultsFound:
+                LOGGER.critical(
+                    [file_source, original_filename, filepath, md5sum, url])
+                raise
+            if existing is True:
                 # Update the database record of the file if it doesn't have
                 # original_filename set. (This means that we recovered the file
                 # while checking if all the files in the media folder were in
                 # the DB and don't have the metadata to back it up.)
-                if (len(tracked_files) == 1 and
-                        tracked_files[0].original_filename is None):
-                    tracked_files[0].original_filename = original_filename
-                    tracked_files[0].url = url
-                    return tracked_files[0], existing
+                if tracked_file.original_filename is None:
+                    adjusted_file = set_params(
+                        tracked_file, file_source, original_filename, url)
+                    return adjusted_file, existing
+                return tracked_file, existing
             else:
                 with open(filepath, "wb") as fptr:
                     fptr.write(file_buffer)
@@ -110,21 +126,32 @@ class TrackedFile(Base):
                 with open(copy_from_filepath, 'rb') as fptr:
                     md5sum = get_fptr_md5sum(fptr=fptr)
             filepath = os.path.join(media_path, md5sum + extension)
-            tracked_files = db_session.query(cls).filter_by(md5sum=md5sum).all()
-            if tracked_files:
-                existing = True
+
+            try:
+                tracked_file = \
+                    db_session.query(cls).filter_by(md5sum=md5sum).one()
                 LOGGER.debug(
                     "Repeated hash: %s [%s, %s]",
-                    md5sum, tracked_files[0].filepath, filepath)
+                    md5sum, tracked_file.original_filename, original_filename)
+                existing = True
+            except NoResultFound:
+                tracked_file = TrackedFile(
+                    file_source, original_filename, filepath, md5sum, url)
+            except MultipleResultsFound:
+                LOGGER.critical(
+                    [file_source, original_filename, filepath, md5sum, url])
+                raise
+
+            if existing is True:
                 # Update the database record of the file if it doesn't have
                 # original_filename set. (This means that we recovered the file
                 # while checking if all the files in the media folder were in
                 # the DB and don't have the metadata to back it up.)
-                if (len(tracked_files) == 1 and
-                        tracked_files[0].original_filename is None):
-                    tracked_files[0].original_filename = original_filename
-                    tracked_files[0].url = url
-                    return tracked_files[0], existing
+                if tracked_file.original_filename is None:
+                    adjusted_file = set_params(
+                        tracked_file, file_source, original_filename, url)
+                    return adjusted_file, existing
+                return tracked_file, existing
             else:
                 if move_original_file is True:
                     shutil.move(src=copy_from_filepath, dst=filepath)

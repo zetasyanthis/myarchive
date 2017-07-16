@@ -60,8 +60,10 @@ def import_from_shotwell_db(
                 md5sum_override=media_md5sum,
             )
             files_by_id[media_id] = tracked_file
-            tracked_file.tags.append(shotwell_tag)
-            tag_db.session.add(tracked_file)
+            if shotwell_tag not in tracked_file.tags:
+                tracked_file.tags.append(shotwell_tag)
+            if not existing:
+                tag_db.session.add(tracked_file)
     tag_db.session.commit()
 
     LOGGER.info("Reading in tags... [Part 2 of 3]")
