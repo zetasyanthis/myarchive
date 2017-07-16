@@ -5,3 +5,4 @@ feedparser
 deviantart==0.1.4
 youtube-dl
 pafy
+sqlalchemy
