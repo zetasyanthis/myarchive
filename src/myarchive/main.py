@@ -64,6 +64,12 @@ def main():
         default=False,
         help='Imports LJ entries.'
     )
+    parser.add_argument(
+        '--detect_file_duplicates',
+        action="store_true",
+        default=False,
+        help='Imports LJ entries.'
+    )
     args = parser.parse_args()
     logger.debug(args)
 
@@ -92,6 +98,18 @@ def main():
 
     check_tf_consistency(
         db_session=tag_db.session, media_storage_path=media_storage_path)
+    if args.detect_file_duplicates:
+        db_md5sums = [
+            response_tuple[0] for response_tuple in
+            tag_db.session.query(TrackedFile.md5sum).all()]
+        from collections import defaultdict
+        md5_counters = defaultdict(int)
+        for db_md5sum in db_md5sums:
+            md5_counters[db_md5sum] += 1
+        for md5sum, count in md5_counters.items():
+            if count > 1:
+                LOGGER.warning(
+                    "Multiple TrackedFiles detected for md5sum: %s", md5sum)
 
     """
     Raw Folder Import Section
