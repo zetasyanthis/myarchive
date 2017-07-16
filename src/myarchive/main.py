@@ -28,7 +28,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Manages tagged files.')
     parser.add_argument(
-        "--import-folder",
+        "--import_folder",
         type=str,
         dest="import_folder",
         help="Folder to organize.")
