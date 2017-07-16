@@ -115,6 +115,7 @@ def get_da_user(db_session, da_api, username, media_storage_path):
             details=str(user.details)
         )
         icon_file, existing = TrackedFile.download_file(
+            file_source="deviantart",
             db_session=db_session,
             media_path=media_storage_path,
             url=user.usericon)

@@ -235,8 +235,8 @@ def check_tf_consistency(db_session, media_storage_path):
     db_session.commit()
 
     if missing_md5sums > 0:
-        LOGGER.critical(
-            "Adding DB metadata for %s files in media storage folder not found "
+        LOGGER.warning(
+            "Added DB metadata for %s files in media storage folder not found "
             "in DB...", missing_md5sums)
 
 if __name__ == '__main__':

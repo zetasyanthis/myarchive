@@ -53,6 +53,7 @@ def import_from_shotwell_db(
         for media_tuple in media_tuples:
             media_id, media_path, media_md5sum = media_tuple
             tracked_file, existing = TrackedFile.add_file(
+                file_source="shotwell",
                 db_session=tag_db.session,
                 media_path=media_storage_path,
                 copy_from_filepath=media_path,

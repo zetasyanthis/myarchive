@@ -29,6 +29,7 @@ class TrackedFile(Base):
     __tablename__ = 'files'
 
     _id = Column(Integer, name="id", primary_key=True)
+    file_source = Column(String)
     original_filename = Column(String)
     filepath = Column(String)
     md5sum = Column(String(32), index=True)
@@ -47,7 +48,9 @@ class TrackedFile(Base):
     def tag_names(self):
         return [tag.name for tag in self.tags]
 
-    def __init__(self, original_filename, filepath, md5sum, url=None):
+    def __init__(self, file_source, original_filename,
+                 filepath, md5sum, url=None):
+        self.file_source = file_source
         self.original_filename = original_filename
         self.filepath = filepath
         self.md5sum = md5sum
@@ -60,6 +63,7 @@ class TrackedFile(Base):
 
     @classmethod
     def add_file(cls, db_session, media_path,
+                 file_source,
                  file_buffer=None,
                  copy_from_filepath=None,
                  original_filename=None,
@@ -129,7 +133,8 @@ class TrackedFile(Base):
         else:
             raise Exception("Not sure what to do with this???")
 
-        return TrackedFile(original_filename, filepath, md5sum, url), existing
+        return TrackedFile(
+            file_source, original_filename, filepath, md5sum, url), existing
 
     @classmethod
     def recover_file(cls, md5sum, filepath):
@@ -137,11 +142,11 @@ class TrackedFile(Base):
         Only to be used for recovering DB information for files already in the
         media_storage_path.
         """
-        return TrackedFile(None, filepath, md5sum, None)
+        return TrackedFile(None, None, filepath, md5sum, None)
 
     @classmethod
-    def download_file(cls, db_session, media_path, url, filename_override=None,
-                      saved_url_override=None):
+    def download_file(cls, db_session, media_path, url, file_source,
+                      filename_override=None, saved_url_override=None):
 
         # Allow overriding the URL we save with the file. Sometimes we want
         # the origin page, like on deviantart.
@@ -166,6 +171,7 @@ class TrackedFile(Base):
 
         # Add file to DB (runs a md5sum).
         tracked_file, existing = TrackedFile.add_file(
+            file_source=file_source,
             db_session=db_session,
             media_path=media_path,
             file_buffer=media_request.content,

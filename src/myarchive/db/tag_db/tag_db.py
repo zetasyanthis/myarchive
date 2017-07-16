@@ -43,6 +43,7 @@ class TagDB(DB):
                         continue
                     LOGGER.debug("Importing %s...", full_filepath)
                     db_file, existing = TrackedFile.add_file(
+                        file_source="file_import",
                         db_session=self.session,
                         media_path=media_path,
                         copy_from_filepath=full_filepath,
@@ -54,6 +55,7 @@ class TagDB(DB):
             LOGGER.debug("Importing %s...", import_path)
             directory, filename = os.path.split(import_path)
             db_file, existing = TrackedFile.add_file(
+                file_source="file_import",
                 db_session=self.session,
                 media_path=media_path,
                 copy_from_filepath=import_path,

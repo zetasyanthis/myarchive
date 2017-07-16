@@ -152,9 +152,10 @@ def __download_user_deviations(
                             deviationid=deviation.deviationid)["html"]
                     except deviantart.api.DeviantartError:
                         LOGGER.error("Unable to download %s", deviation_name)
-                        LOGGER.critical(deviation.__dict__)
+                        LOGGER.error(deviation.__dict__)
                         continue
                     tracked_file, existing = TrackedFile.add_file(
+                        file_source="deviantart",
                         db_session=database.session,
                         media_path=media_storage_path,
                         file_buffer=text_buffer.encode('utf-8'),
