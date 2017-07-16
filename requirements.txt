@@ -2,6 +2,6 @@ lj
 twitter
 chardet
 feedparser
-deviantart=0.1.4
+deviantart==0.1.4
 youtube-dl
 pafy
