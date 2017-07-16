@@ -1,6 +1,6 @@
-https://travis-ci.org/
 
 General
+    Get https://travis-ci.org/ build working.
     Export files to directories based on tags. Use original_filename, and either don't make, or symlink, duplicates.
     File renaming support? Should be sufficient to adjust original_filename.
     Secure credential storage.
