@@ -69,17 +69,26 @@ class TrackedFile(Base):
         existing = False
         if file_buffer is not None:
             md5sum = md5(file_buffer).hexdigest()
-            # Fix up extensions the URL doesn't have one.
-            fixed_filepath = fix_file_extension(
+            # Fix up extensions in case they're wrong.
+            extension = fix_file_extension(
                 file_buffer=file_buffer, original_filename=original_filename)
-            extension = os.path.splitext(fixed_filepath)[1]
             filepath = os.path.join(media_path, str(md5sum)) + extension
-            tracked_file = db_session.query(cls).filter_by(md5sum=md5sum).all()
-            if tracked_file:
+            tracked_files = db_session.query(cls).filter_by(md5sum=md5sum).all()
+            if tracked_files:
                 LOGGER.debug(
                     "Repeated hash: %s [%s, %s]",
-                    md5sum, tracked_file[0].filepath, filepath)
+                    md5sum, tracked_files[0].filepath, filepath)
                 existing = True
+
+                # Update the database record of the file if it doesn't have
+                # original_filename set. (This means that we recovered the file
+                # while checking if all the files in the media folder were in
+                # the DB and don't have the metadata to back it up.)
+                if (len(tracked_files) == 1 and
+                        tracked_files[0].original_filename is None):
+                    tracked_files[0].original_filename = original_filename
+                    tracked_files[0].url = url
+                    return tracked_files[0], existing
             else:
                 with open(filepath, "wb") as fptr:
                     fptr.write(file_buffer)
@@ -97,12 +106,21 @@ class TrackedFile(Base):
                 with open(copy_from_filepath, 'rb') as fptr:
                     md5sum = get_fptr_md5sum(fptr=fptr)
             filepath = os.path.join(media_path, md5sum + extension)
-            tracked_file = db_session.query(cls).filter_by(md5sum=md5sum).all()
-            if tracked_file:
+            tracked_files = db_session.query(cls).filter_by(md5sum=md5sum).all()
+            if tracked_files:
                 existing = True
                 LOGGER.debug(
                     "Repeated hash: %s [%s, %s]",
-                    md5sum, tracked_file[0].filepath, filepath)
+                    md5sum, tracked_files[0].filepath, filepath)
+                # Update the database record of the file if it doesn't have
+                # original_filename set. (This means that we recovered the file
+                # while checking if all the files in the media folder were in
+                # the DB and don't have the metadata to back it up.)
+                if (len(tracked_files) == 1 and
+                        tracked_files[0].original_filename is None):
+                    tracked_files[0].original_filename = original_filename
+                    tracked_files[0].url = url
+                    return tracked_files[0], existing
             else:
                 if move_original_file is True:
                     shutil.move(src=copy_from_filepath, dst=filepath)
