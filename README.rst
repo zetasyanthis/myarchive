@@ -49,15 +49,3 @@ Twitter
   * twitter.(username).tweet
   * twitter.(username).favorite [If the tweet is favorited by the user data is being imported for.]
   * Any hashtags on the tweet.
-
-Requirements
-++++++++++++
-
- * Python packages from pip3.
-
-  * lj
-  * twitter
-  * chardet
-  * feedparser
-  * deviantart-0.1.4
-  * youtube-dl
