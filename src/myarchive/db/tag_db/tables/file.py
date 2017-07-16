@@ -114,6 +114,14 @@ class TrackedFile(Base):
         return TrackedFile(original_filename, filepath, md5sum, url), existing
 
     @classmethod
+    def recover_file(cls, md5sum, filepath):
+        """
+        Only to be used for recovering DB information for files already in the
+        media_storage_path.
+        """
+        return TrackedFile(None, filepath, md5sum, None)
+
+    @classmethod
     def download_file(cls, db_session, media_path, url, filename_override=None,
                       saved_url_override=None):
 

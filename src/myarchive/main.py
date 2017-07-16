@@ -3,12 +3,14 @@
 import argparse
 import configparser
 import os
+import re
 
 from logging import getLogger
 
 from myarchive.modules import dalib, shotwelllib, youtubelib
 
 from myarchive.db.tag_db.tag_db import TagDB
+from myarchive.db.tag_db.tables.file import TrackedFile
 from myarchive.modules.ljlib import LJAPIConnection
 from myarchive.modules.twitterlib import (
     import_tweets_from_api, import_tweets_from_csv)
@@ -83,6 +85,13 @@ def main():
     tag_db.session.autocommit = False
     os.makedirs(media_storage_path, exist_ok=True)
     os.makedirs(tweet_storage_path, exist_ok=True)
+
+    """
+    Check media_storage_folder / TrackedFile consistency.
+    """
+
+    check_tf_consistency(
+        db_session=tag_db.session, media_storage_path=media_storage_path)
 
     """
     Raw Folder Import Section
@@ -178,6 +187,39 @@ def main():
 
     tag_db.clean_db_and_close()
 
+
+def check_tf_consistency(db_session, media_storage_path):
+
+    # Grab the md5sum named files already in the media folder.
+    file_md5sums = dict()
+    for root, dirnames, filenames in os.walk(media_storage_path):
+        for filename in sorted(filenames):
+            full_filepath = os.path.join(root, filename)
+            match = re.search(r"^([0-9a-f]{32})\.?[A-Za-z0-9]*$", filename)
+            if match:
+                file_md5sums[match.group(1)] = full_filepath
+            else:
+                LOGGER.warning(
+                    "Non-md5sum filename detected in media storage folder: %s",
+                    full_filepath)
+
+    # Check for files that are not in the DB and add their md5sums if needed.
+    db_md5sums = [
+        response_tuple[0] for response_tuple in
+        db_session.query(TrackedFile.md5sum).all()]
+    missing_md5sums = 0
+    for file_md5sum, full_filepath in file_md5sums.items():
+        if file_md5sum not in db_md5sums:
+            missing_md5sums += 1
+            tracked_file = TrackedFile.recover_file(
+                filepath=full_filepath, md5sum=file_md5sum)
+            db_session.add(tracked_file)
+    db_session.commit()
+
+    if missing_md5sums > 0:
+        LOGGER.critical(
+            "Adding DB metadata for %s files in media storage folder not found "
+            "in DB...", missing_md5sums)
 
 if __name__ == '__main__':
     main()
