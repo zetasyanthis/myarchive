@@ -3,8 +3,7 @@ sudo: false
 dist: trusty
 
 before_install:
-    - pip install pep8
-    - pip install pylint
+
 
 script:
     # Run pep8 on all .py files in all subfolders
@@ -12,3 +11,20 @@ script:
     # because of use case sys.path.append('..'); import <module>)
     - find . -name \*.py -exec pep8 --ignore=E402 {} +
     - pylint myarchive
+
+
+language: python
+python:
+  - "3.5"
+cache: pip
+sudo: false
+dist: trusty
+
+# Install test dependencies
+install:
+  - pip install tox-travis
+  - pip install pep8
+  - pip install pylint
+
+# command to run tests
+script: tox
