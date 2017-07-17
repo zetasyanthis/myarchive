@@ -28,7 +28,7 @@ FILE_SOURCE_PRIORITIES = {
     "youtube": 4,
     "twitter": 3,
     "shotwell": 2,
-    "folder_import": 1,
+    "file_import": 1,
     None: 0,
 }
 
