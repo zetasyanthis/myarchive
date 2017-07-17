@@ -190,7 +190,7 @@ class TwitterAPI(twitter.Api):
                     sleep(sleep_time)
                     continue
                 raise
-            LOGGER.info(
+            LOGGER.debug(
                 "Found %s tweets this iteration...", len(loop_statuses))
             # Check for "We ran out of tweets via this API" termination
             # condition.

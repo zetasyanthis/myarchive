@@ -84,7 +84,7 @@ class TrackedFile(Base):
         def set_params(tracked_file, file_source, original_filename, url):
             if (FILE_SOURCE_PRIORITIES[file_source] >
                     FILE_SOURCE_PRIORITIES[tracked_file.file_source]):
-                LOGGER.info(
+                LOGGER.debug(
                     "Updating already tracked file [%s] with information from "
                     "%s...", tracked_file.md5sum, file_source)
                 tracked_file.original_filename = original_filename
@@ -206,7 +206,7 @@ class TrackedFile(Base):
             filename = filename_override + extension
         else:
             filename = os.path.basename(urlparse(url).path)
-        LOGGER.info("Downloading %s...", url)
+        LOGGER.debug("Downloading %s...", url)
         media_request = requests.get(url)
 
         # Add file to DB (runs a md5sum).
