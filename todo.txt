@@ -15,7 +15,8 @@ General
     https://wiki.python.org/moin/SortingListsOfDictionaries
     https://www.python.org/dev/peps/pep-3148/
     Consider compressing DB with lzop. Saves a ton of space and it's very fast.
-    Metadata recovery (scan files for non tracked files, and add them to TrackedFiles. Tag as recovered_files until we fill in data for them.)
+    Safely catch ctrl-c's. We don't want to miss tags, etc... we won't re-pull.
+
 
 Dreamwidth / LJ
     Add download of posts.

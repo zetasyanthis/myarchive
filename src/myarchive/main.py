@@ -7,11 +7,10 @@ import re
 
 from logging import getLogger
 
-from myarchive.modules import dalib, shotwelllib, youtubelib
+from myarchive.modules import dalib, ljlib, shotwelllib, youtubelib
 
 from myarchive.db.tag_db.tag_db import TagDB
 from myarchive.db.tag_db.tables.file import TrackedFile
-from myarchive.modules.ljlib import LJAPIConnection
 from myarchive.modules.twitterlib import (
     import_tweets_from_api, import_tweets_from_csv)
 from myarchive.util.logger import myarchive_LOGGER as logger
@@ -20,6 +19,40 @@ from myarchive.util.logger import myarchive_LOGGER as logger
 
 
 LOGGER = getLogger("myarchive")
+
+
+def check_tf_consistency(db_session, media_storage_path):
+
+    # Grab the md5sum named files already in the media folder.
+    file_md5sums = dict()
+    for root, dirnames, filenames in os.walk(media_storage_path):
+        for filename in sorted(filenames):
+            full_filepath = os.path.join(root, filename)
+            match = re.search(r"^([0-9a-f]{32})\.?.*$", filename)
+            if match:
+                file_md5sums[match.group(1)] = full_filepath
+            else:
+                LOGGER.warning(
+                    "Non-md5sum filename detected in media storage folder: %s",
+                    full_filepath)
+
+    # Check for files that are not in the DB and add their md5sums if needed.
+    db_md5sums = [
+        response_tuple[0] for response_tuple in
+        db_session.query(TrackedFile.md5sum).all()]
+    missing_md5sums = 0
+    for file_md5sum, full_filepath in file_md5sums.items():
+        if file_md5sum not in db_md5sums:
+            missing_md5sums += 1
+            tracked_file = TrackedFile.recover_file(
+                filepath=full_filepath, md5sum=file_md5sum)
+            db_session.add(tracked_file)
+    db_session.commit()
+
+    if missing_md5sums > 0:
+        LOGGER.warning(
+            "Added DB metadata for %s files in media storage folder not found "
+            "in DB...", missing_md5sums)
 
 
 def main():
@@ -190,54 +223,16 @@ def main():
     """
 
     if args.import_lj_entries:
-        for lj_api_account in LJ_API_ACCOUNTS:
-            ljapi = LJAPIConnection(
-                db_session=tag_db.session,
-                host=lj_api_account.host,
-                user_agent=lj_api_account.user_agent,
-                username=lj_api_account.username,
-                password=lj_api_account.password
-            )
-            ljapi.download_journals_and_comments(db_session=tag_db.session)
+        ljlib.download_journals_and_comments(
+            config=config,
+            db_session=tag_db.session
+        )
 
     # MainWindow(tag_db)
     # Gtk.main()
 
     tag_db.clean_db_and_close()
 
-
-def check_tf_consistency(db_session, media_storage_path):
-
-    # Grab the md5sum named files already in the media folder.
-    file_md5sums = dict()
-    for root, dirnames, filenames in os.walk(media_storage_path):
-        for filename in sorted(filenames):
-            full_filepath = os.path.join(root, filename)
-            match = re.search(r"^([0-9a-f]{32})\.?.*$", filename)
-            if match:
-                file_md5sums[match.group(1)] = full_filepath
-            else:
-                LOGGER.warning(
-                    "Non-md5sum filename detected in media storage folder: %s",
-                    full_filepath)
-
-    # Check for files that are not in the DB and add their md5sums if needed.
-    db_md5sums = [
-        response_tuple[0] for response_tuple in
-        db_session.query(TrackedFile.md5sum).all()]
-    missing_md5sums = 0
-    for file_md5sum, full_filepath in file_md5sums.items():
-        if file_md5sum not in db_md5sums:
-            missing_md5sums += 1
-            tracked_file = TrackedFile.recover_file(
-                filepath=full_filepath, md5sum=file_md5sum)
-            db_session.add(tracked_file)
-    db_session.commit()
-
-    if missing_md5sums > 0:
-        LOGGER.warning(
-            "Added DB metadata for %s files in media storage folder not found "
-            "in DB...", missing_md5sums)
 
 if __name__ == '__main__':
     main()

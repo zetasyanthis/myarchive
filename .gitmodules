@@ -1,0 +1,6 @@
+[submodule "src/myarchive/python-lj"]
+	path = src/myarchive/submodules/python-lj
+	url = https://github.com/daniilr/python-lj.git
+[submodule "src/myarchive/deviantart"]
+	path = src/myarchive/submodules/deviantart
+	url = https://github.com/neighbordog/deviantart.git

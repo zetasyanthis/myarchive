@@ -1,7 +1,8 @@
 # Requires python-lj 0.2.
 
-from datetime import datetime
+import logging
 
+from datetime import datetime
 from lj import lj
 from lj.backup import (
     DEFAULT_JOURNAL, update_journal_entries, update_journal_comments,
@@ -10,6 +11,9 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from myarchive.db.tag_db.tables.ljtables import (
     LJComment, LJEntry, LJHost, LJUser)
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class LJAPIConnection(object):
@@ -106,3 +110,22 @@ class LJAPIConnection(object):
                 parent_id=comment["parentid"]
             )
         db_session.commit()
+
+
+def download_journals_and_comments(config, db_session):
+    for config_section in config.sections():
+        if config_section.startswith("LJ_"):
+            LOGGER.info(config.get(section=config_section, option="host"))
+            LOGGER.info(config.get(section=config_section, option="username"))
+            ljapi = LJAPIConnection(
+                db_session=db_session,
+                host=config.get(
+                    section=config_section, option="host"),
+                user_agent=config.get(
+                    section=config_section, option="user_agent"),
+                username=config.get(
+                    section=config_section, option="username"),
+                password=config.get(
+                    section=config_section, option="password"),
+            )
+            ljapi.download_journals_and_comments(db_session=db_session)
