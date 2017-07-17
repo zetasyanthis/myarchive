@@ -170,6 +170,7 @@ def __download_user_deviations(
                     db_session=database.session,
                     media_path=media_storage_path,
                     url=file_url,
+                    file_source="deviantart",
                     filename_override=deviation_name,
                     saved_url_override=deviation_url,
                 )

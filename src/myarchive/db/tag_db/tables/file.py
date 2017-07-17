@@ -23,6 +23,15 @@ LOGGER = logging.getLogger(__name__)
 
 MAX_BUFFER = 16 * 2 ** 20
 
+FILE_SOURCE_PRIORITIES = {
+    "deviantart": 5,
+    "youtube": 4,
+    "twitter": 3,
+    "shotwell": 2,
+    "folder_import": 1,
+    None: 0,
+}
+
 
 class TrackedFile(Base):
     """Class representing a file managed by the database."""
@@ -73,9 +82,14 @@ class TrackedFile(Base):
                  move_original_file=False):
 
         def set_params(tracked_file, file_source, original_filename, url):
-            tracked_file.original_filename = original_filename
-            tracked_file.url = url
-            tracked_file.file_source = file_source
+            if (FILE_SOURCE_PRIORITIES[file_source] >
+                    FILE_SOURCE_PRIORITIES[tracked_file.file_source]):
+                LOGGER.info(
+                    "Updating already tracked file [%s] with information from "
+                    "%s...", tracked_file.md5sum, file_source)
+                tracked_file.original_filename = original_filename
+                tracked_file.url = url
+                tracked_file.file_source = file_source
             return tracked_file
 
         existing = False
@@ -95,6 +109,7 @@ class TrackedFile(Base):
             except NoResultFound:
                 tracked_file = TrackedFile(
                     file_source, original_filename, filepath, md5sum, url)
+                db_session.add(tracked_file)
             except MultipleResultsFound:
                 LOGGER.critical(
                     [file_source, original_filename, filepath, md5sum, url])
@@ -104,11 +119,9 @@ class TrackedFile(Base):
                 # original_filename set. (This means that we recovered the file
                 # while checking if all the files in the media folder were in
                 # the DB and don't have the metadata to back it up.)
-                if tracked_file.original_filename is None:
-                    adjusted_file = set_params(
-                        tracked_file, file_source, original_filename, url)
-                    return adjusted_file, existing
-                return tracked_file, existing
+                adjusted_file = set_params(
+                    tracked_file, file_source, original_filename, url)
+                return adjusted_file, existing
             else:
                 with open(filepath, "wb") as fptr:
                     fptr.write(file_buffer)
@@ -137,6 +150,7 @@ class TrackedFile(Base):
             except NoResultFound:
                 tracked_file = TrackedFile(
                     file_source, original_filename, filepath, md5sum, url)
+                db_session.add(tracked_file)
             except MultipleResultsFound:
                 LOGGER.critical(
                     [file_source, original_filename, filepath, md5sum, url])
@@ -147,11 +161,9 @@ class TrackedFile(Base):
                 # original_filename set. (This means that we recovered the file
                 # while checking if all the files in the media folder were in
                 # the DB and don't have the metadata to back it up.)
-                if tracked_file.original_filename is None:
-                    adjusted_file = set_params(
-                        tracked_file, file_source, original_filename, url)
-                    return adjusted_file, existing
-                return tracked_file, existing
+                adjusted_file = set_params(
+                    tracked_file, file_source, original_filename, url)
+                return adjusted_file, existing
             else:
                 if move_original_file is True:
                     shutil.move(src=copy_from_filepath, dst=filepath)
@@ -160,8 +172,7 @@ class TrackedFile(Base):
         else:
             raise Exception("Not sure what to do with this???")
 
-        return TrackedFile(
-            file_source, original_filename, filepath, md5sum, url), existing
+        return tracked_file, existing
 
     @classmethod
     def recover_file(cls, md5sum, filepath):
@@ -182,9 +193,11 @@ class TrackedFile(Base):
         else:
             saved_url = url
 
-        tracked_files = db_session.query(cls).filter_by(url=saved_url).all()
-        if tracked_files:
-            return tracked_files[0], True
+        try:
+            tracked_file = db_session.query(cls).filter_by(url=saved_url).one()
+            return tracked_file, True
+        except NoResultFound:
+            pass
 
         # Download the file.
         if filename_override is not None:
@@ -197,14 +210,13 @@ class TrackedFile(Base):
         media_request = requests.get(url)
 
         # Add file to DB (runs a md5sum).
-        tracked_file, existing = TrackedFile.add_file(
+        return TrackedFile.add_file(
             file_source=file_source,
             db_session=db_session,
             media_path=media_path,
             file_buffer=media_request.content,
             original_filename=filename,
             url=saved_url)
-        return tracked_file, existing
 
 
 def get_md5sum_by_filename(file_id, filepath, block_size=2**20):
