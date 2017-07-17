@@ -32,6 +32,7 @@ Medium
     https://medium.com/me/settings
 Github Gist
     https://developer.github.com/v3/gists/
+    https://github.com/jdowner/gist
 SoFurry
 Weasyl
 Goodreads

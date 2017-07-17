@@ -22,3 +22,6 @@
 [submodule "src/myarchive/submodules/feedparser"]
 	path = src/myarchive/submodules/feedparser
 	url = https://github.com/kurtmckee/feedparser.git
+[submodule "src/myarchive/submodules/gist"]
+	path = src/myarchive/submodules/gist
+	url = https://github.com/jdowner/gist
