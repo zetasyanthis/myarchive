@@ -75,7 +75,7 @@ class Tweet(Base):
             for media_url in self.media_urls:
                 if media_url != "":
                     tracked_file, existing = TrackedFile.download_file(
-                        db_session, media_path, media_url, "shotwell")
+                        db_session, media_path, media_url, "twitter")
                     if (tracked_file is not None and
                             tracked_file not in self.files):
                         self.files.append(tracked_file)
@@ -157,7 +157,7 @@ class TwitterUser(Base):
                     db_session=db_session,
                     media_path=media_path,
                     url=media_url,
-                    file_source="shotwell",
+                    file_source="twitter",
                 )
                 self.files.append(tracked_file)
             db_session.commit()
