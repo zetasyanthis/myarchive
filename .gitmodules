@@ -4,3 +4,21 @@
 [submodule "src/myarchive/deviantart"]
 	path = src/myarchive/submodules/deviantart
 	url = https://github.com/neighbordog/deviantart.git
+[submodule "src/myarchive/submodules/Mastodon.py"]
+	path = src/myarchive/submodules/Mastodon.py
+	url = https://github.com/halcy/Mastodon.py.git
+[submodule "src/myarchive/submodules/pafy"]
+	path = src/myarchive/submodules/pafy
+	url = https://github.com/mps-youtube/pafy
+[submodule "src/myarchive/submodules/praw"]
+	path = src/myarchive/submodules/praw
+	url = https://github.com/praw-dev/praw.git
+[submodule "src/myarchive/submodules/medium-sdk-python"]
+	path = src/myarchive/submodules/medium-sdk-python
+	url = https://github.com/Medium/medium-sdk-python.git
+[submodule "src/myarchive/submodules/gpodder"]
+	path = src/myarchive/submodules/gpodder
+	url = https://github.com/gpodder/gpodder.git
+[submodule "src/myarchive/submodules/feedparser"]
+	path = src/myarchive/submodules/feedparser
+	url = https://github.com/kurtmckee/feedparser.git
