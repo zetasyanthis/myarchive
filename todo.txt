@@ -44,7 +44,8 @@ Reddit
   - https://praw.readthedocs.io/en/latest/
 Github Repository (Auto-pull updates?)
 Internet archive API may be of help.
-
+FurAffinity
+    https://github.com/fake-name/xA-Scraper
 
 
 
