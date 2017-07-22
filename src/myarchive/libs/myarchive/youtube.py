@@ -7,7 +7,6 @@
 # @License MIT
 
 import os
-import pafy
 
 from datetime import datetime
 from logging import getLogger
@@ -16,6 +15,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from myarchive.db.tag_db.tables.file import TrackedFile
 from myarchive.db.tag_db.tables.tag import Tag
 from myarchive.db.tag_db.tables.yttables import YTPlaylist, YTVideo
+from myarchive.libs import pafy
 
 LOGGER = getLogger(__name__)
 
