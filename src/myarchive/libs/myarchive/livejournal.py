@@ -76,7 +76,8 @@ class LJAPIConnection(object):
 
         users = {
             int(self.journal['login']["userid"]):
-                self.journal['login']["username"],
+                self.journal['login']["fullname"],
+                # self.journal['login']["username"],
         }
         # for user_id, username in self.journal["comment_posters"].items():
         #     users[int(user_id)] = username
@@ -94,13 +95,15 @@ class LJAPIConnection(object):
 
         lj_entries = dict()
         for entry_id, entry in self.journal["entries"].items():
+            LOGGER.critical(entry)
+            LOGGER.critical(entry["event"])
             lj_entry = LJEntry.get_or_add_entry(
                 db_session=db_session,
                 lj_user=poster,
                 itemid=entry_id,
                 eventtime=datetime_from_string(entry["eventtime"]),
                 subject=entry["subject"],
-                text=entry["event"],
+                text=str(entry["event"]),
                 current_music=entry["props"].get("current_music"),
                 tag_list=entry["props"].get("taglist")
             )
