@@ -1,4 +1,11 @@
 #!/usr/bin/python3
+# @Author: Zeta Syanthis <zetasyanthis>
+# @Date:   2017/07/21
+# @Email:  zeta@zetasyanthis.org
+# @Project: MyArchive
+# @Last modified by:   zetasyanthis
+# @Last modified time: 2017/07/21
+# @License MIT
 
 import argparse
 import configparser
@@ -7,7 +14,7 @@ import re
 
 from logging import getLogger
 
-from myarchive.modules.myarchive import (
+from myarchive.libs.myarchive import (
     deviantart, livejournal, shotwell, twitter, youtube)
 
 from myarchive.db.tag_db.tag_db import TagDB

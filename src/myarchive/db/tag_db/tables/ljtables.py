@@ -1,3 +1,11 @@
+# @Author: Zeta Syanthis <zetasyanthis>
+# @Date:   2017/07/21
+# @Email:  zeta@zetasyanthis.org
+# @Project: MyArchive
+# @Last modified by:   zetasyanthis
+# @Last modified time: 2017/07/21
+# @License MIT
+
 from myarchive.db.tag_db.tables.association_tables import (
     at_ljcomment_tag, at_ljentry_tag)
 from myarchive.db.tag_db.tables.base import Base

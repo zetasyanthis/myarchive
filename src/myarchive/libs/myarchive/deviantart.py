@@ -1,3 +1,11 @@
+# @Author: Zeta Syanthis <zetasyanthis>
+# @Date:   2017/07/21
+# @Email:  zeta@zetasyanthis.org
+# @Project: MyArchive
+# @Last modified by:   zetasyanthis
+# @Last modified time: 2017/07/21
+# @License MIT
+
 """Handles deviantart calls."""
 
 import logging
@@ -6,7 +14,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from myarchive.db.tag_db.tables import Deviation, Tag, TrackedFile
 from myarchive.db.tag_db.tables.datables import get_da_user
-from myarchive.modules import deviantart
+from myarchive.libs import deviantart
 
 LOGGER = logging.getLogger(__name__)
 

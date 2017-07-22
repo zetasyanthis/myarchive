@@ -1,10 +1,18 @@
+# @Author: Zeta Syanthis <zetasyanthis>
+# @Date:   2017/07/21
+# @Email:  zeta@zetasyanthis.org
+# @Project: MyArchive
+# @Last modified by:   zetasyanthis
+# @Last modified time: 2017/07/21
+# @License MIT
+
 """
 Module containing class definitions for files to be tagged.
 """
 
 import logging
 
-from myarchive.modules.deviantart.api import DeviantartError
+from myarchive.libs.deviantart.api import DeviantartError
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import backref, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
