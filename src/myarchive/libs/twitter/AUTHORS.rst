@@ -1,0 +1,1 @@
+../../../../submodules/python-twitter/AUTHORS.rst

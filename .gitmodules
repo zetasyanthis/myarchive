@@ -27,4 +27,4 @@
 	url = https://github.com/jdowner/gist.git
 [submodule "python-twitter"]
 	path = submodules/python-twitter
-	url = https://github.com/bear/python-twitter.git
+	url = git@github.com:/zetasyanthis/python-twitter.git

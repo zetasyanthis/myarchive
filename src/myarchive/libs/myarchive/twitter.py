@@ -16,15 +16,15 @@ import json
 import os
 import sys
 import time
-import twitter
 
 from collections import namedtuple
 from sqlalchemy.orm.exc import NoResultFound
 from time import sleep
-from twitter.error import TwitterError
 
 from myarchive.db.tag_db.tables.twittertables import Tweet, TwitterUser
 from myarchive.db.tag_db.tables.tag import Tag
+from myarchive.libs import twitter
+from myarchive.libs.twitter import TwitterError
 
 LOGGER = logging.getLogger(__name__)
 
