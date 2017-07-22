@@ -1,5 +1,9 @@
 
 General
+    Integrate library dependencies. See link for how to handle licenses.
+        https://softwareengineering.stackexchange.com/questions/234511/what-is-the-best-practice-for-arranging-third-party-library-licenses-paperwork/234526#234526
+        Need to do numbers 3, 4, 6 specifically
+
     Get https://travis-ci.org/ build working.
     Export files to directories based on tags. Use original_filename, and either don't make, or symlink, duplicates.
     File renaming support? Should be sufficient to adjust original_filename.
@@ -19,8 +23,7 @@ General
 
 
 Dreamwidth / LJ
-    Add download of posts.
-    Add download of comments.
+    Add try/except to download of comments.
 RSS Feeds
     Either use gpo, or import its functions.  https://github.com/gpodder/gpodder
     https://pypi.python.org/pypi/feedparser
