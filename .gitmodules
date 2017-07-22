@@ -1,27 +1,27 @@
-[submodule "src/myarchive/python-lj"]
-	path = src/myarchive/submodules/python-lj
+[submodule "python-lj"]
+	path = submodules/python-lj
 	url = https://github.com/daniilr/python-lj.git
-[submodule "src/myarchive/deviantart"]
-	path = src/myarchive/submodules/deviantart
+[submodule "deviantart"]
+	path = submodules/deviantart
 	url = https://github.com/neighbordog/deviantart.git
-[submodule "src/myarchive/submodules/Mastodon.py"]
-	path = src/myarchive/submodules/Mastodon.py
+[submodule "submodules/Mastodon.py"]
+	path = submodules/Mastodon.py
 	url = https://github.com/halcy/Mastodon.py.git
-[submodule "src/myarchive/submodules/pafy"]
-	path = src/myarchive/submodules/pafy
+[submodule "submodules/pafy"]
+	path = submodules/pafy
 	url = https://github.com/mps-youtube/pafy
-[submodule "src/myarchive/submodules/praw"]
-	path = src/myarchive/submodules/praw
+[submodule "submodules/praw"]
+	path = submodules/praw
 	url = https://github.com/praw-dev/praw.git
-[submodule "src/myarchive/submodules/medium-sdk-python"]
-	path = src/myarchive/submodules/medium-sdk-python
+[submodule "submodules/medium-sdk-python"]
+	path = submodules/medium-sdk-python
 	url = https://github.com/Medium/medium-sdk-python.git
-[submodule "src/myarchive/submodules/gpodder"]
-	path = src/myarchive/submodules/gpodder
+[submodule "submodules/gpodder"]
+	path = submodules/gpodder
 	url = https://github.com/gpodder/gpodder.git
-[submodule "src/myarchive/submodules/feedparser"]
-	path = src/myarchive/submodules/feedparser
+[submodule "submodules/feedparser"]
+	path = submodules/feedparser
 	url = https://github.com/kurtmckee/feedparser.git
-[submodule "src/myarchive/submodules/gist"]
-	path = src/myarchive/submodules/gist
+[submodule "submodules/gist"]
+	path = submodules/gist
 	url = https://github.com/jdowner/gist
