@@ -1,1 +1,1 @@
-../../../../submodules/python-lj/lj/__init__.py
+__all__ = ['lj']
