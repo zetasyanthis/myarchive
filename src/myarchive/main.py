@@ -7,12 +7,11 @@ import re
 
 from logging import getLogger
 
-from myarchive.modules import dalib, ljlib, shotwelllib, youtubelib
+from myarchive.modules import (
+    deviantart, livejournal, shotwell, twitter, youtube)
 
 from myarchive.db.tag_db.tag_db import TagDB
 from myarchive.db.tag_db.tables.file import TrackedFile
-from myarchive.modules.twitterlib import (
-    import_tweets_from_api, import_tweets_from_csv)
 from myarchive.util.logger import myarchive_LOGGER as logger
 
 # from gui import Gtk, MainWindow
@@ -171,7 +170,7 @@ def main():
             config.get(section="Shotwell", option="db_filepath"))
         sw_media_path = os.path.expanduser(
             config.get(section="Shotwell", option="storage_filepath"))
-        shotwelllib.import_from_shotwell_db(
+        shotwell.import_from_shotwell_db(
             tag_db=tag_db,
             media_storage_path=media_storage_path,
             sw_database_path=sw_db_path,
@@ -183,7 +182,7 @@ def main():
     """
 
     if args.import_from_deviantart:
-        dalib.download_user_data(
+        deviantart.download_user_data(
             database=tag_db,
             config=config,
             media_storage_path=media_storage_path,
@@ -199,7 +198,7 @@ def main():
             while username is None:
                 username = input(
                     "Enter username for import of %s: " % csv_filepath)
-            import_tweets_from_csv(
+            twitter.import_tweets_from_csv(
                 database=tag_db,
                 config=config,
                 tweet_storage_path=tweet_storage_path,
@@ -207,7 +206,7 @@ def main():
                 csv_filepath=csv_filepath,
                 media_storage_path=media_storage_path,
             )
-        import_tweets_from_api(
+        twitter.import_tweets_from_api(
             database=tag_db, config=config,
             tweet_storage_path=tweet_storage_path,
             media_storage_path=media_storage_path)
@@ -215,7 +214,7 @@ def main():
     if args.import_from_youtube:
         youtube_playlist_urls = config.get(
             section="Youtube", option="youtube_playlist_urls").split(",")
-        youtubelib.download_youtube_playlists(
+        youtube.download_youtube_playlists(
             tag_db.session, media_storage_path, youtube_playlist_urls)
 
     """
@@ -223,7 +222,7 @@ def main():
     """
 
     if args.import_lj_entries:
-        ljlib.download_journals_and_comments(
+        livejournal.download_journals_and_comments(
             config=config,
             db_session=tag_db.session
         )
