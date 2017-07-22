@@ -9,8 +9,8 @@
 import logging
 
 from datetime import datetime
-from lj import lj
-from lj.backup import (
+from myarchive.libs.livejournal import lj
+from myarchive.libs.livejournal.backup import (
     DEFAULT_JOURNAL, update_journal_entries, update_journal_comments,
     datetime_from_string)
 from sqlalchemy.orm.exc import NoResultFound
