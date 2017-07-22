@@ -63,20 +63,23 @@ class LJAPIConnection(object):
 
         # Sync entries from the server
         print("Downloading journal entries")
-        nj = update_journal_entries(server=self._server, journal=self.journal)
+        new_journals = \
+            update_journal_entries(server=self._server, journal=self.journal)
 
         # Sync comments from the server
-        print("Downloading comments")
-        # nc = update_journal_comments(server=self._server, journal=self.journal)
+        # print("Downloading comments")
+        # new_comments = update_journal_comments(
+        #     server=self._server, journal=self.journal)
 
         # print("Updated %d entries and %d comments" % (nj, nc))
+        print(self.journal['login'])
 
         users = {
             int(self.journal['login']["userid"]):
                 self.journal['login']["username"],
         }
-        for user_id, username in self.journal["comment_posters"].items():
-            users[int(user_id)] = username
+        # for user_id, username in self.journal["comment_posters"].items():
+        #     users[int(user_id)] = username
 
         poster = None
         lj_users = dict()
@@ -104,17 +107,17 @@ class LJAPIConnection(object):
             lj_entries[entry_id] = lj_entry
         db_session.commit()
 
-        for comment_id, comment in self.journal["comments"].items():
-            LJComment.get_or_add_comment(
-                db_session=db_session,
-                lj_user=lj_users[int(comment["posterid"])],
-                lj_entry=lj_entries[int(comment["jitemid"])],
-                itemid=int(comment_id),
-                subject=comment["subject"],
-                body=comment["body"],
-                date=datetime.strptime(comment["date"], "%Y-%m-%dT%H:%M:%SZ"),
-                parent_id=comment["parentid"]
-            )
+        # for comment_id, comment in self.journal["comments"].items():
+        #     LJComment.get_or_add_comment(
+        #         db_session=db_session,
+        #         lj_user=lj_users[int(comment["posterid"])],
+        #         lj_entry=lj_entries[int(comment["jitemid"])],
+        #         itemid=int(comment_id),
+        #         subject=comment["subject"],
+        #         body=comment["body"],
+        #         date=datetime.strptime(comment["date"], "%Y-%m-%dT%H:%M:%SZ"),
+        #         parent_id=comment["parentid"]
+        #     )
         db_session.commit()
 
 
