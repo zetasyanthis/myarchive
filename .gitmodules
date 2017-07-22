@@ -1,7 +1,7 @@
-[submodule "python-lj"]
+[submodule "submodules/python-lj"]
 	path = submodules/python-lj
-	url = https://github.com/daniilr/python-lj.git
-[submodule "deviantart"]
+	url = git@github.com:zetasyanthis/python-lj.git
+[submodule "submodules/deviantart"]
 	path = submodules/deviantart
 	url = https://github.com/neighbordog/deviantart.git
 [submodule "submodules/Mastodon.py"]
@@ -25,9 +25,3 @@
 [submodule "submodules/gist"]
 	path = submodules/gist
 	url = https://github.com/jdowner/gist.git
-[submodule "submodules/python-lj"]
-	path = submodules/python-lj
-	url = https://github.com/daniilr/python-lj.git
-[submodule "submodules/deviantart"]
-	path = submodules/deviantart
-	url = https://github.com/neighbordog/deviantart.git
