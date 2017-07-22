@@ -4,7 +4,7 @@ Module containing class definitions for files to be tagged.
 
 import logging
 
-from deviantart.api import DeviantartError
+from myarchive.modules.deviantart.api import DeviantartError
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import backref, relationship
 from sqlalchemy.ext.hybrid import hybrid_property

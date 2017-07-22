@@ -7,7 +7,7 @@ import re
 
 from logging import getLogger
 
-from myarchive.modules import (
+from myarchive.modules.myarchive import (
     deviantart, livejournal, shotwell, twitter, youtube)
 
 from myarchive.db.tag_db.tag_db import TagDB
