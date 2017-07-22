@@ -67,9 +67,9 @@ class LJAPIConnection(object):
 
         # Sync comments from the server
         print("Downloading comments")
-        nc = update_journal_comments(server=self._server, journal=self.journal)
+        # nc = update_journal_comments(server=self._server, journal=self.journal)
 
-        print("Updated %d entries and %d comments" % (nj, nc))
+        # print("Updated %d entries and %d comments" % (nj, nc))
 
         users = {
             int(self.journal['login']["userid"]):
