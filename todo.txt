@@ -24,6 +24,7 @@ General
     Safely catch ctrl-c's. We don't want to miss tags, etc... we won't re-pull.
 
 
+
 RSS Feeds
     Either use gpo, or import its functions.  https://github.com/gpodder/gpodder
     https://pypi.python.org/pypi/feedparser
@@ -52,19 +53,17 @@ FurAffinity
 
 Second Tier Priorities
 
-
-
-Deviantart
- - Handle rate limits (https://www.deviantart.com/developers/errors#rates)
- - PDFs deviations not returned by API?
-Twitter
- - Use sw_media_path.
- - Import as a background process once GUI works since the API takes a while.
- - Zip imports with timestamp, and including origin csv if it exists.
-Youtube
- - TONS more stuff
- - https://github.com/youtube/api-samples/tree/master/python
- - https://github.com/mps-youtube/pafy
- - https://developers.google.com/api-client-library/python/
-Dreamwidth / LJ
- - Add try/except to download of comments.
+ - Deviantart
+   - Handle rate limits (https://www.deviantart.com/developers/errors#rates)
+   - PDFs deviations not returned by API?
+ - Twitter
+   - Use sw_media_path.
+   - Import as a background process once GUI works since the API takes a while.
+   - Zip imports with timestamp, and including origin csv if it exists.
+ - Youtube
+   - TONS more stuff
+   - https://github.com/youtube/api-samples/tree/master/python
+   - https://github.com/mps-youtube/pafy
+   - https://developers.google.com/api-client-library/python/
+ - Dreamwidth / LJ
+   - Add try/except to download of comments.
