@@ -9,16 +9,16 @@ Supported Data Import Sources
  * Shotwell databases/files
  * Raw folders and files on your filesystem
  * Deviantart
+ * Dreamwidth (Note: site comments API is broken)
+ * LiveJournal
  * Twitter
  * Planned, or in work.
 
-   * Dreamwidth
    * Flickr
    * Github Gist (and probably repo mirroring)
    * Goodreads
    * Instagram
    * LibraryThing
-   * LiveJournal
    * Mastodon
    * Medium
    * Reddit
