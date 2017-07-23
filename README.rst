@@ -12,6 +12,7 @@ Supported Data Import Sources
  * Dreamwidth (Note: site comments API is broken)
  * LiveJournal
  * Twitter
+ * Youtube (Playlists only for now)
  * Planned, or in work.
 
    * Flickr
@@ -25,7 +26,6 @@ Supported Data Import Sources
    * SoFurry
    * Tumblr
    * Weasyl
-   * Youtube playlists
    * Generic RSS feeds
 
 
