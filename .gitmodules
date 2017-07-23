@@ -1,30 +1,33 @@
 [submodule "submodules/python-lj"]
 	path = submodules/python-lj
-	url = git@github.com:zetasyanthis/python-lj.git
+	url = git@github.com:ArchiversAnonymous/python-lj.git
 [submodule "submodules/deviantart"]
 	path = submodules/deviantart
-	url = https://github.com/neighbordog/deviantart.git
+	url = git@github.com:zetasyanthis/deviantart.git
 [submodule "submodules/Mastodon.py"]
 	path = submodules/Mastodon.py
-	url = https://github.com/halcy/Mastodon.py.git
+	url = git@github.com:zetasyanthis/Mastodon.py.git
 [submodule "submodules/pafy"]
 	path = submodules/pafy
-	url = https://github.com/mps-youtube/pafy
+	url = git@github.com:zetasyanthis/pafy
 [submodule "submodules/praw"]
 	path = submodules/praw
-	url = https://github.com/praw-dev/praw.git
+	url = git@github.com:zetasyanthis/praw.git
 [submodule "submodules/medium-sdk-python"]
 	path = submodules/medium-sdk-python
-	url = https://github.com/Medium/medium-sdk-python.git
+	url = git@github.com:zetasyanthis/medium-sdk-python.git
 [submodule "submodules/gpodder"]
 	path = submodules/gpodder
-	url = https://github.com/gpodder/gpodder.git
+	url = git@github.com:zetasyanthis/gpodder.git
 [submodule "submodules/feedparser"]
 	path = submodules/feedparser
-	url = https://github.com/kurtmckee/feedparser.git
+	url = git@github.com:zetasyanthis/feedparser.git
 [submodule "submodules/gist"]
 	path = submodules/gist
-	url = https://github.com/jdowner/gist.git
+	url = git@github.com:zetasyanthis/gist.git
 [submodule "python-twitter"]
 	path = submodules/python-twitter
-	url = git@github.com:/zetasyanthis/python-twitter.git
+	url = git@github.com:zetasyanthis/python-twitter.git
+[submodule "submodules/goodreads"]
+	path = submodules/goodreads
+	url = git@github.com:zetasyanthis/goodreads.git

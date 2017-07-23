@@ -1,6 +1,10 @@
 
 General
+    Pylint/PEP8
+    Comment the damned code
     Integrate library dependencies. See link for how to handle licenses.
+        Build script should copy from submodules.
+        Python path setting script should also include submodules.
         https://softwareengineering.stackexchange.com/questions/234511/what-is-the-best-practice-for-arranging-third-party-library-licenses-paperwork/234526#234526
         Need to do numbers 3, 4, 6 specifically
 
@@ -14,16 +18,12 @@ General
         http://docs.sqlalchemy.org/en/latest/dialects/sqlite.html#threading-pooling-behavior
         http://docs.sqlalchemy.org/en/latest/orm/session_basics.html#when-do-i-make-a-sessionmaker
     Add attempted download of linked pages if possible.
-    Comment the damned code
-    Pylint/PEP8
     https://wiki.python.org/moin/SortingListsOfDictionaries
     https://www.python.org/dev/peps/pep-3148/
     Consider compressing DB with lzop. Saves a ton of space and it's very fast.
     Safely catch ctrl-c's. We don't want to miss tags, etc... we won't re-pull.
 
 
-Dreamwidth / LJ
-    Add try/except to download of comments.
 RSS Feeds
     Either use gpo, or import its functions.  https://github.com/gpodder/gpodder
     https://pypi.python.org/pypi/feedparser
@@ -41,15 +41,16 @@ Weasyl
 Goodreads
 LibraryThing
 Mastodon
-  - https://pypi.python.org/pypi/Mastodon.py/1.0.8
-  - https://github.com/halcy/Mastodon.py
 Reddit
-  - https://praw.readthedocs.io/en/latest/
 Github Repository (Auto-pull updates?)
 Internet archive API may be of help.
 FurAffinity
-    https://github.com/fake-name/xA-Scraper
 
+
+
+
+
+Second Tier Priorities
 
 
 
@@ -65,3 +66,5 @@ Youtube
  - https://github.com/youtube/api-samples/tree/master/python
  - https://github.com/mps-youtube/pafy
  - https://developers.google.com/api-client-library/python/
+Dreamwidth / LJ
+ - Add try/except to download of comments.
