@@ -46,7 +46,11 @@ Reddit
 Github Repository (Auto-pull updates?)
 Internet archive API may be of help.
 FurAffinity
-
+Flickr
+    https://github.com/sybrenstuvel/flickrapi
+    https://stuvel.eu/flickrapi
+    https://github.com/alexis-mignon/python-flickr-api
+    https://github.com/alexis-mignon/python-flickr-api/wiki/Tutorial
 
 
 
